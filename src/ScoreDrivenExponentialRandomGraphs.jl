@@ -1,5 +1,9 @@
 module ScoreDrivenExponentialRandomGraphs
 
-# Write your package code here.
+
+include("./StaNets.jl")
+
+include("./DynNets.jl")
+
 
 end

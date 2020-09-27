@@ -22,8 +22,8 @@ identify(Model::GasNetModel,UnPar::Array{<:Real,1};idType = "pinco") =
 
 include("./AReg.jl")
 include("./HelperFunDom.jl")
+include("./StaNets.jl")
 
-using StaNets,HelperFunDom
 
 include("./DynNets_GasNetModelBin1.jl")
 include("./DynNets_GasNetModelDirBin1.jl")
