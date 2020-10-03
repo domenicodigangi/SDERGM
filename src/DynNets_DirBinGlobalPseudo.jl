@@ -184,6 +184,7 @@ function scalingMatGas(Model::GasNetModelDirBinGlobalPseudo,expMat::Array{<:Real
     return scalingMat
  end
 
+
 function updatedGasPar( Model::GasNetModelDirBinGlobalPseudo, obs_t::Array{<:Real,2},
                          ftot_t::Array{<:Real,1}, I_tm1::Array{<:Real,2},
                          indTvPar::BitArray{1}, Wgas::Array{<:Real,1},

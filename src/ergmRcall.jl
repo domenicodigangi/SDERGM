@@ -4,27 +4,22 @@
 
 module ergmRcall
 
-using Distributions, StatsBase,Optim, LineSearches, StatsFuns, Roots,MLBase
-using LinearAlgebra
-using JLD,DataFrames
-using StaNets,HelperFunDom
-using ForwardDiff,NLSolversBase
-using PyCall;# pygui(:qt);
-using PyPlot
+using DataFrames
 using RCall
-using HelperFunDom
 using DynNets
 
-R"rm(list = ls())
-  library(statnet)
-   library(ergm)
-   library(sna)
-   library(coda)
-   library(network)
-   sessionInfo()"
-
-R"set.seed(0)"
-
+function clean_start_RCall()
+    # Clean R enviroment and load needed packages
+    R"rm(list = ls())
+    library(statnet)
+    library(ergm)
+    library(sna)
+    library(coda)
+    library(network)
+    sessionInfo()"
+   R"set.seed(0)"
+end
+export clean_start_RCall
 function sampleErgmRcall(parMatDgp_T,N,Nsample,formula_ergm_str)
     """
     Function that samples from an ergm defined by formula_ergm_str (according to
@@ -33,17 +28,7 @@ function sampleErgmRcall(parMatDgp_T,N,Nsample,formula_ergm_str)
     beginning of the module installed in R
     """
 
-    # Clean R enviroment and load needed packages
-    R"rm(list = ls())
-      library(statnet)
-       library(ergm)
-       library(sna)
-       library(coda)
-       library(network)
-       sessionInfo()"
-
-    R"set.seed(0)"
-
+    clean_start_RCall()
     T = size(parMatDgp_T)[2]
     # For each t, sample the ERGM with parameters corresponding to the DGP at time t
     # and run a single snapeshot estimate
@@ -82,6 +67,7 @@ function sampleErgmRcall(parMatDgp_T,N,Nsample,formula_ergm_str)
     stats_T = @rget(stats_T_R); #tmp = zeros(Nterms,T); for t=1:T tmp[:,t] = stats_T[t];end;stats_T = tmp
     return sampledMat_T, changeStats_T, stats_T
 end
+export sampleErgmRcall
 
 function estimateErgmRcall(sampledMat_T_R , formula_ergm_str)
     """
@@ -92,16 +78,7 @@ function estimateErgmRcall(sampledMat_T_R , formula_ergm_str)
     """
 
 
-        # Clean R enviroment and load needed packages
-    R"rm(list = ls())
-      library(statnet)
-       library(ergm)
-       library(sna)
-       library(coda)
-       library(network)
-       sessionInfo()"
-
-    R"set.seed(0)"
+    clean_start_RCall()
 
     T = size(sampledMat_T_R )[3]
     # For each t, sample the ERGM with parameters corresponding to the DGP at time t
@@ -140,6 +117,7 @@ function estimateErgmRcall(sampledMat_T_R , formula_ergm_str)
     estParSS_T = HelperFunDom.collapseArr3(estParSS_T)
     return estParSS_T
 end
+export estimateErgmRcall
 
 
 

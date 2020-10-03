@@ -3,15 +3,13 @@
 Test script for dirBin0Rec0 model: one parameter for total number of links and one for reciprocity
 """
 
-include("../../../add_load_paths.jl")
+include("../../add_load_paths.jl")
 
 using StaNets
-
-
-
+using ergmRcall
 # test sampling
 
-nSample = 500
+2nSample = 500
 N=30
     θ_0 = -3.1
     η_0 = 2

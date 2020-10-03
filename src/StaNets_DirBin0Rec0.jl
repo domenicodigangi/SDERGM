@@ -65,7 +65,7 @@ function estimate(Model::NetModelDirBin0Rec0, L, R, N )
     θ_est = log((R_bar - L_bar)/(2*L_bar - R_bar -1) )
     η_est = log( (- R_bar)*(2*L_bar - R_bar -1)/((1- R_bar)*(R_bar-L_bar)^2)  )/2
     vPar = [θ_est, η_est]
-    return vParUn
+    return vPar
 end
 
 function estimate(Model::NetModelDirBin0Rec0, A ::Matrix{<:Real})
@@ -78,3 +78,24 @@ function logLikelihood(Model::NetModelDirBin0Rec0, L, R, par)
     θ, η = par
     return L * θ + R*η - log(1 + 2*exp(θ) + exp(2*(θ + η)))
 end
+
+function pseudoLogLikelihood(Model::NetModelDirBin0Rec0, L, R, par)
+    θ, η = par
+    return L * θ + R*η - log(1 + 2*exp(θ) + exp(2*(θ + η)))
+end
+
+function pseudo_loglikelihood(par::Array{<:Real,1}, changeStat::Array{<:Real,2})
+    
+    tmpMatPar = par' .* changeStat[:,2:end-1]
+    p_ij =  exp.( .- sum(tmpMatPar,dims = 2))
+    mult =changeStat[:,end]
+    logpseudolike_t =  .-  sum(mult .* log.(1 .+ 1 ./ p_ij ))
+    π = (1 ./ (1 .+ p_ij  ))
+    for p =1:length(par)
+        δ_p = changeStat[:,p+1] # p+1 because to skip the first column
+        tmp1 = sum( mult[indPres] .* δ_p[indPres] )
+        logpseudolike_t += par[p]*tmp1
+    end
+    return logpseudolike_t
+end
+export pseudo_loglikelihood
