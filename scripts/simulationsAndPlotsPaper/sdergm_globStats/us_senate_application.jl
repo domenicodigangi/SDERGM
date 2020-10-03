@@ -1,5 +1,5 @@
 
-using HelperFunDom,AReg,StaNets,JLD,MLBase,StatsBase,CSV, RCall,DynNets,StaNets
+using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase,CSV, RCall,DynNets,StaticNets
 using PyCall; pygui(); using PyPlot
 
 @load("/home/Domenico/Dropbox/Dynamic_Networks/data/congress_covoting_US/juliaEstimates.jld",estParSS_T,obsMat_T,changeStats_T,

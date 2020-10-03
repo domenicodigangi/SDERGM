@@ -69,7 +69,7 @@ scatter(meanSq(degsIO_T,1), log.(squareErr1_N) )
 
 ## Compare link probabilities
 T = length(degsIO_T[:,1])
-expMat(parIO) = StaNets.expMatrix(DynNets.StaModType(estModNpar),parIO)
+expMat(parIO) = StaticNets.expMatrix(DynNets.StaModType(estModNpar),parIO)
 expM_1_T = zeros(T,N,N)
 expM_N_T = zeros(T,N,N)
 expM_SS_T = zeros(T,N,N)

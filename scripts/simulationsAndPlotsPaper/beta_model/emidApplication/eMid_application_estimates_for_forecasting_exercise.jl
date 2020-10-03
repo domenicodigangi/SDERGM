@@ -1,7 +1,7 @@
 #script that estimates the dir bin gas network model on emid data and evaluates GAS
 # forecasting performances
 
-using HelperFunDom,AReg,StaNets,JLD,MLBase,StatsBase,DynNets
+using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase,DynNets
 using PyCall; pygui(:qt); using PyPlot
 #estimate and save for half the datase (after LTRO) or whole data?
 halfPeriod = false
@@ -23,7 +23,7 @@ matY_T = YeMidWeekly_T[:,:,3:end]
     Ttrain = 100#round(Int, T/2) #70 106 #
     threshVar = 0.00#5
     degsIO_T = [sumSq(matA_T,2);sumSq(matA_T,1)]
- allFitSS =  StaNets.estimate( StaNets.SnapSeqNetDirBin1(degsIO_T);
+ allFitSS =  StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(degsIO_T);
                         identPost = false,identIter= true )
 
 

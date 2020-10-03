@@ -1,7 +1,7 @@
 
 # script that wants to numerically test chatteris diaconis (misspelled with 99% prob)
 # for the estimates of beta, fitness,ergm (many names..) in the DirBin1 case
-using HelperFunDom,AReg,StaNets,JLD,MLBase,StatsBase,DynNets
+using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase,DynNets
 using PyCall; pygui(:qt); using PyPlot
 
 Nsample = 100
@@ -67,7 +67,7 @@ groupsPar = ones(2NG)
 firstOrderCond(Mod;degIO = deg,parGroupsIO = groupsPar, groupsInds = groupsInds )
 expMatrix(Mod,groupsPar)
 
-targetErrValStaNets = 0.005
+targetErrValStaticNets = 0.005
 estPar,estIt,estMod = estimate(Mod)
 
 ##
@@ -98,9 +98,9 @@ halfPeriod? periodEndStr =  "2012_03_12_to_2015_02_27.jld": periodEndStr =  "200
 matA_T = AeMidWeekly_T# pieroA_T
 degsIO_T = [sumSq(matA_T,2);sumSq(matA_T,1)]
 T = size(matA_T)[3]
-allFitSS =  StaNets.estimate( StaNets.SnapSeqNetDirBin1(degsIO_T); identPost = false,identIter= true )
+allFitSS =  StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(degsIO_T); identPost = false,identIter= true )
 dgpPar = meanSq(allFitSS,2 )
-expDgpMat = StaNets.expMatrix(fooNetModelDirBin1,dgpPar)
+expDgpMat = StaticNets.expMatrix(fooNetModelDirBin1,dgpPar)
 dgpDegs = [sumSq(expDgpMat,2); sumSq(expDgpMat,1)]
 N = length(matA_T[1,:,1])
 Nsample = 1000
@@ -121,7 +121,7 @@ estDegs = zeros(2N,Nsample)
 for i=1:Nsample
     println(i)
     estPar[:,i]= estimate(fooNetModelDirBin1;degIO =degsIO_Sample[:,i])[1]
-    expEstMat = StaNets.expMatrix(fooNetModelDirBin1,estPar[:,i])
+    expEstMat = StaticNets.expMatrix(fooNetModelDirBin1,estPar[:,i])
     estDegs[:,i] = [sumSq(expEstMat,2); sumSq(expEstMat,1)]
 
 end

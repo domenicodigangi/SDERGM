@@ -17,12 +17,12 @@ targetErrValDynNets = 0.01
 
 #Relations between Static and Dynamic Models]
 identify(Model::GasNetModel,UnPar::Array{<:Real,1};idType = "pinco") =
-    StaNets.identify(StaModType(Model),UnPar;idType = idType)
+    StaticNets.identify(StaModType(Model),UnPar;idType = idType)
 
 
 include("./AReg.jl")
 include("./HelperFunDom.jl")
-include("./StaNets.jl")
+include("./StaticNets.jl")
 
 
 include("./DynNets_GasNetModelBin1.jl")

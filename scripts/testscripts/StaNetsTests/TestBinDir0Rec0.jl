@@ -5,7 +5,7 @@ Test script for dirBin0Rec0 model: one parameter for total number of links and o
 
 include("../../../add_load_paths.jl")
 
-using StaNets
+using StaticNets
 
 
 

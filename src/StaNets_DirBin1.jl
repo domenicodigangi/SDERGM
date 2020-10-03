@@ -170,7 +170,7 @@ function firstOrderCond(Model::NetModelDirBin1;degIO::Array{<:Real,1} = Model.ob
 
 
 function estimateSlow(Model::NetModelDirBin1; degIO::Array{<:Real,1} = Model.obs,
-                    groupsInds = Int.(1:round(length(degIO)/2)), targetErr::Real=targetErrValStaNets,
+                    groupsInds = Int.(1:round(length(degIO)/2)), targetErr::Real=targetErrValStaticNets,
                     startVals =zeros(2))
     "Given model type, observations of the statistics and groups assignments,
     estimate the parameters."
@@ -314,7 +314,7 @@ function estimateSlow(Model::NetModelDirBin1; degIO::Array{<:Real,1} = Model.obs
     return parUN, i
  end
 function estimate(model::NetModelDirBin1; degIO::Array{<:Real,1} = model.obs,
-                    targetErr::Real=targetErrValStaNets,identIter = false)
+                    targetErr::Real=targetErrValStaticNets,identIter = false)
     ## Write and test a new way to estimate DirBOIn1 following Chatterjee, Diaconis and  Sly
     N,degI,degO = splitVec(degIO)
     ldegI = log.(degI);ldegO = log.(degO)
@@ -585,8 +585,8 @@ function dgpFitVarN(N::Int,degMin::Int,degMax::Int;exponent = 1)
 
     degIOUncMeans = repeat(round.(Int,Vector(tmp.*(degMax/tmp[end]) )),2)
     degIOUncMeans[degIOUncMeans.<degMin] = degMin
-    meanFit ,~ = StaNets.estimate(StaNets.NetModelDirBin1(degIOUncMeans),degIO = degIOUncMeans)
-    expDegs = StaNets.expValStats(fooNetModelDirBin1,meanFit)
+    meanFit ,~ = StaticNets.estimate(StaticNets.NetModelDirBin1(degIOUncMeans),degIO = degIOUncMeans)
+    expDegs = StaticNets.expValStats(fooNetModelDirBin1,meanFit)
     return meanFit, expDegs
 end
 
@@ -608,7 +608,7 @@ function dgpDynamic(model::NetModelDirBin1,mode,N::Int,T::Int;NTV = 2,degIOUncMe
     indsTV = round.(Int,range(2, stop=N, length=NTV))
     indLogTV = falses(N);indLogTV[indsTV] .= true; indLogTV = repeat(indLogTV,2)
 
-    meanFit ,~ = StaNets.estimate(StaNets.NetModelDirBin1(degIOUncMeans),degIO = degIOUncMeans)
+    meanFit ,~ = StaticNets.estimate(StaticNets.NetModelDirBin1(degIOUncMeans),degIO = degIOUncMeans)
     #define the oscillations bounds for the fitnesses
     periodOsc = round(Int,T/2)
 

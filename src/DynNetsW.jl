@@ -5,7 +5,7 @@ module DynNetsW
 #export sample_bern_mat, sample_fitTV, sampleDgpNetsTv
 
 using Distributions, StatsBase,Optim, LineSearches, StatsFuns, Roots
-using StaNets,HelperFunDom
+using StaticNets,HelperFunDom
 using ForwardDiff
 
 abstract type GasNetModel end
@@ -53,9 +53,9 @@ fooGasNetModelDirW1 = GasNetModelDirW1(ones(100,20))
 
 # Relations between Static and Dynamical models: conventions on storage for
 # parameters and observations
-StaModType(Model::GasNetModelDirW1) = StaNets.fooNetModelDirW1# to be substituted with a conversion mechanism
+StaModType(Model::GasNetModelDirW1) = StaticNets.fooNetModelDirW1# to be substituted with a conversion mechanism
 # linSpacedPar(Model::GasNetModelDirBin1,Nnodes::Int;NgroupsW = Nnodes, deltaN::Int=3,graphConstr = true) =
-#         StaNets.linSpacedPar(StaModType(Model),Nnodes;Ngroups = NgroupsW,deltaN=deltaN,graphConstr =graphConstr);
+#         StaticNets.linSpacedPar(StaModType(Model),Nnodes;Ngroups = NgroupsW,deltaN=deltaN,graphConstr =graphConstr);
 #
 # options and conversions of parameters for optimization
 
@@ -145,7 +145,7 @@ function uBndPar2bndPar_T(Model::GasNetModelDirW1, uBndParNodesIO_T::Array{<:Rea
     outBndPar_T = zeros(uBndParNodesIO_T)
     for t = 1:T
         uBndParNodesIO_t = uBndParNodesIO_T[t,:]
-        outBndPar_T[t,:] = StaNets.uBndPar2bndPar(StaModType(Model), uBndParNodesIO_t )
+        outBndPar_T[t,:] = StaticNets.uBndPar2bndPar(StaModType(Model), uBndParNodesIO_t )
     end
     return outBndPar_T
 end
@@ -260,7 +260,7 @@ function scaleScoreGas(Model::GasNetModelDirW1,  ftotIO_t::Array{<:Real,1},fBndT
 function updatedGasPar( Model::GasNetModelDirW1,strIO_t::Array{<:Real,1},
                          ftotIO_t::Array{<:Real,1},I_tm1::Array{<:Real,2},indTvNodesIO::BitArray{1},
                          WgasIO::Array{<:Real,1},BgasIO::Array{<:Real,1},AgasIO::Array{<:Real,1},t::Int ;
-                         fBndTot_t::Array{<:Real,1} =  StaNets.uBndPar2bndPar(StaModType(Model),ftotIO_t) )
+                         fBndTot_t::Array{<:Real,1} =  StaticNets.uBndPar2bndPar(StaModType(Model),ftotIO_t) )
      #= likelihood and gradients depend on all the parameters (ftot_t), but
      only the time vaying ones (f_t) are to be updated=#
      fIO_t = ftotIO_t[indTvNodesIO] #Time varying fitnesses
@@ -273,7 +273,7 @@ function updatedGasPar( Model::GasNetModelDirW1,strIO_t::Array{<:Real,1},
      #
      indTvNodesIO[N+1:end][indMin] ? (scoreAdd = true; indMin = indmin(ftotO_t[indTvNodesIO[N+1:end]]) ) : scoreAdd = false
      #display((BgasIO[1],AgasIO[1]))
-     sumParMat, exp_mat_t = StaNets.expMatrix2(StaModType(Model),fBndTot_t )
+     sumParMat, exp_mat_t = StaticNets.expMatrix2(StaModType(Model),fBndTot_t )
 
      exp_strIO_t = [sumSq(exp_mat_t,2);sumSq(exp_mat_t,1)]
      #The following part is a faster version of logLikelihood_t
@@ -384,11 +384,11 @@ function gasFilter( Model::GasNetModelDirW1,
     for t=1:T
         #println(t)
         #display(ftotIO_t)
-        fBndTot_t =  StaNets.uBndPar2bndPar(StaModType(Model),ftotIO_t)
+        fBndTot_t =  StaticNets.uBndPar2bndPar(StaModType(Model),ftotIO_t)
 
         if dgp
-            expMat_t = StaNets.expMatrix(StaModType(Model),fBndTot_t )# exp.(ftot_t)
-            Y_T[t,:,:] = StaNets.samplSingMatCan(StaModType(Model),expMat_t)
+            expMat_t = StaticNets.expMatrix(StaModType(Model),fBndTot_t )# exp.(ftot_t)
+            Y_T[t,:,:] = StaticNets.samplSingMatCan(StaModType(Model),expMat_t)
             #display(expMat_t)
             strIO_t =  [ sumSq(Y_T[t,:,:],2); sumSq(Y_T[t,:,:],1)]
         else
@@ -417,8 +417,8 @@ sampl(Mod::GasNetModelDirW1,T::Int)=( N = length(Mod.groupsInds[1]) ;
 # # Estimation
 #
 function estSingSnap(Model::GasNetModelDirW1, str_t::Array{<:Real,1}; groupsInds = Model.groupsInds, targetErr::Real=targetErrValDynNets)
-    hatBndPar,~,~ = StaNets.estimate(StaModType(Model); strIO = str_t ,groupsInds = groupsInds[1], targetErr =  targetErr)
-    hatUbndPar = StaNets.bndPar2uBndPar(StaModType(Model),hatBndPar)
+    hatBndPar,~,~ = StaticNets.estimate(StaModType(Model); strIO = str_t ,groupsInds = groupsInds[1], targetErr =  targetErr)
+    hatUbndPar = StaticNets.bndPar2uBndPar(StaModType(Model),hatBndPar)
     return hatUbndPar
  end
 function estimateSnapSeq(Model::GasNetModelDirW1; strT::Array{<:Real,2}=Model.obsT,
@@ -462,7 +462,7 @@ function estimate(Model::GasNetModelDirW1;start_values = [zeros(Real,10),zeros(R
              UMstaticGroups = meanEstSS
          else
              error("This model doe not work well on real data without a targeting")
-             UMstaticGroups = StaNets.bndPar2uBndPar(StaModType(Model), estSingSnap(Model ,MeanStrT; groupsInds = groupsInds ))
+             UMstaticGroups = StaticNets.bndPar2uBndPar(StaModType(Model), estSingSnap(Model ,MeanStrT; groupsInds = groupsInds ))
          end
         # display([UMstaticGroups[1:N] UMstaticGroups[N+1:2N] ])
          conv_flag1 = true

@@ -50,9 +50,9 @@ fooGasNetModelDirBin1 = GasNetModelDirBin1(ones(100,20))
 
 # Relations between Static and Dynamical models: conventions on storage for
 # parameters and observations
-StaModType(Model::GasNetModelDirBin1) = StaNets.fooNetModelDirBin1# to be substituted with a conversion mechanism
+StaModType(Model::GasNetModelDirBin1) = StaticNets.fooNetModelDirBin1# to be substituted with a conversion mechanism
 linSpacedPar(Model::GasNetModelDirBin1,Nnodes::Int;NgroupsW = Nnodes, deltaN::Int=3,graphConstr = true) =
-        StaNets.linSpacedPar(StaModType(Model),Nnodes;Ngroups = NgroupsW,deltaN=deltaN,graphConstr =graphConstr);
+        StaticNets.linSpacedPar(StaModType(Model),Nnodes;Ngroups = NgroupsW,deltaN=deltaN,graphConstr =graphConstr);
 
 # options and conversions of parameters for optimization
 function setOptionsOptim(Model::GasNetModelDirBin1)
@@ -143,7 +143,7 @@ function unRestrictGasPar( Model::GasNetModelDirBin1,vecReGasPar::Array{<:Real,1
 
 #Gas Filter Functions
 identify(Model::GasNetModelDirBin1,parIO::Array{Tp,1} where Tp<:Real; idType = "equalIOsums")=
- StaNets.identify(StaNets.fooNetModelDirBin1,parIO;  idType =idType )
+ StaticNets.identify(StaticNets.fooNetModelDirBin1,parIO;  idType =idType )
 
 function scalingMatGas(Model::GasNetModelDirBin1,expMat::Array{<:Real,2};
                         I_tm1:: Union{UniformScaling, Matrix}=UniformScaling(2))
@@ -185,7 +185,7 @@ function updatedGasPar( Model::GasNetModelDirBin1,N::Int,degsIO_t::Array{<:Real,
      only the time vaying ones (f_t) are to be updated=#
 
      fIO_t = ftotIO_t[indTvNodesIO] #Time varying fitnesses
-     thetas_mat_t_exp, exp_mat_t = StaNets.expMatrix2(StaNets.fooNetModelDirBin1,ftotIO_t)
+     thetas_mat_t_exp, exp_mat_t = StaticNets.expMatrix2(StaticNets.fooNetModelDirBin1,ftotIO_t)
      exp_degIO_t = [sumSq(exp_mat_t,2);sumSq(exp_mat_t,1)]
          #The following part is a faster version of logLikelihood_t()
      loglike_t = sum(ftotIO_t .* degsIO_t) -  sum(log.(1 .+ thetas_mat_t_exp))
@@ -232,7 +232,7 @@ function gasFilter( Model::GasNetModelDirBin1,
 
     # Organize parameters of the GAS update equation
     WGroupsIO = vResGasPar[1:NGW]
-    #    StaNets.expMatrix2(StaNets.fooNetModelDirBin1,WGroupsIO )
+    #    StaticNets.expMatrix2(StaticNets.fooNetModelDirBin1,WGroupsIO )
     W_allIO = WGroupsIO[groupsInds[1]]
 
     BgasGroups  = vResGasPar[NGW+1:NGW+GBA]
@@ -258,8 +258,8 @@ function gasFilter( Model::GasNetModelDirBin1,
     for t=1:T-1
 
         if dgp
-            expMat_t = StaNets.expMatrix(StaModType(Model),ftotIO_t )# exp.(ftot_t)
-            Y_T[:,:,t] = StaNets.samplSingMatCan(StaModType(Model),expMat_t)
+            expMat_t = StaticNets.expMatrix(StaModType(Model),ftotIO_t )# exp.(ftot_t)
+            Y_T[:,:,t] = StaticNets.samplSingMatCan(StaModType(Model),expMat_t)
             degsIO_t = [dropdims(sum(Y_T[:,:,t],dims = 2),dims = 2); dropdims(sum(Y_T[:,:,t],dims = 1),dims = 1)]
         else
             degsIO_t = obsT[:,t] # vector of in and out degrees
@@ -295,7 +295,7 @@ function gasScoreSeries( Model::GasNetModelDirBin1,
         degsIO_t = obsT[:,t] # vector of in and out degrees
 
              fIO_t = ftotIO_t[indTvNodesIO] #Time varying fitnesses
-             thetas_mat_t_exp, exp_mat_t = StaNets.expMatrix2(StaNets.fooNetModelDirBin1,ftotIO_t)
+             thetas_mat_t_exp, exp_mat_t = StaticNets.expMatrix2(StaticNets.fooNetModelDirBin1,ftotIO_t)
              exp_degIO_t = [sumSq(exp_mat_t,2);sumSq(exp_mat_t,1)]
 
              #The following part is a faster version of logLikelihood_t()
@@ -324,14 +324,14 @@ sampl(Mod::GasNetModelDirBin1,T::Int)=( N = length(Mod.groupsInds[1]) ;
 # Estimation
 
 function estSingSnap(Model::GasNetModelDirBin1, degs_t::Array{<:Real,1}; groupsInds = Model.groupsInds, targetErr::Real=targetErrValDynNets)
-    hatUnPar,~,~ = StaNets.estimate(StaModType(Model); degIO = degs_t ,groupsInds = groupsInds[1], targetErr =  targetErr)
+    hatUnPar,~,~ = StaticNets.estimate(StaModType(Model); degIO = degs_t ,groupsInds = groupsInds[1], targetErr =  targetErr)
     return hatUnPar
  end
 function estimateSnapSeq(Model::GasNetModelDirBin1; degsIO_T::Array{<:Real,2}=Model.obsT,
                             targetErr::Real=1e-5,identPost=false,identIter=false)
     #this funciton does  not allow groups estimate a sequence of single node's
     # fitnesses
-    return  StaNets.estimate(StaNets.SnapSeqNetDirBin1(degsIO_T),targetErr = targetErr ,identPost=identPost,identIter= identIter)
+    return  StaticNets.estimate(StaticNets.SnapSeqNetDirBin1(degsIO_T),targetErr = targetErr ,identPost=identPost,identIter= identIter)
  end
 
 function estimateTarg(Model::GasNetModelDirBin1; SSest::Array{<:Real,2} =zeros(2,2),
@@ -387,7 +387,7 @@ function estimateTarg(Model::GasNetModelDirBin1; SSest::Array{<:Real,2} =zeros(2
     if true && GBA>1
         #calcola autocorrelazioni dello score e usale per definire A_0
         meanDegsIO = meanSq(Model.obsT,2)
-        constParsIO,~,~ = StaNets.estimate(StaNets.fooNetModelDirBin1,degIO = meanDegsIO)
+        constParsIO,~,~ = StaticNets.estimate(StaticNets.fooNetModelDirBin1,degIO = meanDegsIO)
          fooPar = [zeros(2N), zeros(2N) ,zeros(2N)]
           indsGroups = [Int.(1:2N),Int.(1:2N)]
         modGasDirBin1 = DynNets.GasNetModelDirBin1(Model.obsT, fooPar, indsGroups,"FISHER-DIAG")
@@ -409,9 +409,9 @@ function estimateTarg(Model::GasNetModelDirBin1; SSest::Array{<:Real,2} =zeros(2
         # println(typeof(WNodes))
          WNodes[indTvNodesIO] = uncMeansIO[indTvNodesIO].*(1 .- ReB[ABgroupsIndNodesIO[indTvNodesIO]])
 
-         #StaNets.expMatrix2(StaNets.fooNetModelDirBin1,WNodes)
+         #StaticNets.expMatrix2(StaticNets.fooNetModelDirBin1,WNodes)
          vecReGasPar = [WNodes;ReB;ReA ]
-         #StaNets.expMatrix2(StaNets.fooNetModelDirBin1,vecReGasPar[1:NGW])
+         #StaticNets.expMatrix2(StaticNets.fooNetModelDirBin1,vecReGasPar[1:NGW])
          #NON POSSONO STARE NELLO STESSO VETTORE PARAMETRI DA OTTIMIZZARE DI TIPO FORWARDDIFF E TYPES NORMALI  ?      ?      ?      ?
          foo,loglikelValue = gasFilter( Model,vecReGasPar;
                                         groupsInds = groupsInds, ftotIO_0=ftotIO_0)
@@ -582,7 +582,7 @@ function forecastEvalGasNetDirBin1(obsNet_T::BitArray{3}, gasParEstOnTrain::Arra
     #disregard predictions for degrees that are constant in the training sample
     # gas shoud manage but AR fitness no and I dont want to advantage gas
     # to do so i need to count the number of links that are non constant (nnc)
-    Nc,isConIn,isConOut = StaNets.defineConstDegs(degsIO_T[:,1:Ttrain];thVarConst = thVarConst )
+    Nc,isConIn,isConOut = StaticNets.defineConstDegs(degsIO_T[:,1:Ttrain];thVarConst = thVarConst )
     noDiagIndnnc = putZeroDiag(((.!isConIn).*(.!isConOut')).* (.!mat2rem)    )
 
     @show Nlinksnnc =sum(noDiagIndnnc)
@@ -603,7 +603,7 @@ function forecastEvalGasNetDirBin1(obsNet_T::BitArray{3}, gasParEstOnTrain::Arra
         indZeroC = sum(adjMat_tm1,dims = 1).==0
         indZeroMat = indZeroR.*indZeroC
     #    println(sum(indZeroMat)/(length(indZeroC)^2))
-        expMat = StaNets.expMatrix(StaNets.fooNetModelDirBin1,foreFit[:,Ttrain+1:end][:,t])
+        expMat = StaticNets.expMatrix(StaticNets.fooNetModelDirBin1,foreFit[:,Ttrain+1:end][:,t])
 
         #expMat[indZeroMat] = 0
         foreVals[lastInd:lastInd+Nlinksnnc-1] = expMat[noDiagIndnnc]
@@ -648,9 +648,9 @@ function multiSteps_updatedGasPar( Model::GasNetModelDirBin1,N::Int,degsIO_t_in:
      ftotIO_T[:,1] = copy(ftotIO_t1)
      for i=1:Nsample
          ftotIO_t1_tmp = copy(ftotIO_t1)
-         expMat_t = StaNets.expMatrix(StaModType(Model),ftotIO_t1_tmp )
+         expMat_t = StaticNets.expMatrix(StaModType(Model),ftotIO_t1_tmp )
          expMat_T_means[:,:,1] = expMat_t
-         Y_t = StaNets.samplSingMatCan(StaModType(Model),expMat_t)
+         Y_t = StaticNets.samplSingMatCan(StaModType(Model),expMat_t)
          degsIO_t = [dropdims(sum(Y_t,dims = 2),dims =2); dropdims(sum(Y_t,dims = 1), dims =1)]
          #matrice media dell matrici campionate
          expMat_T_Y[:,:,1] = expMat_T_Y[:,:,1]  .+  Y_t ./ Nsample
@@ -659,7 +659,7 @@ function multiSteps_updatedGasPar( Model::GasNetModelDirBin1,N::Int,degsIO_t_in:
                             indTvNodesIO,WgasIO,BgasIO,AgasIO)
          ftotIO_t = copy(ftotIO_tp1)
          ftotIO_T[:,1] = copy(ftotIO_t)
-         expMat_t = StaNets.expMatrix(StaModType(Model),ftotIO_t )
+         expMat_t = StaticNets.expMatrix(StaModType(Model),ftotIO_t )
         # println(sum(ftotIO_t0))
 
          for t=2:Nsteps
@@ -671,12 +671,12 @@ function multiSteps_updatedGasPar( Model::GasNetModelDirBin1,N::Int,degsIO_t_in:
              ftotIO_T[:,t] = ftotIO_T[:,t] .+ ftotIO_t ./ Nsample
 
 
-             expMat_t = StaNets.expMatrix(StaModType(Model),ftotIO_t )
+             expMat_t = StaticNets.expMatrix(StaModType(Model),ftotIO_t )
             # t==2  ?     println(mean(expMat_t)) : ()
              #matrice media delle matrici medie
              expMat_T_means[:,:,t] = expMat_T_means[:,:,t]  .+  expMat_t ./ Nsample
 
-             Y_t = StaNets.samplSingMatCan(StaModType(Model),expMat_t)
+             Y_t = StaticNets.samplSingMatCan(StaModType(Model),expMat_t)
              #matrice media dell matrici campionate
              expMat_T_Y[:,:,t] = expMat_T_Y[:,:,t]  .+  Y_t ./ Nsample
              degsIO_t = [dropdims(sum(Y_t,dims = 2), dims =2); dropdims(sum(Y_t,dims = 1), dims =1)]
@@ -708,7 +708,7 @@ function multiStepsForecastExpMat( Model::GasNetModelDirBin1,obsNet_T::BitArray{
           expMat_T_means[:,:,tFit+Nsteps] = tmpAllMat_means[:,:,Nsteps]
           expMat_T_Y[:,:,tFit+Nsteps] = tmpAllMat_Y[:,:,Nsteps]
           foreFit_T[:,tFit+Nsteps] = tmpFit[:,end]
-           expMat_T_meanPar[:,:,tFit+Nsteps] =   StaNets.expMatrix(StaModType(Model),tmpFit[:,end])
+           expMat_T_meanPar[:,:,tFit+Nsteps] =   StaticNets.expMatrix(StaModType(Model),tmpFit[:,end])
       end
       return expMat_T_means,foreFit_T,expMat_T_Y,expMat_T_meanPar
   end
@@ -740,7 +740,7 @@ function multiStepsForecastExpMat_roll( Model::GasNetModelDirBin1,obsNet_T::BitA
           expMat_T_means[:,:,tObs+Nsteps] = tmpAllMat_means[:,:,Nsteps]
           expMat_T_Y[:,:,tObs+Nsteps] = tmpAllMat_Y[:,:,Nsteps]
           foreFit_T[:,tObs+Nsteps] = tmpFit[:,end]
-           expMat_T_meanPar[:,:,tObs+Nsteps] =   StaNets.expMatrix(StaModType(Model),tmpFit[:,end])
+           expMat_T_meanPar[:,:,tObs+Nsteps] =   StaticNets.expMatrix(StaModType(Model),tmpFit[:,end])
       end
       return expMat_T_means,foreFit_T,expMat_T_Y,expMat_T_meanPar
   end
@@ -751,7 +751,7 @@ function logLike_t(Model::GasNetModelDirBin1, obsT, vReGasPar)
       NGW,GBA,ABgroupsIndNodesIO,indTvNodesIO = NumberOfGroupsAndABindNodes(Model, groupsInds)
       # Organize parameters of the GAS update equation
       WGroupsIO = vReGasPar[1:NGW]
-      #    StaNets.expMatrix2(StaNets.fooNetModelDirBin1,WGroupsIO )
+      #    StaticNets.expMatrix2(StaticNets.fooNetModelDirBin1,WGroupsIO )
       W_allIO = WGroupsIO[groupsInds[1]]
       BgasGroups  = vReGasPar[NGW+1:NGW+GBA]
       AgasGroups  = vReGasPar[NGW+GBA+1:NGW+2GBA]
@@ -779,7 +779,7 @@ function logLike_T(Model::GasNetModelDirBin1, obsT, vReGasPar)
       NGW,GBA,ABgroupsIndNodesIO,indTvNodesIO = NumberOfGroupsAndABindNodes(Model, groupsInds)
       # Organize parameters of the GAS update equation
       WGroupsIO = vReGasPar[1:NGW]
-      #    StaNets.expMatrix2(StaNets.fooNetModelDirBin1,WGroupsIO )
+      #    StaticNets.expMatrix2(StaticNets.fooNetModelDirBin1,WGroupsIO )
       W_allIO = WGroupsIO[groupsInds[1]]
       BgasGroups  = vReGasPar[NGW+1:NGW+GBA]
       AgasGroups  = vReGasPar[NGW+GBA+1:NGW+2GBA]

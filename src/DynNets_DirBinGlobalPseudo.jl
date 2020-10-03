@@ -32,7 +32,7 @@ fooGasNetModelDirBinGlobalPseudo = GasNetModelDirBinGlobalPseudo(repeat([ones(Fl
 
 # Relations between Static and Dynamical models: conventions on storage for
 # parameters and observations
-StaModType(Model::GasNetModelDirBinGlobalPseudo ) = StaNets.fooNetModelDirBinGlobalPseudo# to be substituted with a conversion mechanism
+StaModType(Model::GasNetModelDirBinGlobalPseudo ) = StaticNets.fooNetModelDirBinGlobalPseudo# to be substituted with a conversion mechanism
 
 # options and conversions of parameters for optimization
 setOptionsOptim(Model::GasNetModelDirBinGlobalPseudo) = setOptionsOptim(fooGasNetModelDirBin1)

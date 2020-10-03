@@ -2,7 +2,7 @@
 # The purpose of this script is to compare the filtering capability of the single snapshots
 # estimates and the gas filter on a given
 
-using StatsBase, JLD,  Hwloc,  DynNets, StaNets, StatsFuns,HelperFunDom
+using StatsBase, JLD,  Hwloc,  DynNets, StaticNets, StatsFuns,HelperFunDom
 
 # STATIC ESTIMATES INCREASING N  ---------------------------------------------
 #need to choose how to distribute the unconditional means. I want to stay
@@ -37,12 +37,12 @@ function simulAndEstVarN(model::NetModelDirBin1,Nrange::StepRange{Int,Int},Nsamp
         Nn = Nrange[n]
         for i=1:size(dgpFits)[2]
             # sample the dgpFits
-            matSamp =  StaNets.sampl(NetModelDirBin1(dgpFits[n,i]),Nsample;  parGroupsIO = dgpFits[n,i])
+            matSamp =  StaticNets.sampl(NetModelDirBin1(dgpFits[n,i]),Nsample;  parGroupsIO = dgpFits[n,i])
             degsSamp = [sumSq(matSamp,2);sumSq(matSamp,1)]
             #println(degsSamp   )
             tmpEst = zeros(2Nn,Nsample)
             for s=1:Nsample
-                tmpEst[:,s],~ = StaNets.estimate(fooNetModelDirBin1,degIO = degsSamp[:,s])
+                tmpEst[:,s],~ = StaticNets.estimate(fooNetModelDirBin1,degIO = degsSamp[:,s])
 
             end
             estFits[n,i] = tmpEst
@@ -54,14 +54,14 @@ end
 
 function simulAndEstVarN(model::NetModelDirBin1,dgpDegs::Array{<:Real,1},Nsample::Int)
     # if the degree sequence is given as input use that
-    dgpFits,~,~ = meanFit ,~ = StaNets.estimate(StaNets.NetModelDirBin1(dgpDegs),degIO = dgpDegs  )
+    dgpFits,~,~ = meanFit ,~ = StaticNets.estimate(StaticNets.NetModelDirBin1(dgpDegs),degIO = dgpDegs  )
     N2 = length(dgpDegs)
     estFits = Array{Float64,2}(N2, Nsample )
     estFits = zeros(N2,Nsample)
-    matSamp = StaNets.sampl(NetModelDirBin1(dgpFits),Nsample;  parGroupsIO = dgpFits)
+    matSamp = StaticNets.sampl(NetModelDirBin1(dgpFits),Nsample;  parGroupsIO = dgpFits)
     degsSamp = [sumSq(matSamp,2);sumSq(matSamp,1)]
         for s=1:Nsample
-            estFits[:,s],~ = StaNets.estimate(fooNetModelDirBin1,degIO = degsSamp[:,s])
+            estFits[:,s],~ = StaticNets.estimate(fooNetModelDirBin1,degIO = degsSamp[:,s])
             println(s)
         end
  return dgpFits,estFits

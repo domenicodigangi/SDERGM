@@ -1,7 +1,7 @@
 
 # script that wants to numerically test chatteris diaconis (misspelled with 99% prob)
 # for the estimates of beta, fitness,ergm (many names..) in the DirBin1 case
-using HelperFunDom,AReg,StaNets,JLD,MLBase,StatsBase#,DynNets
+using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase#,DynNets
 using PyCall; pygui(:qt); using PyPlot
 
 Nsample = 100
@@ -49,9 +49,9 @@ prevDegEqFlagI,prevDegEqFlagO = prevDegEqFlag[1:N,:], prevDegEqFlag[1+1N:end,:]
 
 tmp = (sum(prevDegEqFlagI,1) - N).*(sum(prevDegEqFlagO,1) - N)/(N*(N-1))
 plot(tmp')
-allFitSS =  StaNetsW.estimate( StaNetsW.SnapSeqNetDirW1(strIO_T./10000000); identPost = false,identIter= true )
+allFitSS =  StaticNetsW.estimate( StaticNetsW.SnapSeqNetDirW1(strIO_T./10000000); identPost = false,identIter= true )
 dgpPar = meanSq(allFitSS,2 )
-expDgpMat = StaNets.expMatrix(fooNetModelDirBin1,dgpPar)
+expDgpMat = StaticNets.expMatrix(fooNetModelDirBin1,dgpPar)
 dgpDegs = [sumSq(expDgpMat,2); sumSq(expDgpMat,1)]
 N = length(matA_T[1,:,1])
 Nsample = 1000
@@ -72,7 +72,7 @@ estDegs = zeros(2N,Nsample)
 for i=1:Nsample
     println(i)
     estPar[:,i]= estimate(fooNetModelDirBin1;degIO =degsIO_Sample[:,i])[1]
-    expEstMat = StaNets.expMatrix(fooNetModelDirBin1,estPar[:,i])
+    expEstMat = StaticNets.expMatrix(fooNetModelDirBin1,estPar[:,i])
     estDegs[:,i] = [sumSq(expEstMat,2); sumSq(expEstMat,1)]
 
 end

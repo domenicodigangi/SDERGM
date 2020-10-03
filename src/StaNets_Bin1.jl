@@ -123,7 +123,7 @@ function identify(Model::NetModelBin1,Par::Array{<:Real,1})
     return Par
   end
 function estimate(Model::NetModelBin1; deg::Array{<:Real,1} = Model.obs,
-            groupsInds = Model.groupsInds, targetErr::Real=targetErrValStaNets,bigConst = bigConstVal)
+            groupsInds = Model.groupsInds, targetErr::Real=targetErrValStaticNets,bigConst = bigConstVal)
     "Given model type, observations of the statistics and groups assignments,
     estimate the parameters."
     # The parameters inside this function are Restricted to be in [0,1] hence

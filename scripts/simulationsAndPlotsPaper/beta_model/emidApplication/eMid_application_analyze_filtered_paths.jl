@@ -4,7 +4,7 @@ Analyze filtered fitnesses for emid data. Code created as part of the revision o
 """
 
 ## Load dataj
-using HelperFunDom,AReg,StaNets,JLD,MLBase,StatsBase#,DynNets
+using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase#,DynNets
 using PyCall; pygui(:qt); using PyPlot
 
 
@@ -28,7 +28,7 @@ matY_T = YeMidWeekly_T[1:N_test,1:N_test,3:end]
     Ttrain = 100#round(Int, T/2) #70 106 #
     threshVar = 0.00#5
     degsIO_T = [sumSq(matA_T,2);sumSq(matA_T,1)]
- allFitSS =  StaNets.estimate( StaNets.SnapSeqNetDirBin1(degsIO_T);
+ allFitSS =  StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(degsIO_T);
             identPost = false,identIter= true )
 
 
@@ -57,7 +57,7 @@ w_hat = allpar0[1:2*N]
 function loglike(Model::DynNets.GasNetModelDirBin1, degs_t::Array{<:Real,1},
                         f_t::Array{<:Real,1})
 
-    thetas_mat_t_exp, exp_mat_t = StaNets.expMatrix2(StaNets.fooNetModelBin1,f_t)
+    thetas_mat_t_exp, exp_mat_t = StaticNets.expMatrix2(StaticNets.fooNetModelBin1,f_t)
     exp_deg_t = sum(exp_mat_t,dims = 2)
 
     loglike_t = sum(f_t.*degs_t) -  sum(UpperTriangular(log.(1 .+ thetas_mat_t_exp))) #  sum(log.(1 + thetas_mat_t_exp))

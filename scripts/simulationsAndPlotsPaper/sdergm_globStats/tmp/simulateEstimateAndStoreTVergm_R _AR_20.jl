@@ -1,7 +1,7 @@
 
 # sample sequences of ergms with different parameters' values from R package ergm
 # and test the PseudoLikelihoodScoreDrivenERGM filter
- using HelperFunDom,AReg,StaNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
+ using HelperFunDom,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  using PyCall; pygui(); using PyPlot
  # load the required packages in R
  R"library(statnet)
@@ -105,7 +105,7 @@
               stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,Nsample,T,N)
 
 
-using HelperFunDom,AReg,StaNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
+using HelperFunDom,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  using PyCall; pygui(); using PyPlot
  using JLD,HelperFunDom, GLM
  ## load R MCMC simulation and estimates and estimate sdergmTest

@@ -2,7 +2,7 @@
 # The purpose of this script is to compare the filtering capability of the single snapshots
 # estimates and the gas filter on a given
 
-using StatsBase, JLD,  Hwloc,  DynNets, StaNets, StatsFuns,HelperFunDom
+using StatsBase, JLD,  Hwloc,  DynNets, StaticNets, StatsFuns,HelperFunDom
 
 # static Estimates for increasing N ---------------------------------------------
 

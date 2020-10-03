@@ -1,7 +1,7 @@
 #script that estimates the dir bin gas network model on emid data and evaluates GAS
 # forecasting performances
 
-using HelperFunDom,AReg,StaNets,JLD,MLBase,StatsBase,DynNets
+using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase,DynNets
 using PyCall; pygui(:qt); using PyPlot
 #estimate and save for half the datase (after LTRO) or whole data?
 halfPeriod = false
@@ -22,7 +22,7 @@ matY_T = YeMidWeekly_T[:,:,3:end]
     Ttrain = 100#round(Int, T/2) #70 106 #
     threshVar = 0.00#5
     degsIO_T = [sumSq(matA_T,2);sumSq(matA_T,1)]
- allFitSS =  StaNets.estimate( StaNets.SnapSeqNetDirBin1(degsIO_T); identPost = false,identIter= true )
+ allFitSS =  StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(degsIO_T); identPost = false,identIter= true )
 
 density_T = [sum(matA_T[:,:,t]) for t=1:T]./(N*(N-1))
 
@@ -57,7 +57,7 @@ close()
 
 
 #Estimate gas model on train sample
-allFitConstTrain,~,~ =  StaNets.estimate( StaNets.NetModelDirBin1(meanSq(degsIO_T[:,1:Ttrain],2)) )
+allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.NetModelDirBin1(meanSq(degsIO_T[:,1:Ttrain],2)) )
  modGasDirBin1_eMidTrain = DynNets.GasNetModelDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG")
  estTargDirBin1_eMidTrain,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS )
  gasParEstOnTrain = estTargDirBin1_eMidTrain
@@ -77,12 +77,12 @@ Nsteps = 1
     tEst = t-Ttrain
     tObs = t-Nsteps
     trainFit = allFitSS[:,tEst:tEst + Ttrain-1]
-    Nconst,isConIn,isConOut = StaNets.defineConstDegs(degsIO_T[:,tEst:tEst + Ttrain],thVarConst =0.005 )
-    estAR1= StaNets.estManyAR(trainFit;isCon = [isConIn;isConOut])
+    Nconst,isConIn,isConOut = StaticNets.defineConstDegs(degsIO_T[:,tEst:tEst + Ttrain],thVarConst =0.005 )
+    estAR1= StaticNets.estManyAR(trainFit;isCon = [isConIn;isConOut])
     ## Nsteps  ahead forecasts for each fitness for each time in Test sample
     for n=1:2N
         #compute forecasting for all links, diagonal will be disregarded after
-        foreFitAR_roll[n,t] = StaNets.oneStepForAR1(allFitSS[n,tObs],estAR1[n,:],steps = Nsteps)
+        foreFitAR_roll[n,t] = StaticNets.oneStepForAR1(allFitSS[n,tObs],estAR1[n,:],steps = Nsteps)
     end
  end
 
@@ -97,17 +97,17 @@ close()
  #select links among largest banks in training sample
  remMat =squeeze(prod(.!matA_T,3),3)
  inds2forecast = (Ttrain+2:T)
-    tmpTm1 =  StaNets.nowCastEvalFitNet(  gasFiltAndForeFitFromRollEst[:,inds2forecast] ,matA_T[:,:,inds2forecast];mat2rem = remMat,shift = 0)
+    tmpTm1 =  StaticNets.nowCastEvalFitNet(  gasFiltAndForeFitFromRollEst[:,inds2forecast] ,matA_T[:,:,inds2forecast];mat2rem = remMat,shift = 0)
     legTex = ["SD-ERGM   t-1 AUC = $(round(tmpTm1[3],3))"]
-    tmpTm1 =  StaNets.nowCastEvalFitNet(  foreFitAR_roll[:,inds2forecast] ,matA_T[:,:,inds2forecast];mat2rem = remMat,shift = 0)
+    tmpTm1 =  StaticNets.nowCastEvalFitNet(  foreFitAR_roll[:,inds2forecast] ,matA_T[:,:,inds2forecast];mat2rem = remMat,shift = 0)
     legTex = [legTex;"AR1     t-1 AUC = $(round(tmpTm1[3],3))"]
     # ROC for predictions from mean over Ttrain estimates
-    #tmpTm1 = StaNets.nowCastEvalFitNet(   allFitSS[:,inds2forecast] ,matA_T[:,:,inds2forecast];mat2rem = remMat)
+    #tmpTm1 = StaticNets.nowCastEvalFitNet(   allFitSS[:,inds2forecast] ,matA_T[:,:,inds2forecast];mat2rem = remMat)
     #legTex = [legTex; "ERGM Contemporaneous   AUC = $(round(tmpTm1[3],3))"]
-    # tmpTm1 =  StaNets.nowCastEvalFitNet(  gasforeFit[:,1:T] ,matA_T,Ttrain;mat2rem = remMat,shift = -1)
+    # tmpTm1 =  StaticNets.nowCastEvalFitNet(  gasforeFit[:,1:T] ,matA_T,Ttrain;mat2rem = remMat,shift = -1)
     # legTex = [legTex;"GAS t AUC = $(round(tmpTm1[3],3))"]
     shiftVal = 1
-    tmpTm1 = StaNets.nowCastEvalFitNet(   allFitSS[:,inds2forecast] ,matA_T[:,:,inds2forecast];mat2rem = remMat,shift = shiftVal)
+    tmpTm1 = StaticNets.nowCastEvalFitNet(   allFitSS[:,inds2forecast] ,matA_T[:,:,inds2forecast];mat2rem = remMat,shift = shiftVal)
     legTex = [legTex; "ERGM t-$(shiftVal)   AUC = $(round(tmpTm1[3],3))"]
 
     legend(legTex,fontsize = legSize)

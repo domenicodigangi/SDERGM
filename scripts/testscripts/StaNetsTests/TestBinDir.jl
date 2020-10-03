@@ -26,7 +26,7 @@ groupsPar = ones(2NG)
 firstOrderCond(Mod;degIO = deg,parGroupsIO = groupsPar, groupsInds = groupsInds )
 expMatrix(Mod,groupsPar)
 
-targetErrValStaNets = 0.005
+targetErrValStaticNets = 0.005
 estPar,estIt,estMod = estimate(Mod)
 
 ##

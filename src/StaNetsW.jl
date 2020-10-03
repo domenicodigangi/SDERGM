@@ -1,5 +1,5 @@
 #__precompile__()
-module StaNetsW
+module StaticNetsW
 
 using HelperFunDom,Distributions, StatsBase,Optim, LineSearches, StatsFuns,Roots
 
@@ -13,8 +13,8 @@ abstract type NetModelWcount <: NetModelW end
 abstract type NetModelBin <: NetModel end
 
 #constants
-targetErrValStaNets = 0.005
-targetErrValStaNetsW = 1e-5
+targetErrValStaticNets = 0.005
+targetErrValStaticNetsW = 1e-5
 bigConstVal = 10^6
 maxLargeVal =  1e40# 1e-10 *sqrt(prevfloat(Inf))
 minSmallVal = 1e2*eps()
@@ -146,7 +146,7 @@ function identify!(Model::NetModelDirW1Afixed,parIO::Array{<:Real,1})
   end
 
 function estimateSlow(Model::NetModelDirW1Afixed; strIO::Array{<:Real,1} = Model.obs,
-                Amat::BitArray{2}=falses(10,10) , targetErr  =targetErrValStaNetsW,bigConst   = bigConstVal,identIter = false,startVals::Array{Float64,1} =zeros(10) )
+                Amat::BitArray{2}=falses(10,10) , targetErr  =targetErrValStaticNetsW,bigConst   = bigConstVal,identIter = false,startVals::Array{Float64,1} =zeros(10) )
     "Given model type, observations of the statistics and groups assignments,
     estimate the parameters."
     N,strI,strO = splitVec(strIO)
@@ -300,7 +300,7 @@ function sampl(Model::NetModelDirW1Afixed,Nsample::Int;  parNodesIO::Array{Array
     end
     return SampleMats
  end
-function estimateIPFMat(strIO::Array{<:Real,1},A::Array{<:Real,2} ; targetErr  =100 * targetErrValStaNetsW)
+function estimateIPFMat(strIO::Array{<:Real,1},A::Array{<:Real,2} ; targetErr  =100 * targetErrValStaticNetsW)
     "Given In and Out strength sequences and a binary matrix A, return the matrix obtained with IPF "
     N,sI,sO = splitVec(strIO)
     nnzInds = strIO.!=0
@@ -474,7 +474,7 @@ function estimateIPFMat(strIO::Array{<:Real,1},A::Array{<:Real,2} ; targetErr  =
    end
 
  function estimate(Model::NetModelDirW1; strIO::Array{<:Real,1} = Model.obs,
-                     groupsInds = Model.groupsInds, targetErr  =targetErrValStaNetsW,bigConst   = bigConstVal)
+                     groupsInds = Model.groupsInds, targetErr  =targetErrValStaticNetsW,bigConst   = bigConstVal)
      "Given model type, observations of the statistics and groups assignments,
      estimate the parameters."
      N,strI,strO = splitVec(strIO)

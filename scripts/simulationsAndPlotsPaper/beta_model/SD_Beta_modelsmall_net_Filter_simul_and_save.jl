@@ -15,30 +15,30 @@ addprocs(4)
 @everywhere push!(LOAD_PATH,"./DynNets/src/")
 
 
-@everywhere using SharedArrays, Statistics, HelperFunDom, DynNets, StaNets, JLD
+@everywhere using SharedArrays, Statistics, HelperFunDom, DynNets, StaticNets, JLD
 
 @everywhere begin
     function simWrap1(N,T, NTV;dynType = "SIN", degIOUncMeans =0, degb = [10, 40],
                       dynFitDgp = zeros(10,50), indsTVnodes=falses(10))
 
        if sum(dynFitDgp)==0
-           dynFitDgp,indsTVnodes =  StaNets.dgpDynamic(StaNets.fooNetModelDirBin1,dynType,N,T;
+           dynFitDgp,indsTVnodes =  StaticNets.dgpDynamic(StaticNets.fooNetModelDirBin1,dynType,N,T;
                                                NTV = NTV,degIOUncMeans = degIOUncMeans,degb = degb  )
        end
        dynExpDegsDgp = zero(dynFitDgp)
-       for t =1:T  dynExpDegsDgp[:,t] = StaNets.expValStats(StaNets.fooNetModelDirBin1,dynFitDgp[:,t]) end
+       for t =1:T  dynExpDegsDgp[:,t] = StaticNets.expValStats(StaticNets.fooNetModelDirBin1,dynFitDgp[:,t]) end
        # sanmple dynamical networks from dgp fitnesses
        dynDegsSam = zeros(size(dynFitDgp))
        for t=1:T
-           matSamp = StaNets.sampl(StaNets.NetModelDirBin1(dynFitDgp[:,t]),1;  parGroupsIO = dynFitDgp[:,t])
+           matSamp = StaticNets.sampl(StaticNets.NetModelDirBin1(dynFitDgp[:,t]),1;  parGroupsIO = dynFitDgp[:,t])
            dynDegsSam[:,t] = [sumSq(matSamp,2);sumSq(matSamp,1)]
        end
        #println(dynDegsSam[:,4])
-       estFitSS =  StaNets.estimate( StaNets.SnapSeqNetDirBin1(dynDegsSam); identPost = true,identIter= false,targetErr = 0.001 )
+       estFitSS =  StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(dynDegsSam); identPost = true,identIter= false,targetErr = 0.001 )
        for t=1:T
-           dynFitDgp[:,t] =  StaNets.identify(StaNets.NetModelDirBin1(dynDegsSam[:,t]),
+           dynFitDgp[:,t] =  StaticNets.identify(StaticNets.NetModelDirBin1(dynDegsSam[:,t]),
                                               dynFitDgp[:,t]; idType = "equalIOsums" )
-           estFitSS[:,t] =  StaNets.identify(StaNets.NetModelDirBin1(dynDegsSam[:,t]),
+           estFitSS[:,t] =  StaticNets.identify(StaticNets.NetModelDirBin1(dynDegsSam[:,t]),
                                               estFitSS[:,t]; idType =  "equalIOsums")
        end
        return dynFitDgp,dynDegsSam,estFitSS,indsTVnodes

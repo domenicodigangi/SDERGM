@@ -8,6 +8,7 @@ using DataFrames
 using RCall
 using DynNets
 
+
 function clean_start_RCall()
     # Clean R enviroment and load needed packages
     R"rm(list = ls())
@@ -20,6 +21,7 @@ function clean_start_RCall()
    R"set.seed(0)"
 end
 export clean_start_RCall
+
 function sampleErgmRcall(parMatDgp_T,N,Nsample,formula_ergm_str)
     """
     Function that samples from an ergm defined by formula_ergm_str (according to
@@ -119,9 +121,6 @@ function estimateErgmRcall(sampledMat_T_R , formula_ergm_str)
 end
 export estimateErgmRcall
 
-
-
-
 function sdergmDGPpaper_Rcall( Model::DynNets.GasNetModelDirBinGlobalPseudo, indTvPar::BitArray{1},T::Int,N::Int;vConstPar ::Array{<:Real,1} = zeros(Real,2),
                                 ftot_0::Array{<:Real,1} = zeros(Real,2),UM = [-3 , 0.05],B_Re  = 0.9, A_Re  = 0.01 )
     """ SDERGM DGP  for density and GWESP as described in the paper
@@ -217,8 +216,8 @@ function sdergmDGPpaper_Rcall( Model::DynNets.GasNetModelDirBinGlobalPseudo, ind
 
 
     return obsT,statsT,fVecT
-    end
-
+end
+export sdergmDGPpaper_Rcall
 
 
 

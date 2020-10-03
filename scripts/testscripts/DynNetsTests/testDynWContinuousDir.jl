@@ -6,11 +6,11 @@ maxW = 200000
 minW = 10000
 tmpStrIO = round.([ Vector(linspace(minW,maxW,N));Vector(linspace(minW,maxW ,N))])
 N, StrI,StrO = splitVec(tmpStrIO);sum(StrI) == sum(StrO)?():error()
-dgpStrIO  =   StaNets.DegSeq2graphDegSeq(StaNets.fooNetModelDirWCount1,tmpStrIO)
+dgpStrIO  =   StaticNets.DegSeq2graphDegSeq(StaticNets.fooNetModelDirWCount1,tmpStrIO)
 groupsInds = [HelperFunDom.distributeAinVecN(Int.(1:NG),N) , HelperFunDom.distributeAinVecN(Int.(1:1),NG) , HelperFunDom.distributeAinVecN(Int.(1:1),NG)]
-StaMod = StaNets.NetModelDirW1(Int.(dgpStrIO),[zeros(Float64,2N),zeros(Float64,1)],groupsInds[1])
-estPar,estIt,estMod = StaNets.estimate(StaMod)
-uBndPar = StaNets.bndPar2uBndPar(StaMod,estPar)
+StaMod = StaticNets.NetModelDirW1(Int.(dgpStrIO),[zeros(Float64,2N),zeros(Float64,1)],groupsInds[1])
+estPar,estIt,estMod = StaticNets.estimate(StaMod)
+uBndPar = StaticNets.bndPar2uBndPar(StaMod,estPar)
 # Test Dgp
 A = ones(1)*0.1
 B = ones(1)*0.9
@@ -30,8 +30,8 @@ Fitness_TIO_Fil, loglike = gasFilter(Mod2est,dgpParVec; groupsInds = groupsInds)
 Fitness_TIO - Fitness_TIO_Fil
 estimateSnapSeq(Mod2est;print_t = true)
 
-hatBndPar,x,xx = StaNets.estimate(StaNets.fooNetModelDirW1;strIO = StrIO[19,:],groupsInds = groupsInds[1] )
-hatUbndPar = StaNets.bndPar2uBndPar(StaNets.fooNetModelDirW1,hatBndPar)
+hatBndPar,x,xx = StaticNets.estimate(StaticNets.fooNetModelDirW1;strIO = StrIO[19,:],groupsInds = groupsInds[1] )
+hatUbndPar = StaticNets.bndPar2uBndPar(StaticNets.fooNetModelDirW1,hatBndPar)
 
 (hatBndPar[1:N] .+ hatBndPar[N+1:2N]' .>=0)
 minInd = indmin(hatBndPar[N+1:2N])
@@ -71,16 +71,16 @@ W_prob_tmp=    [-Inf         -324.547
                -0.433907    -0.36438
                -0.499994    -0.370849]
 W_prob = [W_prob_tmp[1:N];W_prob_tmp[N+1:2N]]
-Umean_prob =StaNets.uBndPar2bndPar(StaMod, W_prob./(1-B_prob))
-display(StaNets.expMatrix(StaMod,Umean_prob))
+Umean_prob =StaticNets.uBndPar2bndPar(StaMod, W_prob./(1-B_prob))
+display(StaticNets.expMatrix(StaMod,Umean_prob))
 Y_T, Fitness_TIO =gasFilter(Mod2est,[W_prob;B_prob;A_prob]; groupsInds = groupsInds)
 
 
 ##
 MeanStrT =  meanSq(Mod2est.obsT,1)
 [MeanStrT[1:N] MeanStrT[N+1:2N]]
-staMod =  StaNets.NetModelDirW1((MeanStrT),[zeros(Float64,2N),zeros(Float64,1)],groupsInds[1])
-StaNets.estimate(staMod)
+staMod =  StaticNets.NetModelDirW1((MeanStrT),[zeros(Float64,2N),zeros(Float64,1)],groupsInds[1])
+StaticNets.estimate(staMod)
 MeanStrT[N+1:end] = -MeanStrT[N+1:end]
 sum(MeanStrT)
 ##

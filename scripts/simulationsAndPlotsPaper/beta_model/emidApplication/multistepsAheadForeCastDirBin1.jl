@@ -1,7 +1,7 @@
 #script that estimates the dir bin gas network model on emid data and evaluates GAS
 # forecasting performances
 
-using HelperFunDom,AReg,StaNets,JLD,MLBase,StatsBase,DynNets
+using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase,DynNets
 using PyCall; pygui(:qt); using PyPlot
 
 
@@ -25,7 +25,7 @@ matY_T = YeMidWeekly_T[:,:,3:end]
     Ttrain = 100#round(Int, T/2) #70 106 #
     threshVar = 0.00#5
     degsIO_T = [sumSq(matA_T,2);sumSq(matA_T,1)]
- allFitSS =  StaNets.estimate( StaNets.SnapSeqNetDirBin1(degsIO_T); identPost = false,identIter= true )
+ allFitSS =  StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(degsIO_T); identPost = false,identIter= true )
  sizeLab = 30
 
 
@@ -74,16 +74,16 @@ remMat =squeeze(prod(.!matA_T,3),3)#
                              DynNets.multiStepsForecastExpMat_roll(modAllObs,matA_T,gasEst_rolling,gasFiltAndForeFitFromRollEst,Nsample,Nsteps,Ttrain)
              end
              #figure(11)
-              tmpTm1 =  StaNets.nowCastEvalFitNet(   zeros(2,2) ,matA_T[:,:,Ttrain+1:end];mat2rem = remMat,expMat_T=expMat_T_means[:,:,Ttrain+1:end],shift=0,plotFlag = false)
+              tmpTm1 =  StaticNets.nowCastEvalFitNet(   zeros(2,2) ,matA_T[:,:,Ttrain+1:end];mat2rem = remMat,expMat_T=expMat_T_means[:,:,Ttrain+1:end],shift=0,plotFlag = false)
 
               aucGas[k,n,1] = tmpTm1[3]
               #figure(12)
-              tmpTm1 =  StaNets.nowCastEvalFitNet(   zeros(2,2) ,matA_T[:,:,Ttrain+1:end];mat2rem = remMat,expMat_T=expMat_T_Y[:,:,Ttrain+1:end],shift=0,plotFlag = false)
+              tmpTm1 =  StaticNets.nowCastEvalFitNet(   zeros(2,2) ,matA_T[:,:,Ttrain+1:end];mat2rem = remMat,expMat_T=expMat_T_Y[:,:,Ttrain+1:end],shift=0,plotFlag = false)
 
               aucGas[k,n,2] = tmpTm1[3]
              # figure(13)
 
-              tmpTm1 =  StaNets.nowCastEvalFitNet(   zeros(2,2) ,matA_T[:,:,Ttrain+1:end];mat2rem = remMat,expMat_T=expMat_T_meanPar[:,:,Ttrain+1:end],shift=0,plotFlag = false )
+              tmpTm1 =  StaticNets.nowCastEvalFitNet(   zeros(2,2) ,matA_T[:,:,Ttrain+1:end];mat2rem = remMat,expMat_T=expMat_T_meanPar[:,:,Ttrain+1:end],shift=0,plotFlag = false )
               aucGas[k,n,3] = tmpTm1[3]
 
         end
@@ -104,17 +104,17 @@ aucAR =  zeros(maxNsteps)
     tEst = t-Ttrain
     tObs = t-Nsteps
     trainFit = allFitSS[:,tEst:tEst + Ttrain-1]
-    Nconst,isConIn,isConOut = StaNets.defineConstDegs(degsIO_T[:,tEst:tEst + Ttrain],thVarConst =0.005 )
-    estAR1= StaNets.estManyAR(trainFit;isCon = [isConIn;isConOut])
+    Nconst,isConIn,isConOut = StaticNets.defineConstDegs(degsIO_T[:,tEst:tEst + Ttrain],thVarConst =0.005 )
+    estAR1= StaticNets.estManyAR(trainFit;isCon = [isConIn;isConOut])
     ## Nsteps  ahead forecasts for each fitness for each time in Test sample
     for n=1:2N
         #compute forecasting for all links, diagonal will be disregarded after
-        foreFitAR_roll[n,t] = StaNets.oneStepForAR1(allFitSS[n,tObs],estAR1[n,:],steps = Nsteps)
+        foreFitAR_roll[n,t] = StaticNets.oneStepForAR1(allFitSS[n,tObs],estAR1[n,:],steps = Nsteps)
     end
  end
   inds2forecast = (Ttrain+2:T)
   @show(Nsteps)
- tmpTm1 =  StaNets.nowCastEvalFitNet(  foreFitAR_roll[:,inds2forecast] ,matA_T[:,:,inds2forecast];mat2rem = remMat,shift = 0,plotFlag=false)
+ tmpTm1 =  StaticNets.nowCastEvalFitNet(  foreFitAR_roll[:,inds2forecast] ,matA_T[:,:,inds2forecast];mat2rem = remMat,shift = 0,plotFlag=false)
  aucAR[Nsteps] = tmpTm1[3]
  end
 
@@ -128,7 +128,7 @@ close()#
   aucStat = zeros(maxNsteps)
     for n=1:maxNsteps
           shiftVal = n
-          tmpTm1 = StaNets.nowCastEvalFitNet(   allFitSS[:,Ttrain+1:end],matA_T[:,:,Ttrain+1:end];mat2rem = remMat,shift = shiftVal,plotFlag = false)
+          tmpTm1 = StaticNets.nowCastEvalFitNet(   allFitSS[:,Ttrain+1:end],matA_T[:,:,Ttrain+1:end];mat2rem = remMat,shift = shiftVal,plotFlag = false)
           aucStat[n] = tmpTm1[3]
           legTex = [legTex; "t-$(shiftVal) Par  AUC = $(round(tmpTm1[3],3))"]
     end
@@ -201,7 +201,7 @@ end
 #     #disregard predictions for degrees that are constant in the training sample
 #     # gas shoud manage but AR fitness no and I dont want to advantage gas
 #     # to do so i need to count the number of links that are non constant (nnc)
-#     Nc,isConIn,isConOut = StaNets.defineConstDegs(degsIO_T[:,1:Ttrain];thVarConst = thVarConst )
+#     Nc,isConIn,isConOut = StaticNets.defineConstDegs(degsIO_T[:,1:Ttrain];thVarConst = thVarConst )
 #     noDiagIndnnc = putZeroDiag(((.!isConIn).*(.!isConOut')).* (.!mat2rem)    )
 #
 #     @show Nlinksnnc =sum(noDiagIndnnc)
@@ -223,7 +223,7 @@ end
 #         indZeroMat = indZeroR.*indZeroC
 #     #    println(sum(indZeroMat)/(length(indZeroC)^2))
 #
-#         expMat = StaNets.expMatrix(StaNets.fooNetModelDirBin1,foreFit[:,Ttrain+1:end][:,t])
+#         expMat = StaticNets.expMatrix(StaticNets.fooNetModelDirBin1,foreFit[:,Ttrain+1:end][:,t])
 #
 #          tmpAllMat,~ = multiSteps_updatedGasPar(modGasDirBin1_eMidTrain,N,foreFit[:,Ttrain+1:end][:,t-Nsteps],
 #             gasParEstOnTrain[1],gasParEstOnTrain[2],gasParEstOnTrain[3],Nsample,Nsteps)

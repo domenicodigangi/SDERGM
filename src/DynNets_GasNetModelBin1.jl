@@ -34,10 +34,10 @@ GasNetModelBin1(obsT::Array{<:Real,2},scoreScalingType::String) = GasNetModelBin
 fooGasNetModelBin1 = GasNetModelBin1(ones(3,3))
 # Functions that are obtained directly from the static version of the model
 
-StaModType(Model::GasNetModelBin1) = StaNets.fooNetModelBin1# to be substituted with a conversion mechanism
+StaModType(Model::GasNetModelBin1) = StaticNets.fooNetModelBin1# to be substituted with a conversion mechanism
 # StaPar2DynPar(Model::GasNetModelBin1,RePar::Array{<:Real,1}) = log.(RePar)
 # DynPar2StaPar(Model::GasNetModelBin1,UnPar::Array{<:Real,1}) = exp.(UnPar)
-linSpacedPar(Model::GasNetModelBin1,Nnodes::Int;NgroupsW = Nnodes, deltaN::Int=3,graphConstr = true) =   StaNets.linSpacedPar(StaModType(Model),Nnodes;Ngroups = NgroupsW,deltaN=deltaN,graphConstr =graphConstr);
+linSpacedPar(Model::GasNetModelBin1,Nnodes::Int;NgroupsW = Nnodes, deltaN::Int=3,graphConstr = true) =   StaticNets.linSpacedPar(StaModType(Model),Nnodes;Ngroups = NgroupsW,deltaN=deltaN,graphConstr =graphConstr);
 
 
 # options and conversions of parameters for optimization
@@ -141,9 +141,9 @@ function updatedGasPar( Model::GasNetModelBin1,N::Int,degs_t::Array{<:Real,1},
     only the time vaying ones (f_t) are to be updated=#
     f_t = ftot_t[indTvNodes] #Time varying fitnesses
 
-    thetas_mat_t_exp, exp_mat_t = StaNets.expMatrix2(StaNets.fooNetModelBin1,ftot_t)
+    thetas_mat_t_exp, exp_mat_t = StaticNets.expMatrix2(StaticNets.fooNetModelBin1,ftot_t)
     # thetas_mat_t_exp = exp.(Symmetric(ftot_t  .+  ftot_t'))
-    # StaNets.putZeroDiag!(thetas_mat_t_exp)
+    # StaticNets.putZeroDiag!(thetas_mat_t_exp)
     # exp_mat_t = thetas_mat_t_exp ./ (1+thetas_mat_t_exp)
 
     exp_deg_t = sum(exp_mat_t,dims = 2)
@@ -205,8 +205,8 @@ function gasFilter( Model::GasNetModelBin1,
     loglike = 0
     for t=1:T
         if dgp
-            expMat_t = StaNets.expMatrix(StaModType(Model),ftot_t )# exp.(ftot_t)
-            Y_T[t,:,:] =StaNets.samplSingMatCan(StaModType(Model),expMat_t)
+            expMat_t = StaticNets.expMatrix(StaModType(Model),ftot_t )# exp.(ftot_t)
+            Y_T[t,:,:] =StaticNets.samplSingMatCan(StaModType(Model),expMat_t)
             degs_t = dropdims(sum(Y_T[t,:,:],2),dims = 2)
         else
             degs_t = obsT[t,:] # vector of in and out degrees
@@ -228,7 +228,7 @@ sampl(Mod::GasNetModelBin1,T::Int) = (  N = length(Mod.groupsInds[1]) ;
 
 # Estimation
 function estSingSnap(Model::GasNetModelBin1,degs_t::Array{<:Real,1}; groupsInds = Model.groupsInds, targetErr::Real=targetErrValDynNets)
-    hatUnPar,~,~ = StaNets.estimate(StaModType(Model); deg = degs_t ,groupsInds = groupsInds[1], targetErr =  targetErr)
+    hatUnPar,~,~ = StaticNets.estimate(StaModType(Model); deg = degs_t ,groupsInds = groupsInds[1], targetErr =  targetErr)
     return hatUnPar
  end
 function estimateSnapSeq(Model::GasNetModelBin1; degsT::Array{<:Real,2}=Model.obsT,

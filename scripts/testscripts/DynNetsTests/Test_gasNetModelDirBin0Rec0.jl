@@ -5,7 +5,7 @@ Test script for SD dirBin0Rec0 model: one parameter for total number of links an
 
 # test sampling
 using Revise
-using StaNets, DynNets
+using StaticNets, DynNets
 
 ## define parameters
 N=30
@@ -21,7 +21,7 @@ A0 = 0.01
 aResGasPar_0 = [[θ_0*(1-B0), B0, A0], [η_0*(1-B0), B0, A0] ]
 vResGasPar_0 = DynNets.array2VecGasPar(model, aResGasPar_0, indTvPar)
 
-StaNets.logLikelihood(StaNets.fooNetModelDirBin0Rec0, 12, 5, [0, 0])
+StaticNets.logLikelihood(StaticNets.fooNetModelDirBin0Rec0, 12, 5, [0, 0])
 fVecT_dgp , A_T_dgp = DynNets.gasFilter( model, vResGasPar_0, indTvPar; dgpNT = (10,100))
 
 

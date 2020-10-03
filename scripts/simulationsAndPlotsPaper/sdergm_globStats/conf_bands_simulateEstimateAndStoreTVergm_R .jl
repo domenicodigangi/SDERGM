@@ -4,7 +4,7 @@ using HelperFunDom, AReg, JLD, MLBase, StatsBase, CSV, RCall, Distributions,
       LinearAlgebra, ForwardDiff, GLM
 
 using Revise
-using StaNets, DynNets
+using StaticNets, DynNets
  using PyCall; pygui(:qt); using PyPlot
 
  Nconf_bands = 500
@@ -102,7 +102,7 @@ plot(gasFiltPar)
 
 ##  Load Samles of many SD static parameters, filter the data once for each set
  # of static pars  and plot
-using HelperFunDom,AReg,StaNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
+using HelperFunDom,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  using PyCall; pygui(); using PyPlot
  using JLD, GLM
  Nsample = 1

@@ -1,7 +1,7 @@
 
 # script that wants to numerically test chatteris diaconis (misspelled with 99% prob)
 # for the estimates of beta, fitness,ergm (many names..) in the DirBin1 case
-using HelperFunDom,AReg,StaNets,JLD,MLBase,StatsBase#,DynNets using PyCall; pygui(:qt); using PyPlot
+using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase#,DynNets using PyCall; pygui(:qt); using PyPlot
 
 Nsample = 100
 

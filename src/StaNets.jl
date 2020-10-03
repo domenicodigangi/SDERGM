@@ -1,5 +1,5 @@
 __precompile__(false)
-module StaNets
+module StaticNets
 
 using Distributions, StatsBase,Optim, LineSearches, StatsFuns,Roots,MLBase, Statistics, LinearAlgebra, Random
 # using PyCall;# pygui(:qt);
@@ -15,8 +15,8 @@ abstract type NetModelWcount <: NetModelW end
 abstract type NetModelBin <: NetModel end
 
 #constants
-targetErrValStaNets = 1e-2
-targetErrValStaNetsW = 1e-5
+targetErrValStaticNets = 1e-2
+targetErrValStaticNetsW = 1e-5
 bigConstVal = 10^6
 maxLargeVal =  1e40# 1e-10 *sqrt(prevfloat(Inf))
 minSmallVal = 1e2*eps()
@@ -25,9 +25,9 @@ include("./AReg.jl")
 
 include("./HelperFunDom.jl")
 
-include("./StaNets_Bin1.jl")
-include("./StaNets_DirBin1.jl")
-include("./StaNets_DirBin1Rec0.jl")
+include("./StaticNets_Bin1.jl")
+include("./StaticNets_DirBin1.jl")
+include("./StaticNets_DirBin0Rec0.jl")
 
 
 end

@@ -28,7 +28,7 @@ fooGasNetModelDirBin0Rec0 = GasNetModelDirBin0Rec0( [zeros(2), zeros(2)], 10, fo
 
 # Relations between Static and Dynamical models: conventions on storage for
 # parameters and observations
-StaModType(Model::GasNetModelDirBin0Rec0 ) = StaNets.fooNetModelDirBin0Rec0# to be substituted with a conversion mechanism
+StaModType(Model::GasNetModelDirBin0Rec0 ) = StaticNets.fooNetModelDirBin0Rec0# to be substituted with a conversion mechanism
 
 # options and conversions of parameters for optimization
 setOptionsOptim(Model::GasNetModelDirBin0Rec0) = setOptionsOptim(fooGasNetModelDirBin1)
@@ -116,7 +116,7 @@ function updatedGasPar( Model::GasNetModelDirBin0Rec0, obs_t, N,
      f_t = ftot_t[indTvPar] #Time varying ergm parameters
 
      L_t, R_t = obs_t
-     logLike_t = StaNets.logLikelihood(StaNets.fooNetModelDirBin0Rec0, L_t, R_t, ftot_t)
+     logLike_t = StaticNets.logLikelihood(StaticNets.fooNetModelDirBin0Rec0, L_t, R_t, ftot_t)
 
      θ_t = f_t[1]
      η_t = f_t[2]
@@ -184,10 +184,10 @@ function gasFilter( Model::GasNetModelDirBin0Rec0,
     for t=1:T
     #    println(t)
         if dgp
-            diadProb = StaNets.diadProbFromPars(StaNets.fooNetModelDirBin0Rec0, ftot_t )
-            A_t = StaNets.samplSingMatCan(StaNets.fooNetModelDirBin0Rec0, diadProb, N)
+            diadProb = StaticNets.diadProbFromPars(StaticNets.fooNetModelDirBin0Rec0, ftot_t )
+            A_t = StaticNets.samplSingMatCan(StaticNets.fooNetModelDirBin0Rec0, diadProb, N)
             A_T[:, : , t] = A_t
-            obs_t = StaNets.statsFromMat(StaNets.fooNetModelDirBin0Rec0, A_t)
+            obs_t = StaticNets.statsFromMat(StaticNets.fooNetModelDirBin0Rec0, A_t)
         else
             obs_t = obsT[t]
         end

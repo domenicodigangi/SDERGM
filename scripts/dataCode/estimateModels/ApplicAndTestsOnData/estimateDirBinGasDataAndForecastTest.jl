@@ -1,7 +1,7 @@
 #script that estimates the dir bin gas network model on emid data and evaluates GAS
 # forecasting performances
 
-using HelperFunDom,AReg,StaNets,JLD,MLBase,StatsBase
+using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase
 using PyCall; pygui(:qt); using PyPlot
 using DynNets
 #estimate and save for half the datase (after LTRO) or whole data?
@@ -57,7 +57,7 @@ foreFit,~ = gasFilter( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1]
 plot(foreFit')
 expDegsIO_Ttest = zeros(N2,Ttest)
 for t=1:Ttest
-    expDegsIO_Ttest[:,t] = [sumSq(StaNets.expMatrix(StaNets.fooNetModelDirBin1,foreEval[3][:,t]),2);sumSq(StaNets.expMatrix(StaNets.fooNetModelDirBin1,foreEval[3][:,t]),1)]
+    expDegsIO_Ttest[:,t] = [sumSq(StaticNets.expMatrix(StaticNets.fooNetModelDirBin1,foreEval[3][:,t]),2);sumSq(StaticNets.expMatrix(StaticNets.fooNetModelDirBin1,foreEval[3][:,t]),1)]
 end
 plot(expDegsIO_Ttest' )
 

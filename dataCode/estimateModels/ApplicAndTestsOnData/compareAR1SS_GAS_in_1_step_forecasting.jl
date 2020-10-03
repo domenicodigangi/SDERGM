@@ -1,7 +1,7 @@
 #script that estimates the dir bin gas network model on emid data and evaluates GAS
 # forecasting performances
 
-using HelperFunDom,AReg,StaNets,JLD,MLBase,StatsBase,DynNets
+using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase,DynNets
 using PyCall; pygui(:qt); using PyPlot
 #estimate and save for half the datase (after LTRO) or whole data?
 halfPeriod = false
@@ -29,7 +29,7 @@ matY_T = YeMidWeekly_T[:,:,3:end]
     Ttrain = 100#round(Int, T/2) #70 106 #
     threshVar = 0.00#5
     degsIO_T = [sumSq(matA_T,2);sumSq(matA_T,1)]
- allFitSS =  StaNets.estimate( StaNets.SnapSeqNetDirBin1(degsIO_T); identPost = false,identIter= true )
+ allFitSS =  StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(degsIO_T); identPost = false,identIter= true )
 
 density_T = [sum(matA_T[:,:,t]) for t=1:T]./(N*(N-1))
 sizeLab = 30
@@ -47,7 +47,7 @@ sizeLab = 30
  plt[:axvline](x=Ttrain,color = "r",linestyle = "--")
 
 #Estimate gas model on train sample
-allFitConstTrain,~,~ =  StaNets.estimate( StaNets.NetModelDirBin1(meanSq(degsIO_T[:,1:Ttrain],2)) )
+allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.NetModelDirBin1(meanSq(degsIO_T[:,1:Ttrain],2)) )
  modGasDirBin1_eMidTrain = DynNets.GasNetModelDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG")
  estTargDirBin1_eMidTrain,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS )
  gasParEstOnTrain = estTargDirBin1_eMidTrain
@@ -60,21 +60,21 @@ close()
  #select links among largest banks in training sample
  remMat =falses(N,N)#squeeze(prod(.!matA_T,3),3)#
  sizeLeg = 15
- tmpTm1 =  StaNets.nowCastEvalFitNet(  gasforeFit[:,1:T] ,matA_T,Ttrain;mat2rem = remMat,shift = 0)
+ tmpTm1 =  StaticNets.nowCastEvalFitNet(  gasforeFit[:,1:T] ,matA_T,Ttrain;mat2rem = remMat,shift = 0)
     legTex = ["GAS t-1 AUC = $(round(tmpTm1[3],3))"]
     # ROC for predictions from mean over Ttrain estimates
-    tmpTm1 = StaNets.nowCastEvalFitNet(   allFitSS[:,1:end] ,matA_T,Ttrain;mat2rem = remMat)
+    tmpTm1 = StaticNets.nowCastEvalFitNet(   allFitSS[:,1:end] ,matA_T,Ttrain;mat2rem = remMat)
     legTex = [legTex; "t Par  AUC = $(round(tmpTm1[3],3))"]
-    # tmpTm1 =  StaNets.nowCastEvalFitNet(  gasforeFit[:,1:T] ,matA_T,Ttrain;mat2rem = remMat,shift = -1)
+    # tmpTm1 =  StaticNets.nowCastEvalFitNet(  gasforeFit[:,1:T] ,matA_T,Ttrain;mat2rem = remMat,shift = -1)
     # legTex = [legTex;"GAS t AUC = $(round(tmpTm1[3],3))"]
     shiftVal = 1
-    tmpTm1 = StaNets.nowCastEvalFitNet(   allFitSS[:,1:end] ,matA_T,Ttrain;mat2rem = remMat,shift = shiftVal)
+    tmpTm1 = StaticNets.nowCastEvalFitNet(   allFitSS[:,1:end] ,matA_T,Ttrain;mat2rem = remMat,shift = shiftVal)
     legTex = [legTex; "t-$(shiftVal) Par  AUC = $(round(tmpTm1[3],3))"]
 
-    tmpTm1 = StaNets.nowCastEvalFitNet( repmat( allFitConstTrain,1,T),matA_T,Ttrain;mat2rem = remMat)
+    tmpTm1 = StaticNets.nowCastEvalFitNet( repmat( allFitConstTrain,1,T),matA_T,Ttrain;mat2rem = remMat)
     legTex = [legTex; "Const Par  AUC = $(round(tmpTm1[3],3))"]
 
-    tmpTm1 = StaNets.forecastEvalAR1Net( matA_T,Ttrain,mat2rem = remMat)
+    tmpTm1 = StaticNets.forecastEvalAR1Net( matA_T,Ttrain,mat2rem = remMat)
     legTex = [legTex; "AR1 SS = $(round(tmpTm1[3],3))"]
     legend(legTex,fontsize = sizeLeg)
     title("T train = $(Ttrain) of $(T)  ",size = sizeLab)
@@ -91,9 +91,9 @@ N2,T = size(pieroEmidEst["thetaEST0"]);N =round(Int,N2/2);TtrainP = T - 50
  matAP_T = pieroEmidData["A"].>0
  shiftVal = 1
  mat2rem = falses(N,N)# squeeze(prod(.!matAP_T,3),3)
- tmpTm1 = StaNets.nowCastEvalFitNet(fitP2_T,matAP_T,TtrainP,shift = shiftVal,mat2rem=mat2rem)
+ tmpTm1 = StaticNets.nowCastEvalFitNet(fitP2_T,matAP_T,TtrainP,shift = shiftVal,mat2rem=mat2rem)
  legTex = ["theta0 t - $(shiftVal)   AUC = $(round(tmpTm1[3],3))"]
- tmpTm1 = StaNets.nowCastEvalFitNet(fitP1_T,matAP_T,TtrainP,shift = shiftVal,mat2rem=mat2rem)
+ tmpTm1 = StaticNets.nowCastEvalFitNet(fitP1_T,matAP_T,TtrainP,shift = shiftVal,mat2rem=mat2rem)
  legTex = [legTex ; "theta0X t - $(shiftVal)   AUC = $(round(tmpTm1[3],3))"]
  legend(legTex)
 
@@ -104,8 +104,8 @@ N = length(matAP_T[1,:,1])
     threshVar = 0.00#5
     degsIOP_T = [sumSq(matAP_T,2);sumSq(matAP_T,1)]
 
- allFitSS =   StaNets.estimate( StaNets.SnapSeqNetDirBin1(degsIOP_T); identPost = false,identIter= true,targetErr = 1e-6 )
- allFitConstTrain,~,~ =  StaNets.estimate( StaNets.NetModelDirBin1(meanSq(degsIOP_T[:,1:Ttrain],2)) )
+ allFitSS =   StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(degsIOP_T); identPost = false,identIter= true,targetErr = 1e-6 )
+ allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.NetModelDirBin1(meanSq(degsIOP_T[:,1:Ttrain],2)) )
  modGasDirBin1_eMidTrain = DynNets.GasNetModelDirBin1(degsIOP_T[:,1:Ttrain],"FISHER-DIAG")
  estTargDirBin1_eMidTrain,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS )
  gasParEstOnTrain = estTargDirBin1_eMidTrain
@@ -118,25 +118,25 @@ N = length(matAP_T[1,:,1])
  close()
     #select links among largest banks in training sample
     remMat = mat2rem# falses(N,N)#;for i=1:N remMat[i,i] = true; end
-    tmpGas =  StaNets.nowCastEvalFitNet(   Float64.(GasforeFit) ,matAP_T,Ttrain;mat2rem = remMat,shift=0)
+    tmpGas =  StaticNets.nowCastEvalFitNet(   Float64.(GasforeFit) ,matAP_T,Ttrain;mat2rem = remMat,shift=0)
      legTex = ["GAS  AUC = $(round(tmpGas[3],3))"]
      legend(legTex)
-     #tmpAR = StaNets.forecastEvalAR1Net(matAP_T,Ttrain;thVarConst = threshVar,mat2rem = remMat)
+     #tmpAR = StaticNets.forecastEvalAR1Net(matAP_T,Ttrain;thVarConst = threshVar,mat2rem = remMat)
      #legTex = [legTex ; "AR1  AUC = $(round(tmpAR[3],3))"]
      legend(legTex)
      title("T train = $(Ttrain) of $(T)  ")
-       tmpTm1 = StaNets.nowCastEvalFitNet(   allFitSS[:,1:end] ,matAP_T,Ttrain;mat2rem = remMat)
+       tmpTm1 = StaticNets.nowCastEvalFitNet(   allFitSS[:,1:end] ,matAP_T,Ttrain;mat2rem = remMat)
      legTex = [legTex; "t Par  AUC = $(round(tmpTm1[3],3))"]
-     # tmpTm1 = StaNets.nowCastEvalFitNet(  [ allFitSS[:,1]  allFitSS[:,1:end-1] ] ,matAP_T,Ttrain;mat2rem = remMat)
+     # tmpTm1 = StaticNets.nowCastEvalFitNet(  [ allFitSS[:,1]  allFitSS[:,1:end-1] ] ,matAP_T,Ttrain;mat2rem = remMat)
      # legTex = [legTex; "t-1 Par  AUC = $(round(tmpTm1[3],3))"]
      shiftVal = 1
-     tmpTm1 = StaNets.nowCastEvalFitNet(    allFitSS[:,1:end],matAP_T,Ttrain;mat2rem = remMat,shift=shiftVal)
+     tmpTm1 = StaticNets.nowCastEvalFitNet(    allFitSS[:,1:end],matAP_T,Ttrain;mat2rem = remMat,shift=shiftVal)
      legTex = [legTex; "t-$(shiftVal) Par  AUC = $(round(tmpTm1[3],3))"]
 
-     tmpTm1 = StaNets.nowCastEvalFitNet( repmat( allFitConstTrain,1,T),matAP_T,Ttrain;mat2rem = remMat)
+     tmpTm1 = StaticNets.nowCastEvalFitNet( repmat( allFitConstTrain,1,T),matAP_T,Ttrain;mat2rem = remMat)
      legTex = [legTex; "Const Par  AUC = $(round(tmpTm1[3],3))"]
 
-     tmpTm1 = StaNets.forecastEvalAR1Net( matAP_T,Ttrain;mat2rem = remMat)
+     tmpTm1 = StaticNets.forecastEvalAR1Net( matAP_T,Ttrain;mat2rem = remMat)
      legTex = [legTex; "AR1 SS = $(round(tmpTm1[3],3))"]
      legend(legTex)
      title("T train = $(Ttrain) of $(T)  ")

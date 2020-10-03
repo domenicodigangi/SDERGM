@@ -11,7 +11,7 @@ save_path = save_fold*file_nameStart* "_W1_" *file_nameEnd#
 @load(save_path,estSSW1,estGasW1,estGasTargW1,estSSW1_1GW,estGasW1_1GW,AeMidWeekly_T, YeMidWeekly_T ,weekInd,degsIO_T)
 
 # test netmodel direceted binary with covariates on eMid Data
-using  StaNets ,HelperFunDom
+using  StaticNets ,HelperFunDom
 
 
 AeMidWeekly_T = BitArray(YeMidWeekly_T )

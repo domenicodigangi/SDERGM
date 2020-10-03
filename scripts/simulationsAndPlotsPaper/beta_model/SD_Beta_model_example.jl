@@ -7,7 +7,7 @@
 #add packages to LOAD path
 push!(LOAD_PATH,"./DynNets/src/")
 
-using  HelperFunDom, DynNets, StaNets, StatsBase
+using  HelperFunDom, DynNets, StaticNets, StatsBase
 
 
 #%% Sample DGP
@@ -23,20 +23,20 @@ unifDeg = round(Int,(maxDeg-  minDeg)/2)
 #targetStatic = false=> use a the mean of single snapshots  estimates for targeting in SD estimate
 targetStatic = true
 # Define time varying fitneesse
-dynFitDgp, indsTVnodes =  StaNets.dgpDynamic(StaNets.fooNetModelDirBin1,dynType,N,T;
+dynFitDgp, indsTVnodes =  StaticNets.dgpDynamic(StaticNets.fooNetModelDirBin1,dynType,N,T;
                                   NTV = NTV, degIOUncMeans =unifDeg*ones(2N),
                                  degb = degb  )
 
 # Sample time series of networks from the dynamical fitnesses
 dynDegsSam = zeros(size(dynFitDgp))
 for t=1:T
-    matSamp = StaNets.sampl(StaNets.NetModelDirBin1(dynFitDgp[:,t]),1;  parGroupsIO = dynFitDgp[:,t])
+    matSamp = StaticNets.sampl(StaticNets.NetModelDirBin1(dynFitDgp[:,t]),1;  parGroupsIO = dynFitDgp[:,t])
     dynDegsSam[:,t] = [sumSq(matSamp,2);sumSq(matSamp,1)]
 end
-estFitSS_T =  StaNets.estimate( StaNets.SnapSeqNetDirBin1(dynDegsSam); identPost = true,identIter= false,targetErr = 0.001 )
+estFitSS_T =  StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(dynDegsSam); identPost = true,identIter= false,targetErr = 0.001 )
 for t=1:T
-    dynFitDgp[:,t] =  StaNets.identify(StaNets.NetModelDirBin1(dynDegsSam[:,t]),dynFitDgp[:,t];idType = "firstZero" )
-    estFitSS_T[:,t] =  StaNets.identify(StaNets.NetModelDirBin1(dynDegsSam[:,t]),estFitSS_T[:,t];idType = "firstZero" )
+    dynFitDgp[:,t] =  StaticNets.identify(StaticNets.NetModelDirBin1(dynDegsSam[:,t]),dynFitDgp[:,t];idType = "firstZero" )
+    estFitSS_T[:,t] =  StaticNets.identify(StaticNets.NetModelDirBin1(dynDegsSam[:,t]),estFitSS_T[:,t];idType = "firstZero" )
 end
 
 degsIO_T = dynDegsSam
@@ -88,7 +88,7 @@ end
 function loglike(Model::DynNets.GasNetModelDirBin1, degs_t::Array{<:Real,1},
                         f_t::Array{<:Real,1})
 
-    thetas_mat_t_exp, exp_mat_t = StaNets.expMatrix2(StaNets.fooNetModelBin1,f_t)
+    thetas_mat_t_exp, exp_mat_t = StaticNets.expMatrix2(StaticNets.fooNetModelBin1,f_t)
     exp_deg_t = sum(exp_mat_t,dims = 2)
 
     loglike_t = sum(f_t.*degs_t) -  sum(UpperTriangular(log.(1 .+ thetas_mat_t_exp))) #  sum(log.(1 + thetas_mat_t_exp))
@@ -100,7 +100,7 @@ function logLike_t(Model, obsT, vReGasPar)
       NGW,GBA,ABgroupsIndNodesIO,indTvNodesIO = NumberOfGroupsAndABindNodes(Model, groupsInds)
       # Organize parameters of the GAS update equation
       WGroupsIO = vReGasPar[1:NGW]
-      #    StaNets.expMatrix2(StaNets.fooNetModelDirBin1,WGroupsIO )
+      #    StaticNets.expMatrix2(StaticNets.fooNetModelDirBin1,WGroupsIO )
       W_allIO = WGroupsIO[groupsInds[1]]
       BgasGroups  = vReGasPar[NGW+1:NGW+GBA]
       AgasGroups  = vReGasPar[NGW+GBA+1:NGW+2GBA]
@@ -127,7 +127,7 @@ function logLike_T(Model, obsT, vReGasPar)
       NGW,GBA,ABgroupsIndNodesIO,indTvNodesIO = NumberOfGroupsAndABindNodes(Model, groupsInds)
       # Organize parameters of the GAS update equation
       WGroupsIO = vReGasPar[1:NGW]
-      #    StaNets.expMatrix2(StaNets.fooNetModelDirBin1,WGroupsIO )
+      #    StaticNets.expMatrix2(StaticNets.fooNetModelDirBin1,WGroupsIO )
       W_allIO = WGroupsIO[groupsInds[1]]
       BgasGroups  = vReGasPar[NGW+1:NGW+GBA]
       AgasGroups  = vReGasPar[NGW+GBA+1:NGW+2GBA]

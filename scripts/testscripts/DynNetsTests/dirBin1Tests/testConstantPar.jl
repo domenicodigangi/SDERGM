@@ -7,7 +7,7 @@
 #
 
 
-using JLD,HelperFunDom,StaNets,DynNets, Clustering
+using JLD,HelperFunDom,StaticNets,DynNets, Clustering
 using PyCall; pygui(:qt); using PyPlot
 
 
@@ -29,7 +29,7 @@ save_fold = "./data/estimatesTest/asympTest/"
 #  groupsInds = [Int.(1:2N),Int.(ones(2N))];groupsInds[2][.!indsTVnodes[indN,s,d]] = 0
 #  degsIO_T = dynDegsSam[indN,s,d]
 #  modGasDirBin1 = DynNets.GasNetModelDirBin1(degsIO_T,[ zeros(2N) ,0.9  * ones(1), 0.01 * ones(1)],groupsInds,"FISHER-DIAG")
-#  statPar,~ = StaNets.estimate(StaModType( modGasDirBin1); degIO = meanSq(degsIO_T,2) )
+#  statPar,~ = StaticNets.estimate(StaModType( modGasDirBin1); degIO = meanSq(degsIO_T,2) )
 #  xOrder = 1:2N #maximum(degsIO_T,2) - minimum(degsIO_T,2)# mean(degsIO_T,2)#
 #  # Score autocorrelation for static parameters estimates
 #  sIO_T,gradIO_T = gasScoreSeries(modGasDirBin1,repmat(statPar,1,T);obsT = degsIO_T)
@@ -71,7 +71,7 @@ sIO_T,gradIO_T = gasScoreSeries(modGasDirBin1,tmpPar;obsT = degsIO_T)
 
 
 ################## Compute score autororrelation on real data
-using JLD,HelperFunDom,StaNets,DynNets, Clustering
+using JLD,HelperFunDom,StaticNets,DynNets, Clustering
 using PyCall; pygui(:qt); using PyPlot
 halfPeriod = false
 fold_Path =  "/home/Domenico/Dropbox/Dynamic_Networks/data/emid_data/juliaFiles/"
@@ -87,7 +87,7 @@ N2,T = size(degsIO_T[:,1:Ttrain]);N = round(Int,N2/2)
  close()
   groupsInds = [Int.(1:2N),Int.(ones(2N))];
   modGasDirBin1 = DynNets.GasNetModelDirBin1(degsIO_T[:,1:Ttrain],[ zeros(2N) ,0.9  * ones(1), 0.01 * ones(1)],groupsInds,"FISHER-DIAG")
-    statPar,~ = StaNets.estimate(StaModType(fooGasNetModelDirBin1); degIO = meanSq(degsIO_T[:,1:Ttrain],2) )
+    statPar,~ = StaticNets.estimate(StaModType(fooGasNetModelDirBin1); degIO = meanSq(degsIO_T[:,1:Ttrain],2) )
     xOrder = 1:2N #maximum(degsIO_T[:,1:Ttrain],2) - minimum(degsIO_T[:,1:Ttrain],2)# mean(degsIO_T[:,1:Ttrain],2)#
     # Score autocorrelation for static parameters estimates
     sIO_T,gradIO_T = gasScoreSeries(modGasDirBin1,repmat(statPar,1,T);obsT = degsIO_T[:,1:Ttrain])
@@ -175,11 +175,11 @@ figure()
  remMat = squeeze(prod(.!matA_T,3),3)#falses(N,N)#
  sizeLeg = 15
  i = 1
- tmpTm1 =  StaNets.nowCastEvalFitNet(  gasforeFitStore[i] ,matA_T,Ttrain;mat2rem = remMat,shift = 0)
+ tmpTm1 =  StaticNets.nowCastEvalFitNet(  gasforeFitStore[i] ,matA_T,Ttrain;mat2rem = remMat,shift = 0)
     legTex = ["GAS $(i) group t-1 AUC = $(round(tmpTm1[3],3))"]
     # ROC for predictions from mean over Ttrain estimates
  for i=2:maxNgroups
-     tmpTm1 =  StaNets.nowCastEvalFitNet(  gasforeFitStore[i] ,matA_T,Ttrain;mat2rem = remMat,shift = 0)
+     tmpTm1 =  StaticNets.nowCastEvalFitNet(  gasforeFitStore[i] ,matA_T,Ttrain;mat2rem = remMat,shift = 0)
         legTex = [legTex ; "GAS $(i) groups t-1 AUC = $(round(tmpTm1[3],3))"]
         legend(legTex)
  end
@@ -194,7 +194,7 @@ degsIO_T = repmat(degsIO_T_store,20,1)
 
 
 targetErr=1e-5;identPost=false;identIter=false
-      statPar = StaNets.estimate(StaNets.SnapSeqNetDirBin1(mean(degsIO_T,2)),targetErr = targetErr ,identPost=identPost,identIter= identIter)
+      statPar = StaticNets.estimate(StaticNets.SnapSeqNetDirBin1(mean(degsIO_T,2)),targetErr = targetErr ,identPost=identPost,identIter= identIter)
      tmpPar = repmat(statPar,1,T)
 
 s_T,grad_T = gasScoreSeries(modGasDirBin1,tmpPar;obsT = degsIO_T)

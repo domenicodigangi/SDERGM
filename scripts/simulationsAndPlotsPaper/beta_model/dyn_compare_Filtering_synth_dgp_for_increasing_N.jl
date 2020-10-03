@@ -4,20 +4,20 @@
 
 
 #function that Generates the dynamical fitnesses and estimates single snapshot
-using StaNets,JLD, DynNets
+using StaticNets,JLD, DynNets
  function simWrap1(N,T, NTV;dynType = "SIN", degIOUncMeans =15.*ones(2N),degb = [10, 40] )
 
-    dynFitDgp,indsTVnodes =  StaNets.dgpDynamic(StaNets.fooNetModelDirBin1,"SIN",N,T;
+    dynFitDgp,indsTVnodes =  StaticNets.dgpDynamic(StaticNets.fooNetModelDirBin1,"SIN",N,T;
                                         NTV = NTV,degIOUncMeans = degIOUncMeans,degb = degb  )
     dynExpDegsDgp = zero(dynFitDgp)
-    for t =1:T  dynExpDegsDgp[:,t] = StaNets.expValStats(StaNets.fooNetModelDirBin1,dynFitDgp[:,t]) end
+    for t =1:T  dynExpDegsDgp[:,t] = StaticNets.expValStats(StaticNets.fooNetModelDirBin1,dynFitDgp[:,t]) end
     # sanmple dynamical networks from dgp fitnesses
     dynDegsSam = zeros(dynFitDgp)
     for t=1:T
-        matSamp = StaNets.sampl(StaNets.NetModelDirBin1(dynFitDgp[:,t]),1;  parGroupsIO = dynFitDgp[:,t])
+        matSamp = StaticNets.sampl(StaticNets.NetModelDirBin1(dynFitDgp[:,t]),1;  parGroupsIO = dynFitDgp[:,t])
         dynDegsSam[:,t] = [sumSq(matSamp,2);sumSq(matSamp,1)]
     end
-    estFitSS =  StaNets.estimate( StaNets.SnapSeqNetDirBin1(dynDegsSam); identPost = false,identIter= true )
+    estFitSS =  StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(dynDegsSam); identPost = false,identIter= true )
     return dynFitDgp,dynDegsSam,estFitSS,indsTVnodes
  end
 

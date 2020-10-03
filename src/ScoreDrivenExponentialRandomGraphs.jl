@@ -1,7 +1,7 @@
 module ScoreDrivenExponentialRandomGraphs
 
 
-include("./StaNets.jl")
+include("./StaticNets.jl")
 
 include("./DynNets.jl")
 
