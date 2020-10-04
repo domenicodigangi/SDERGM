@@ -8,11 +8,15 @@ using DataFrames
 using RCall
 using DynNets
 
+R"""local({r <- getOption("repos")
+       r["CRAN"] <- "http://cran.r-project.org" 
+       options(repos=r)})"""
+
+
 
 function clean_start_RCall()
     # Clean R enviroment and load needed packages
     R"rm(list = ls())
-    library(statnet)
     library(ergm)
     library(sna)
     library(coda)

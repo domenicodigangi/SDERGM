@@ -9,13 +9,16 @@ using StaticNets
 using ergmRcall
 # test sampling
 
-nSample = 500
+nSample = 1500
 N=30
     θ_0 = -3.1
     η_0 = 2
+    par_dgp = [θ_0, η_0] 
     model = fooNetModelDirBin0Rec0
     diadProb = diadProbFromPars(model, [θ_0, η_0])
     A_vec = [samplSingMatCan(model, diadProb, N) for i=1:nSample]
+
+sum([sum(diag(A)) for A in A_vec])
 
 using PyPlot
 hist([sum(A) for A in A_vec])
@@ -31,59 +34,50 @@ hist(par_est[1,:], density=true )
 
 ## Are loglikelihood and pseudo-loglikelihood equal??
 
-formula_ergm = net ~ edges +  gwesp(decay = 0.25,fixed = TRUE)
-
 
 # Write a funciton that, given a matrix returns the change statistics wrt to a given formula
-install_req_R_packages()
-clean_start_RCall()
-T = size(parMatDgp_T)[2]
-# For each t, sample the ERGM with parameters corresponding to the DGP at time t
-# and run a single snapeshot estimate
-@rput T; @rput parMatDgp_T;@rput N;@rput Nsample
+ergmRcall.clean_start_RCall()
+A = A_vec[1]
+par = par_est[:,1]
 
-reval("formula_ergm = net ~ "*formula_ergm_str)
+using RCall
 
-    #create an empty network, the formula defining ergm, sample the ensemble and
+
+ergmTermsString = "edges +  mutual"
+function get_change_stats(A::Matrix{T} where T<:Integer, ergmTermsString::String)
+    @rput A
+    reval("formula_ergm = net ~ "* ergmTermsString)
     # store the sufficient statistics and change statistics in R
-    R"
-    net <- network.initialize(N)
-    sampledMat_T_R =    array(0, dim=c(N,N,T,Nsample))
-    changeStats_T_R = list()
-    stats_T_R = list()
-    for(t in 1:T){
-        changeStats_t_R = list()
-        stats_t_R = list()
-        print(t)
-        for(n in 1:Nsample){
-                net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parMatDgp_T[,t],control = control.simulate.formula(MCMC.burnin = 100000))
-                sampledMat_T_R[,,t,n] <- as.matrix.network( net)
-                print(c(t,n,parMatDgp_T[,t]))
-                chStat_t <- ergmMPLE(formula_ergm)
-                changeStats_t_R[[n]] <- cbind(chStat_t$response, chStat_t$predictor,chStat_t$weights)
-                stats_t_R[[n]] <- summary(formula_ergm)
-                }
-                changeStats_T_R[[t]] <-changeStats_t_R
-                stats_T_R[[t]] <- stats_t_R
-            }"
+    R"""
+        net <- network(A)
+        chStat_t <- ergmMPLE(formula_ergm)
+        changeStats_t_R <- cbind(chStat_t$response, chStat_t$predictor,     chStat_t$weights)
+            """
+
+    changeStats = @rget changeStats_t_R;# tmp = Array{Array{Float64,2}}(T); for 
+    return changeStats
+end
+
+
+changeStat = get_change_stats(A_vec[1],ergmTermsString) 
+
+
+pseudo_loglikelihood(par_est[:,1], changeStat)
+
+
+L,R = statsFromMat(model, A)
+
+logLikelihood(model,L,R,N, par)
+
+n=500
+x_vals = LinRange(-0.2,0.2,n) 
+par_vec_1 =  [par_dgp .+ [0, x] for x in x_vals]
+par_vec_2 =  [par_dgp .+ [x, 0] for x in x_vals]
 
 
 
-# import sampled networks in julia
-sampledMat_T = BitArray( @rget(sampledMat_T_R))
-changeStats_T = @rget changeStats_T_R;# tmp = Array{Array{Float64,2}}(T); for t=1:T tmp[t] =  changeStats_T[t];end;changeStats_T = tmp
-stats_T = @rget(stats_T_R); #tmp = zeros(Nterms,T); for t=1:T tmp[:,t] = stats_T[t];end;stats_T = tmp
-
-
-
-
-
-
-
-
-
-
-
+plot(x_vals,[logLikelihood(model, L,R,N, par) for par in par_vec_1])
+plot(x_vals,[logLikelihood(model, L,R,N, par) for par in par_vec_2])
 
 
 

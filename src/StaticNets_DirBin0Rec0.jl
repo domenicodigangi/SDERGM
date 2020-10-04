@@ -55,13 +55,14 @@ function samplSingMatCan(Model::NetModelDirBin0Rec0, diadProbsVec::Array{<:Real,
 
 function statsFromMat(Model::NetModelDirBin0Rec0, A ::Matrix{<:Real})
     L = sum(A)
-    R = sum(A'.*A)
+    R = sum(A'.*A)/2
+
 return [L, R]
 end
 
 function estimate(Model::NetModelDirBin0Rec0, L, R, N )
     L_bar = L / (N*(N-1))
-    R_bar = R / (N*(N-1))
+    R_bar = 2*R / (N*(N-1)) # when I coputed it I defined R^bar as twice the number of average mutual pairs. This is the only reason for the two in front
     θ_est = log((R_bar - L_bar)/(2*L_bar - R_bar -1) )
     η_est = log( (- R_bar)*(2*L_bar - R_bar -1)/((1- R_bar)*(R_bar-L_bar)^2)  )/2
     vPar = [θ_est, η_est]
@@ -74,18 +75,18 @@ function estimate(Model::NetModelDirBin0Rec0, A ::Matrix{<:Real})
     return estimate(Model, L, R, N )
 end
 
-function logLikelihood(Model::NetModelDirBin0Rec0, L, R, par)
+function logLikelihood(Model::NetModelDirBin0Rec0, L, R, N, par)
     θ, η = par
-    return L * θ + R*η - log(1 + 2*exp(θ) + exp(2*(θ + η)))
+    return L * θ + R*η -  (N*(N-1)/2)*log(1 + 2*exp(θ) + exp(2*θ + η))
 end
 
 function pseudoLogLikelihood(Model::NetModelDirBin0Rec0, L, R, par)
     θ, η = par
-    return L * θ + R*η - log(1 + 2*exp(θ) + exp(2*(θ + η)))
+    return L * θ + R*η - (N*(N-1))*log(1 + 2*exp(θ) + exp(2*(θ + η)))
 end
 
 function pseudo_loglikelihood(par::Array{<:Real,1}, changeStat::Array{<:Real,2})
-    
+    indPres = (changeStat[:,1]).>0 # change stats of matrix elements that are 
     tmpMatPar = par' .* changeStat[:,2:end-1]
     p_ij =  exp.( .- sum(tmpMatPar,dims = 2))
     mult =changeStat[:,end]
