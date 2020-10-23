@@ -224,5 +224,43 @@ end
 export sdergmDGPpaper_Rcall
 
 
+function get_change_stats(A::Matrix{T} where T<:Integer, ergmTermsString::String)
+    # given a matrix returns the change statistics wrt to a given formula
+    @rput A
+    reval("formula_ergm = net ~ "* ergmTermsString)
+    # store the sufficient statistics and change statistics in R
+    R"""
+        net <- network(A)
+        chStat_t <- ergmMPLE(formula_ergm)
+        changeStats_t_R <- cbind(chStat_t$response, chStat_t$predictor,     chStat_t$weights)
+            """
+
+    changeStats = @rget changeStats_t_R;# tmp = Array{Array{Float64,2}}(T); for 
+    return changeStats
+end
+export get_change_stats
+
+function get_mple(A::Matrix{T} where T<:Integer, ergmTermsString::String)
+    @rput A
+    reval("formula_ergm = net ~ "* ergmTermsString)
+    # store the sufficient statistics and change statistics in R
+    R"""
+        net <- network(A)
+        mple_t_R <- ergmMPLE(formula_ergm, output="fit")$coef
+        print(mple_t_R)
+        """
+
+    mple_t = @rget mple_t_R;# tmp = Array{Array{Float64,2}}(T); for 
+    return mple_t
+end
+export get_mple
+
+function decomposeMPLEmatrix(ergmMPLEmatrix)  
+    changeStat = ergmMPLEmatrix[:,2:3]
+    response = ergmMPLEmatrix[:,1]
+    weights = ergmMPLEmatrix[:,4]
+    return changeStat, response, weights 
+end
+export decomposeMPLEmatrix
 
 end
