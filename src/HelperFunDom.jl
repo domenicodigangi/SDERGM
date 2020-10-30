@@ -2,36 +2,51 @@
 module HelperFunDom
 using MLBase, LinearAlgebra
 using PyCall; pygui(:qt); using PyPlot
-export rocCurve,sumSq, meanSq,putZeroDiag!,putZeroDiag, putZeroDiag_no_mut,splitVec,splitMat,
-        distributeAinB!, distributeAinVecN,tmpAjacMatTridiagFalses,
-        tmpArrayAdjmatrEqual,collapseArr3,sortrowsHelperFunDom,randSteps,dgpSin,randSteps,
-        dgpAR
 
 include("./AReg.jl")
+
+logit(x) = log(x/(1-x))
+export logit
+inv_logit(x) = 1/(1+exp(-x))
+export inv_logit
 
 #Funzioni che uso spesso
 sumSq(array :: AbstractArray,Dim::Int) = dropdims(sum(array,dims = Dim),dims =Dim)
 sumSq(array :: AbstractArray) = sumSq(array,1)
+export sumSq
 meanSq(array::AbstractArray,Dim::Int) = dropdims(mean(array,dims = Dim),dims =Dim)
+export meanSq
 
 splitVec(Vec::AbstractArray{<:Any,1}) = (Nhalf = round(Int,length(Vec)/2); (Nhalf,Vec[1:Nhalf],Vec[Nhalf+1:2Nhalf]) )
+export splitVec
 
 splitMat(Mat::AbstractArray{<:Any,2}) = (Nhalf = round(Int,length(Mat[1,:])/2); (Nhalf,Mat[:,1:Nhalf],Mat[:,Nhalf+1:2Nhalf]) )
+export splitMat
+
  """put to zero diagonal of matrices"""
 putZeroDiag!(Matr::Array{T,2} where T<: Real) =   for i=1:length(Matr[:,1]) Matr[i,i] = 0 end
+export putZeroDiag!
+
 #putZeroDiag!(Matr::Symmetric{T,Array{T,2}} where T<: Real) =   for i=1:length(Matr[:,1]) Matr[i,i] = 0 end
 putZeroDiag(Matr::Array{T,2} where T<: Real) = (tmp = Matr; putZeroDiag!(tmp); tmp)
-putZeroDiag_no_mut(Matr::Array{T,2} where T<: Real) = (Matr - Diagonal(Diagonal(Matr)))
 #putZeroDiag(Matr::Symmetric{T,Array{T,2}} where T<: Real) = (tmp = Matr; putZeroDiag!(tmp); tmp)
 putZeroDiag!(Matr::BitArray{2}) =   for i=1:length(Matr[:,1]) Matr[i,i] = false end
 putZeroDiag(Matr::BitArray{2}) = (tmp = Matr; putZeroDiag!(tmp); tmp)
+export putZeroDiag
+
+putZeroDiag_no_mut(Matr::Array{T,2} where T<: Real) = (Matr - Diagonal(Diagonal(Matr)))
+export putZeroDiag_no_mut
+
 
 function sortrowsHelperFunDom(A::Matrix{<:Number},rowInd::Int;rev = true)
     tmp  = sortperm(A[:,rowInd],rev=rev)
     return A[tmp,:]
 end
+export sortrowsHelperFunDom
 #define an adjacency matrix that has falses on diagonals: central upper and lower
 tmpAjacMatTridiagFalses(N::Int) = (tmp = trues(N,N);for i=1:N tmp[i,i] = false; i>1 ? tmp[i,i-1]= 0 : (); i<N ? tmp[i,i+1]=0 : ()  end;tmp)
+export tmpAjacMatTridiagFalses
+
 function tmpArrayAdjmatrEqual(N::Int,T::Int;matGenFun::Function = tmpAjacMatTridiagFalses)
     out = trues(N,N,T)
     mat = matGenFun(N)
@@ -40,6 +55,7 @@ function tmpArrayAdjmatrEqual(N::Int,T::Int;matGenFun::Function = tmpAjacMatTrid
     end
     return out
 end
+export tmpArrayAdjmatrEqual
 
 function distributeAinB!(A::Array{<:Real,1},B::Array{<:Real,1})
     NA = length(A)
@@ -47,7 +63,9 @@ function distributeAinB!(A::Array{<:Real,1},B::Array{<:Real,1})
     GroupSize  = floor(NB/NA)
     for i =0:NA-1 B[1 + Int64( GroupSize *i):Int64(GroupSize*(i+1))] = A[i+1] end;
     B[Int64(GroupSize*(NA-1))+1:end] = A[NA];
- end
+end
+export distributeAinB!
+
 function distributeAinVecN(A::Array{<:Real,1},N::I where I<: Int64)
     if length(A) == 0
         return zeros(Int64,N);
@@ -56,8 +74,9 @@ function distributeAinVecN(A::Array{<:Real,1},N::I where I<: Int64)
         distributeAinB!(A,vecN);
         return vecN
     end
- end
+end
 distributeAinVecN(A::UnitRange,N::I where I<: Int64) = distributeAinVecN(Array{Int,1}(A),N)
+export distributeAinVecN
 
 function rocCurve(realVals::BitArray{1},foreVals::Vector{Float64}; Th::Vector{Float64}=Vector(0:0.00001:1),plotFlag = true)
     #Given binary observations and estimated probabilityes plot the roc and return true positives and false positives
@@ -74,8 +93,8 @@ function rocCurve(realVals::BitArray{1},foreVals::Vector{Float64}; Th::Vector{Fl
         grid()
     end
     return tpr, fpr,auc
- end
-
+end
+export rocCurve
 
 
 function collapseArr3(arr)
@@ -86,13 +105,10 @@ function collapseArr3(arr)
      end
      tmp = permutedims(tmp,[2,1,3])
      return tmp
- end
+end
+export collapseArr3
 
-
-
-
-
- function randSteps(startVal,endVal,Nsteps::Int,T::Int;rand=true)
+function randSteps(startVal,endVal,Nsteps::Int,T::Int;rand=true)
      out = zeros(T)
      if Nsteps>1
          heights = linspace(startVal,endVal,Nsteps)
@@ -110,8 +126,8 @@ function collapseArr3(arr)
          out =startVal
      end
      return out
- end
-
+end
+export randSteps
 
 
 function dgpSin(minVal::Ty  where Ty <:Real  ,maxVal::Ty  where Ty <:Real ,Ncycles::Int,T::Int)
@@ -121,9 +137,10 @@ function dgpSin(minVal::Ty  where Ty <:Real  ,maxVal::Ty  where Ty <:Real ,Ncycl
      amplitude = abs.(maxVal-minVal)
      out = (medVal .+ (amplitude/2) .* sin.(2π*Ncycles/T .*  Vector(1:T)))
      return out
- end
+end
+export dgpSin
 
- function dgpAR(mu,B,sigma,T::Int;minMax=zeros(2),scaling = "uniform")
+function dgpAR(mu,B,sigma,T::Int;minMax=zeros(2),scaling = "uniform")
   ar1 = AReg.ARp([mu*(1-B) , B],sigma,[mu])
   path = AReg.simulate(ar1,T)
 
@@ -143,6 +160,8 @@ function dgpSin(minVal::Ty  where Ty <:Real  ,maxVal::Ty  where Ty <:Real ,Ncycl
       rescPath = path
   end
   return rescPath
- end
+end
+export dgpAR
+
 
 end
