@@ -46,6 +46,7 @@ the 1000 networks, but do not effect the ultimateMLE itself.
     
 
 ## "Overview of Composite Likelihoods Methods" 
+- Notation: m number of elements of vector random variable (as a consequence in many cases it is equalto the  number of composite likelhood's terms), n number of observations 
 - For maximum composite likelihoods estimators (MPLE is a particular case) the "information matrix identity" does not hold. 
 - The variance of MPLE estimators is asymptotically G^-1, where G = E[h] * (var[s])^-1 * E[h] is  the Godambe or sandwitch information matrix 
 - Not clear how to estimate var[s]
