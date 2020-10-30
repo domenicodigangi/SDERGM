@@ -19,7 +19,7 @@ model = fooNetModelDirBin0Rec0
 ##-------------------- Test and COmpare MLE and MPLE estimates
 #Compare for a single value of the parameters
 nSample = 50
-N=100
+N=30
 θ_0 = 3
 η_0 = -5
 par_dgp = [θ_0, η_0] 
@@ -85,30 +85,7 @@ plot(par_mle[1,:], par_mple[1,:], ".")
 
 
 ##----------------------------- Explore logLikelihoods around the estimates
-θ_0 = 3
-η_0 = -5
-par_dgp = [θ_0, η_0]
-N = 100
-A = samplSingMatCan(model, diadProbFromPars(model, [θ_0, η_0]), N) 
-mle = estimate(model, A)
-mple = get_mple(A,ergmTermsString)
-println(mle.-mple)
 
-changeStat, response, weights = decomposeMPLEmatrix(get_change_stats(A,ergmTermsString))
-
-
-# pseudolikelihood function from change statistics following strauss and ikeda
-logit(x) = log(x/(1-x))
-inv_logit(x) = 1/(1+exp(-x))
-
-
-function pseudo_loglikelihood_strauss_ikeda(par, changeStat, response, weights)
-    logit_P = sum(par.*changeStat', dims=1)      
-    P = inv_logit.(logit_P)    
-    logPVec = log.([response[i] == zero(response[i]) ? 1 - P[i] : P[i] for i=1:length(response) ])
-    logPTot = sum(logPVec.*weights)
-    return logPTot
-end
 function pseudo_loglikelihood_ddg(Model::NetModelDirBin0Rec0, A, par)
     θ, η = par
     N=size(A)[1]
@@ -116,34 +93,42 @@ function pseudo_loglikelihood_ddg(Model::NetModelDirBin0Rec0, A, par)
 
     return L * θ + R*η - sum(log.(1 .+ exp.(2θ .+ (η).*A )) ) 
 end
-function logLikelihood(Model::NetModelDirBin0Rec0, A, par)
-    θ, η = par
-    N=size(A)[1]
-    z = 1 + 2*exp(θ) + exp(2*θ+η)
-    L, R = statsFromMat(Model, A)
-    return L * θ + R*η - (N*(N-1)/2)*log(z)
-end
-
-## Are the two functions similar around the estimates?
-x_vals = LinRange(-0.5,0.5,500) 
-par_vec_1 =  [par_dgp .+ [0, x] for x in x_vals]
-par_vec_2 =  [par_dgp .+ [x, 0] for x in x_vals]
 
 
-cost_diff_si = logLikelihood(model, A, par_dgp) - pseudo_loglikelihood_strauss_ikeda(par_dgp, changeStat, response, weights) 
-cost_diff_ddg = logLikelihood(model, A, par_dgp) - pseudo_loglikelihood_ddg(model, A, par_dgp) 
 
+θ_0 = 1
+η_0 = -0.5
+par_dgp = [θ_0, η_0]
+N = 200
 fig, ax = subplots(2,1)
-suptitle("exact vs pseudo log'likelihoods, /constant")
-ax[1].plot(x_vals,[logLikelihood(model, A, par) for par in par_vec_1])
-# ax[1].plot(x_vals,cost_diff_si .+[pseudo_loglikelihood_strauss_ikeda(par, changeStat, response, weights) for par in par_vec_1])
-#ax[1].legend(["log likelihood", "pesudo log likelihood"])
-ax[1].grid()
-ax[2].plot(x_vals,[logLikelihood(model, A, par) for par in par_vec_2])
-# ax[2].plot(x_vals,cost_diff_si .+[pseudo_loglikelihood_strauss_ikeda(par, changeStat, response, weights) for par in par_vec_2])
-ax[2].grid()
+for i=1:3
+    A = samplSingMatCan(model, diadProbFromPars(model, [θ_0, η_0]), N) 
+    mle = estimate(model, A)
+    mple = get_mple(A,ergmTermsString)
+    println(mle.-mple)
+
+    changeStat, response, weights = decomposeMPLEmatrix(get_change_stats(A,ergmTermsString))
 
 
+
+    ## Are the two functions similar around the estimates?
+    x_vals = LinRange(-0.5,0.5,500) 
+    par_vec_1 =  [mle .+ [0, x] for x in x_vals]
+    par_vec_2 =  [mle .+ [x, 0] for x in x_vals]
+
+
+    cost_diff_si = (logLikelihood(model, A, mle) - pseudo_loglikelihood_strauss_ikeda(mle, changeStat, response, weights)) ./N^2
+    cost_diff_ddg = (logLikelihood(model, A, mle) - pseudo_loglikelihood_ddg(model, A, mle))./N^2 
+
+    suptitle("exact vs pseudo log'likelihoods, /constant")
+    ax[1].plot(x_vals,[logLikelihood(model, A, par) for par in par_vec_1]./N^2, "-b")
+    ax[1].plot(x_vals, -cost_diff_si .+[pseudo_loglikelihood_strauss_ikeda(par, changeStat, response, weights) for par in par_vec_1]./N^2, "--r")
+    #ax[1].legend(["log likelihood", "pesudo log likelihood"])
+    ax[1].grid()
+    ax[2].plot(x_vals,[logLikelihood(model, A, par) for par in par_vec_2]./N^2, "-b")
+    ax[2].plot(x_vals,cost_diff_si .+[pseudo_loglikelihood_strauss_ikeda(par, changeStat, response, weights) for par in par_vec_2]./N^2, "--r")
+    ax[2].grid()
+end
 
 function grad(Model::NetModelDirBin0Rec0, A, par)
     θ, η = par

@@ -2,6 +2,8 @@ __precompile__(false)
 module StaticNets
 
 using Distributions, StatsBase,Optim, LineSearches, StatsFuns,Roots,MLBase, Statistics, LinearAlgebra, Random
+
+using HelperFunDom
 # using PyCall;# pygui(:qt);
 # using PyPlot
 
@@ -24,6 +26,7 @@ minSmallVal = 1e2*eps()
 include("./AReg.jl")
 
 include("./HelperFunDom.jl")
+include("./ergmRCall.jl")
 
 include("./StaticNets_Bin1.jl")
 include("./StaticNets_DirBin1.jl")

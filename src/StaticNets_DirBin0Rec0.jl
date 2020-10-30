@@ -1,3 +1,6 @@
+using RCall
+ergmRcall.clean_start_RCall()
+R"""options(warn=-1) """
 
 #---------------------------------Binary DIRECTED Networks with one Reciprocity par
 
@@ -8,6 +11,7 @@ struct  NetModelDirBin0Rec0 <: NetModelBin #Bin stands for (Binary) Adjacency ma
     vPar::Array{<:Real,1} # One parameter per statistic
 end
 fooNetModelDirBin0Rec0 =  NetModelDirBin0Rec0(ones(2), 10, zeros(2))
+export fooNetModelDirBin0Rec0
 NetModelDirBin0Rec0(A:: Matrix) =
     NetModelDirBin0Rec0(obs, size(A)[1], zeros(2) )
 
@@ -64,6 +68,9 @@ end
 function estimate(Model::NetModelDirBin0Rec0, A)
     L, R = statsFromMat(Model, A) 
     N = size(A)[1]
+    return estimate(Model, L, R, N)
+end
+function estimate(Model::NetModelDirBin0Rec0, L, R, N)
     L_bar = L / (N*(N-1))
     R_bar = R / (N*(N-1)) 
 
@@ -82,10 +89,36 @@ end
 
 
 
+function logLikelihood(Model::NetModelDirBin0Rec0, L, R, N, par)
+    θ, η = par
+    z = 1 + 2*exp(θ) + exp(2*θ+η)
+    return L * θ + R*η - (N*(N-1)/2)*log(z)
+end
+
+function logLikelihood(Model::NetModelDirBin0Rec0, A::Matrix, par)
+    N=size(A)[1]
+    L, R = statsFromMat(Model, A)
+    return logLikelihood(Model, L, R, N, par)
+end
+
+function change_stats(Model::NetModelDirBin0Rec0, A::Matrix)
+    ergmTermsString = "edges +  mutual"
+    return ergmRcall.get_change_stats(A,ergmTermsString)
+end
 
 
 
-function pseudo_loglikelihood_from_sdergm(par::Array{<:Real,1}, changeStat::Array{<:Real,2})
+
+# pseudolikelihood function from change statistics following strauss and ikeda
+function pseudo_loglikelihood_strauss_ikeda(Model::NetModelDirBin0Rec0, par, changeStat, response, weights)
+    logit_P = sum(par.*changeStat', dims=1)      
+    P = inv_logit.(logit_P)    
+    logPVec = log.([response[i] == zero(response[i]) ? 1 - P[i] : P[i] for i=1:length(response) ])
+    logPTot = sum(logPVec.*weights)
+    return  logPTot
+end
+
+function pseudo_loglikelihood_from_sdergm(Model::NetModelDirBin0Rec0, par::Array{<:Real,1}, changeStat::Array{<:Real,2})
     indPres = (changeStat[:,1]).>0 # change stats of matrix elements that are 
     tmpMatPar = par' .* changeStat[:,2:end-1]
     p_ij =  exp.( .- sum(tmpMatPar,dims = 2))
@@ -99,4 +132,3 @@ function pseudo_loglikelihood_from_sdergm(par::Array{<:Real,1}, changeStat::Arra
     end
     return logpseudolike_t
 end
-export pseudo_loglikelihood
