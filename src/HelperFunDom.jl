@@ -5,10 +5,19 @@ using PyCall; pygui(:qt); using PyPlot
 
 include("./AReg.jl")
 
+Npairs(N) = N*(N-1)/2
+export Npairs
+
 logit(x) = log(x/(1-x))
 export logit
 inv_logit(x) = 1/(1+exp(-x))
 export inv_logit
+
+drop_nan_col(x::Matrix) = x[:, .!dropdims(any(isnan.(x), dims=1), dims=1) ]
+export drop_nan_col
+
+drop_nan_row(x::Matrix) = x[.!dropdims(any(isnan.(x), dims=2), dims=2), : ]
+export drop_nan_row
 
 #Funzioni che uso spesso
 sumSq(array :: AbstractArray,Dim::Int) = dropdims(sum(array,dims = Dim),dims =Dim)

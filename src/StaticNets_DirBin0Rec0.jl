@@ -132,3 +132,25 @@ function pseudo_loglikelihood_from_sdergm(Model::NetModelDirBin0Rec0, par::Array
     end
     return logpseudolike_t
 end
+
+
+
+function ergm_par_from_mean_vals(model::NetModelDirBin0Rec0, mean_sum, mean_prod, N)
+    # mean_sum is the mean value of ∑_i>j A_ij + A_ji
+    # mean_prod is the mean value of ∑_i>j A_ij * A_ji
+
+
+    Npairs = N*(N-1)/2
+    
+    # average values per pair
+    α = mean_sum/Npairs
+    β = mean_prod/Npairs
+
+    x = (α/2-β)/(1+β-α)
+    θ = log(x)
+
+    y = (β/(1-β)) * ( 1 + 2x )/(x^2) 
+    η =  log(y)
+
+    return θ, η 
+end

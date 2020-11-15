@@ -22,9 +22,13 @@ nSample = 50
 N=30
 θ_0 = 3
 η_0 = -5
+θ_0, η_0 = ergm_par_from_mean_vals(model, Npairs(N)/2, Npairs(N)/12, N)
 par_dgp = [θ_0, η_0] 
 diadProb = diadProbFromPars(model, [θ_0, η_0])
+
 A_vec = [samplSingMatCan(model, diadProb, N) for i=1:nSample]
+[statsFromMat(model, A) for A in A_vec]
+
 parMpleSingle = reduce(hcat, [get_mple(A,ergmTermsString) for A in A_vec])
 parMleSingle = reduce(hcat,[estimate(model, A) for A in A_vec])
 fix, ax = subplots(2,1)

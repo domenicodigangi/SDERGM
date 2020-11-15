@@ -15,6 +15,7 @@ fooGasPar = [ones(2), ones(2), ones(2)]
 fooChangeStat = zeros(4,2)
 fooGasNetModelDirBin0Rec0_pmle = GasNetModelDirBin0Rec0_pmle( [fooChangeStat, fooChangeStat], fooGasPar, trues(2), "")
 
+export fooGasNetModelDirBin0Rec0_pmle
 
 struct  GasNetModelDirBin0Rec0_mle <: GasNetModelDirBin0Rec0
      """ A gas model based on pseudolikelihood (as objective function) for
@@ -31,6 +32,8 @@ struct  GasNetModelDirBin0Rec0_mle <: GasNetModelDirBin0Rec0
 
 fooGasPar = [ones(2), ones(2), ones(2)]
 fooGasNetModelDirBin0Rec0_mle = GasNetModelDirBin0Rec0_mle( [zeros(2), zeros(2), 10 .* ones(Int, 2)], fooGasPar, trues(2), "")
+
+export fooGasNetModelDirBin0Rec0_mle
 
 statsFromMat(Model::T where T<: GasNetModelDirBin0Rec0, A ::Matrix{<:Real}) = StaticNets.statsFromMat(StaticNets.fooNetModelDirBin0Rec0, A ::Matrix{<:Real}) 
 
@@ -221,7 +224,7 @@ function setOptionsOptim(model::T where T<: GasNetModelDirBin0Rec0)
     "Set the options for the optimization required in the estimation of the model.
     For the optimization use the Optim package."
     tol = eps()*100
-    maxIter = 5000
+    maxIter = 50
     opt = Optim.Options(  g_tol = tol,
                      x_tol = tol,
                      f_tol = tol,
@@ -242,7 +245,10 @@ end
 function static_estimate(model::GasNetModelDirBin0Rec0_mle, statsT)
     L_mean  = mean([stat[1] for stat in statsT ])
     R_mean  = mean([stat[2] for stat in statsT ])
-    staticPars = StaticNets.estimate(StaticNets.fooNetModelDirBin0Rec0, L_mean, R_mean, N )
+    N_mean  = mean([stat[3] for stat in statsT ])
+    
+    println(N_mean)
+    staticPars = StaticNets.estimate(StaticNets.fooNetModelDirBin0Rec0, L_mean, R_mean, N_mean )
     return staticPars
 end
 
@@ -341,7 +347,7 @@ function estimate(model::T where T<: GasNetModelDirBin0Rec0; obsT = model.obsT, 
 
         vecReGasParAll,vecConstPar = divideCompleteRestrictPar(vecUnPar)
 
-        oneInADterms  = (maxLargeVal + vecUnPar[1])/maxLargeVal
+        oneInADterms  = (StaticNets.maxLargeVal + vecUnPar[1])/StaticNets.maxLargeVal
 
         foo, target_fun_val_T, foo1 = gasFilter( model,  vecReGasParAll, indTvPar; obsT = obsT, vConstPar =  vecConstPar, ftot_0 = ftot_0 .* oneInADterms)
 
@@ -428,7 +434,7 @@ function target_function_t(model::GasNetModelDirBin0Rec0_pmle, obs_t, par)
 end
 
 
-function dgp_missp(model::GasNetModelDirBin0Rec0, θ_0, η_0, percAmpl, dgpType)
+function dgp_missp(model::GasNetModelDirBin0Rec0, T, θ_0, η_0, percAmpl, dgpType)
     parMatDgp_T = zeros(2,T)
     percAmpl = 50/100 
     Nsteps1= 3
@@ -450,7 +456,7 @@ function dgp_missp(model::GasNetModelDirBin0Rec0, θ_0, η_0, percAmpl, dgpType)
 end
 
 
-function sample_dgp(model::GasNetModelDirBin0Rec0, parMatDgp_T::Matrix)
+function sample_dgp(model::GasNetModelDirBin0Rec0, parMatDgp_T::Matrix, N )
     A_T_dgp = zeros(Int8, N, N, T)
     for t=1:T
         diadProb = StaticNets.diadProbFromPars(StaticNets.fooNetModelDirBin0Rec0, parMatDgp_T[:,t] )
@@ -462,13 +468,22 @@ end
 
 
 
-function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsample) 
+function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsample; plotFlag = true) 
     model_mle = fooGasNetModelDirBin0Rec0_mle
     model_pmle = fooGasNetModelDirBin0Rec0_pmle
 
-    fig1, ax_mle = subplots(2,1)
-    fig2, ax_pmle = subplots(2,1)
-  
+    indTvPar = trues(2)
+    B0=0.95
+    A0 = 0.001
+    vResGasPar_0 = DynNets.array2VecGasPar(model_mle, [[θ_0*(1-B0), B0, A0], [η_0*(1-B0), B0, A0] ], indTvPar)
+    vResGasPar = vResGasPar_0
+    ftot_0= zeros(Real,2)
+
+    if plotFlag
+        fig1, ax_mle = subplots(2,1)
+        fig2, ax_pmle = subplots(2,1)
+    end
+
     rmse(x::Matrix) = sqrt.(mean(x.^2, dims=2))
 
     rmse_mle = zeros(2,Nsample)
@@ -478,15 +493,15 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
 
     for n=1:Nsample
         ## sample dgp
-        A_T_dgp = sample_dgp(model_mle, parMatDgp_T)
+        A_T_dgp = sample_dgp(model_mle, parMatDgp_T, N)
         stats_T_dgp = [vcat(statsFromMat(model_mle, A_T_dgp[:,:,t]), N) for t in 1:T ]
         change_stats_T_dgp = change_stats(model_pmle, A_T_dgp)
 
 
         ## estimate SD
-        estPar_pmle, conv_flag,UM_mple , ftot_0_mple = estimate(model_mple; indTvPar=indTvPar, obsT = change_stats_T_dgp)
-        vResEstPar_pmle = DynNets.array2VecGasPar(model_mple, estPar_pmle, indTvPar)
-        fVecT_filt_p , target_fun_val_T_p, sVecT_filt_p = gasFilter( model_mple,  vResEstPar_pmle, indTvPar; obsT = change_stats_T_dgp)
+        estPar_pmle, conv_flag,UM_mple , ftot_0_mple = estimate(model_pmle; indTvPar=indTvPar, obsT = change_stats_T_dgp)
+        vResEstPar_pmle = DynNets.array2VecGasPar(model_pmle, estPar_pmle, indTvPar)
+        fVecT_filt_p , target_fun_val_T_p, sVecT_filt_p = gasFilter( model_pmle,  vResEstPar_pmle, indTvPar; obsT = change_stats_T_dgp)
         vEstSd_pmle[:,n] = vResEstPar_pmle
 
         estPar_mle, conv_flag,UM_mle , ftot_0_mle = estimate(model_mle; indTvPar=indTvPar, obsT = stats_T_dgp)
@@ -503,21 +518,26 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
         rmse_mle[:,n] = rmse(fVecT_filt.- parMatDgp_T)
         rmse_pmle[:,n] =rmse(fVecT_filt_p.- parMatDgp_T)
     end
-    ax_mle[1].plot(parMatDgp_T[1,:], "k")
-    ax_mle[2].plot(parMatDgp_T[2,:], "k")
-    ax_pmle[1].plot(parMatDgp_T[1,:], "k")
-    ax_pmle[2].plot(parMatDgp_T[2,:], "k")
     
-    avg_rmse_pmle = round.(mean(rmse_pmle, dims=2), digits=3)
-    avg_rmse_mle = round.(mean(rmse_mle, dims=2), digits=3)
+    avg_rmse_pmle = round.(mean(drop_nan_col(rmse_pmle), dims=2), digits=3)
+    avg_rmse_mle = round.(mean(drop_nan_col(rmse_mle), dims=2), digits=3)
 
-    ax_mle[1].set_title("N= $N , θ rmse = $(avg_rmse_mle[1])")   
-    ax_mle[2].set_title("N= $N , η rmse = $(avg_rmse_mle[2])")   
-    ax_mle.tight_layout()
+    if plotFlag
+        ax_mle[1].plot(parMatDgp_T[1,:], "k")
+        ax_mle[2].plot(parMatDgp_T[2,:], "k")
+        ax_pmle[1].plot(parMatDgp_T[1,:], "k")
+        ax_pmle[2].plot(parMatDgp_T[2,:], "k")
 
-    ax_pmle[1].set_title("N= $N , θ rmse = $(avg_rmse_pmle[1])")   
-    ax_pmle[2].set_title("N= $N , η rmse = $(avg_rmse_pmle[2])")   
-    ax_pmle.tight_layout()
-
+        ax_mle[1].set_title("MLE-SDERGM  N= $N , θ rmse = $(avg_rmse_mle[1])")   
+        ax_mle[2].set_title("MLE-SDERGM  N= $N , η rmse = $(avg_rmse_mle[2])")   
+        
+        ax_pmle[1].set_title("PMLE-SDERGM  N= $N , θ rmse = $(avg_rmse_pmle[1])")   
+        ax_pmle[2].set_title("PMLE-SDERGM  N= $N , η rmse = $(avg_rmse_pmle[2])")   
+                
+        fig1.tight_layout()
+        fig2.tight_layout()
+    end
+    
     return (vEstSd_mle=vEstSd_mle, vEstSd_pmle=vEstSd_pmle, rmse_mle=rmse_mle, rmse_pmle=rmse_pmle)
 end
+
