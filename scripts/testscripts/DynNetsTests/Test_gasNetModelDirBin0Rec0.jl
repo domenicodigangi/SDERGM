@@ -39,7 +39,7 @@ end
 
 ## filter SD
 fVecT_dgp , A_T_dgp, sVecT_dgp = gasFilter( model_mle,  vResGasPar_0, indTvPar; dgpNT = (N,T))
-stats_T_dgp = [vcat(statsFromMat(model_mle, A_T_dgp[:,:,t]), N) for t in 1:T ]
+stats_T_dgp = [statsFromMat(model_mle, A_T_dgp[:,:,t]) for t in 1:T ]
 change_stats_T_dgp = change_stats(model_mle, A_T_dgp)
 
 fVecT_filt , target_fun_val_T, sVecT_filt = gasFilter( model_mle,  vResGasPar_0, indTvPar; obsT = stats_T_dgp)
@@ -61,7 +61,7 @@ model_mple = fooGasNetModelDirBin0Rec0_pmle
 
 indTargPar = indTvPar
 fVecT_dgp , A_T_dgp, sVecT_dgp = gasFilter( model_mle,  vResGasPar_0, indTvPar; dgpNT = (N,T))
-stats_T_dgp = [vcat(statsFromMat(model_mle, A_T_dgp[:,:,t]), N) for t in 1:T ]
+stats_T_dgp = [statsFromMat(model_mle, A_T_dgp[:,:,t]) for t in 1:T ]
 change_stats_T_dgp = change_stats(model_mle, A_T_dgp)
 
 estimate(model_mle; indTvPar=indTvPar, indTargPar=indTargPar, obsT = stats_T_dgp)

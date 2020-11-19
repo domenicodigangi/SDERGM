@@ -5,11 +5,13 @@ Test script for dirBin0Rec0 model: one parameter for total number of links and o
 
 include("../../add_load_paths.jl")
 
-using StaticNets
+import StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0
 using ergmRcall
 using PyPlot
 using RCall
+using Statistics
 
+using HelperFunDom
 
 ergmRcall.clean_start_RCall()
 ergmTermsString = "edges +  mutual"
@@ -18,16 +20,24 @@ model = fooNetModelDirBin0Rec0
     
 ##-------------------- Test and COmpare MLE and MPLE estimates
 #Compare for a single value of the parameters
-nSample = 50
-N=30
-θ_0 = 3
-η_0 = -5
-θ_0, η_0 = ergm_par_from_mean_vals(model, Npairs(N)/2, Npairs(N)/12, N)
-par_dgp = [θ_0, η_0] 
-diadProb = diadProbFromPars(model, [θ_0, η_0])
+N=500
+meanL = n_pairs(N)/2
+meanR = n_pairs(N)/12
+θ_0, η_0 = ergm_par_from_mean_vals(model, meanL, meanR, N)
 
+nSample = 100
+diadProb = diadProbFromPars(model, [θ_0, η_0])
 A_vec = [samplSingMatCan(model, diadProb, N) for i=1:nSample]
-[statsFromMat(model, A) for A in A_vec]
+statsVec = reduce(hcat,[statsFromMat(model, A) for A in A_vec])
+pygui(true)
+
+fig, ax = subplots(2,1)
+ax[1].hist(statsVec[1,:], 30)
+ax[1].vlines(meanL, 0, 1, "k")
+ax[2].hist(statsVec[2,:], 30)
+ax[2].vlines(meanR, 0, 1, "k")
+
+
 
 parMpleSingle = reduce(hcat, [get_mple(A,ergmTermsString) for A in A_vec])
 parMleSingle = reduce(hcat,[estimate(model, A) for A in A_vec])
@@ -43,35 +53,39 @@ ax[2].vlines(θ_0, 0, 1, "k")
 ax[2].vlines(η_0, 0, 1, "k")
 ax[2].set_title("mple")
 
-function mle_pmle_comparison(model::NetModelDirBin0Rec0, parDgpVec; nSample=100)
+function mle_pmle_comparison(model::NetModelDirBin0Rec0, netSizes, linkFun, recFun; nSample=30)
     # compare the two estimators over different  par values for the dgp
-    nPars = length(parDgpVec)
-    par_mle = zeros(nPars, 2, nSample)
-    par_mple = zeros(nPars, 2, nSample)
+    nPars = length(netSizes)
+    parMmle = zeros(nPars, 2, nSample)
+    parMple = zeros(nPars, 2, nSample)
+    parDgp = zeros(nPars, 2)
     model = fooNetModelDirBin0Rec0
     for i=1:nPars
-        par_dgp = parDgpVec[i] 
+        N = netSizes[i]
+        θ_0, η_0 = ergm_par_from_mean_vals(model, linkFun(N), recFun(N), N)
+        parDgp[i,:] = [θ_0, η_0]
         diadProb = diadProbFromPars(model, [θ_0, η_0])
         A_vec = [samplSingMatCan(model, diadProb, N) for i=1:nSample]
-        par_mle[i,:,:] = reduce(hcat,[estimate(model, A) for A in A_vec])
-        par_mple[i,:,:] = reduce(hcat, [get_mple(A,ergmTermsString) for A in A_vec])
+        parMmle[i,:,:] = reduce(hcat,[estimate(model, A) for A in A_vec])
+        parMple[i,:,:] = reduce(hcat, [get_mple(A,ergmTermsString) for A in A_vec])
     end
-    return par_mle, par_mple
+    return parDgp, parMmle, parMple
 end
 
 # Compare for multiple values of the parameters
-θ_0 = 3
-η_0 = -5
-parDgpVec = [[θ_0, η_0 + delta] for delta in -2:0.2:2 ]
-par_mle, par_mple = mle_pmle_comparison(model, parDgpVec)
+netSizes = collect(15:5:40)
+
+parDgp, parMle, parMple = mle_pmle_comparison(model, netSizes, x->x, x->x/5 )
+
+[parMle[i, :, :] ]
 
 i=1
-bias_mle = reduce(hcat, [mean(parDgpVec[i] .- par_mle[i,:,:], dims=2 ) for i=1:length(par_mle[:,1,1])] )
-bias_mple = reduce(hcat, [mean(parDgpVec[i] .- par_mple[i,:,:], dims=2 ) for i=1:length(par_mle[:,1,1])] )
-rmse_mle = reduce(hcat, [sqrt.(mean((parDgpVec[i] .- par_mle[i,:,:]).^2, dims=2 )) for i=1:length(par_mle[:,1,1])] )
-rmse_mple = reduce(hcat, [sqrt.(mean((parDgpVec[i] .- par_mple[i,:,:]).^2, dims=2) ) for i=1:length(par_mle[:,1,1])] )
+bias_mle = reduce(hcat, [mean(parDgp[i] .- parMle[i,:,:], dims=2 ) for i=1:length(parMle[:,1,1])] )
+bias_mple = reduce(hcat, [mean(parDgp[i] .- parMple[i,:,:], dims=2 ) for i=1:length(parMle[:,1,1])] )
+rmse_mle = reduce(hcat, [sqrt.(mean((parDgp[i] .- parMle[i,:,:]).^2, dims=2 )) for i=1:length(parMle[:,1,1])] )
+rmse_mple = reduce(hcat, [sqrt.(mean((parDgp[i] .- parMple[i,:,:]).^2, dims=2) ) for i=1:length(parMle[:,1,1])] )
 
-xplot = reduce(hcat,parDgpVec)[2,:]
+xplot = parDgp[2,:]
 fix, ax = subplots(2,2)
 ax[1].plot(xplot, bias_mle', "--")
 ax[1].set_title("bias mle")
@@ -83,8 +97,8 @@ ax[4].plot(xplot, rmse_mple',"-")
 ax[4].set_title("rmse mple")
 
 
-plot(par_mle[2,:], par_mple[2,:], ".")
-plot(par_mle[1,:], par_mple[1,:], ".")
+plot(parMle[2,:], parMple[2,:], ".")
+plot(parMle[1,:], parMple[1,:], ".")
 
 
 
@@ -92,8 +106,7 @@ plot(par_mle[1,:], par_mple[1,:], ".")
 
 function pseudo_loglikelihood_ddg(Model::NetModelDirBin0Rec0, A, par)
     θ, η = par
-    N=size(A)[1]
-    L, R = statsFromMat(Model, A)
+    L, R, N = statsFromMat(Model, A)
 
     return L * θ + R*η - sum(log.(1 .+ exp.(2θ .+ (η).*A )) ) 
 end
@@ -136,8 +149,7 @@ end
 
 function grad(Model::NetModelDirBin0Rec0, A, par)
     θ, η = par
-    L, R = statsFromMat(Model, A) 
-    N=size(A)[1]
+    L, R, N = statsFromMat(Model, A) 
     z = 1 + 2*exp(θ) + exp(2*θ+η)
     g_θ =  L - (N*(N-1)/2) *(2*exp(θ)+ 2* exp(2*θ+η))/z
     g_η =  R - (N*(N-1)/2) *( exp(2*θ+η))/z

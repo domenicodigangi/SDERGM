@@ -1,3 +1,6 @@
+using HelperFunDom
+using PyPlot
+
 struct  GasNetModelDirBin0Rec0_pmle <: GasNetModelDirBin0Rec0
      """ A gas model based on pseudolikelihood (as objective function) for
             Directed binary networks and probability depending on a generic vector
@@ -200,7 +203,7 @@ function gasFilter( model::T where T<: GasNetModelDirBin0Rec0, vResGasPar::Array
             diadProb = StaticNets.diadProbFromPars(StaticNets.fooNetModelDirBin0Rec0, ftot_t )
             A_t = StaticNets.samplSingMatCan(StaticNets.fooNetModelDirBin0Rec0, diadProb, N)
             A_T[:, : , t] = A_t
-            obs_t = vcat(StaticNets.statsFromMat(StaticNets.fooNetModelDirBin0Rec0, A_t), N_T[t])
+            obs_t = StaticNets.statsFromMat(StaticNets.fooNetModelDirBin0Rec0, A_t)
 
         else   
             obs_t = obsT[t]
@@ -279,7 +282,7 @@ function estimate(model::T where T<: GasNetModelDirBin0Rec0; obsT = model.obsT, 
     optims_opt, algo = setOptionsOptim(model)
 
     # #set the starting points for the optimizations
-    B0_Re  = 0.9; B0_Un = log(B0_Re ./ (1 .- B0_Re ))
+    B0_Re  = 0.98; B0_Un = log(B0_Re ./ (1 .- B0_Re ))
     ARe_min =0.001
     A0_Re  = 0.005 ; A0_Un = log(A0_Re  .-  ARe_min)
     # starting values for the vector of parameters that have to be optimized
@@ -436,13 +439,13 @@ end
 
 function dgp_missp(model::GasNetModelDirBin0Rec0, T, θ_0, η_0, percAmpl, dgpType)
     parMatDgp_T = zeros(2,T)
-    percAmpl = 50/100 
-    Nsteps1= 3
+    Nsteps1= 2
     minmax(par_0, percAmpl) =sort( par_0 .* ( 1 .+ [-percAmpl, percAmpl]))
 
     if dgpType=="sin"
-        parMatDgp_T[1,:] = dgpSin(minmax(θ_0, percAmpl)[1], minmax(θ_0, percAmpl)[2],Nsteps1,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-        parMatDgp_T[2,:] = dgpSin(minmax(η_0, percAmpl)[1], minmax(η_0, percAmpl)[2],Nsteps1,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+        phase = 10rand()
+        parMatDgp_T[1,:] = dgpSin(minmax(θ_0, percAmpl)[1], minmax(θ_0, percAmpl)[2],Nsteps1,T; phase = phase)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+        parMatDgp_T[2,:] = dgpSin(minmax(η_0, percAmpl)[1], minmax(η_0, percAmpl)[2],Nsteps1,T;phase= phase + 2/T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
     elseif dgpType=="steps"
         parMatDgp_T[1,:] = randSteps(minmax(θ_0, percAmpl)[1], minmax(θ_0, percAmpl)[2],Nsteps1,T)
         parMatDgp_T[2,:] = randSteps(minmax(η_0, percAmpl)[1], minmax(η_0, percAmpl)[2],Nsteps1,T)     
@@ -457,6 +460,7 @@ end
 
 
 function sample_dgp(model::GasNetModelDirBin0Rec0, parMatDgp_T::Matrix, N )
+    T = size(parMatDgp_T)[2]
     A_T_dgp = zeros(Int8, N, N, T)
     for t=1:T
         diadProb = StaticNets.diadProbFromPars(StaticNets.fooNetModelDirBin0Rec0, parMatDgp_T[:,t] )
@@ -472,13 +476,9 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
     model_mle = fooGasNetModelDirBin0Rec0_mle
     model_pmle = fooGasNetModelDirBin0Rec0_pmle
 
+    T = size(parMatDgp_T)[2]
     indTvPar = trues(2)
-    B0=0.95
-    A0 = 0.001
-    vResGasPar_0 = DynNets.array2VecGasPar(model_mle, [[θ_0*(1-B0), B0, A0], [η_0*(1-B0), B0, A0] ], indTvPar)
-    vResGasPar = vResGasPar_0
-    ftot_0= zeros(Real,2)
-
+   
     if plotFlag
         fig1, ax_mle = subplots(2,1)
         fig2, ax_pmle = subplots(2,1)
@@ -494,26 +494,27 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
     for n=1:Nsample
         ## sample dgp
         A_T_dgp = sample_dgp(model_mle, parMatDgp_T, N)
-        stats_T_dgp = [vcat(statsFromMat(model_mle, A_T_dgp[:,:,t]), N) for t in 1:T ]
+        stats_T_dgp = [statsFromMat(model_mle, A_T_dgp[:,:,t]) for t in 1:T ]
         change_stats_T_dgp = change_stats(model_pmle, A_T_dgp)
 
 
         ## estimate SD
-        estPar_pmle, conv_flag,UM_mple , ftot_0_mple = estimate(model_pmle; indTvPar=indTvPar, obsT = change_stats_T_dgp)
+        estPar_pmle, conv_flag,UM_mple , ftot_0_mple = estimate(model_pmle; indTvPar=indTvPar,indTargPar=falses(2), obsT = change_stats_T_dgp)
         vResEstPar_pmle = DynNets.array2VecGasPar(model_pmle, estPar_pmle, indTvPar)
         fVecT_filt_p , target_fun_val_T_p, sVecT_filt_p = gasFilter( model_pmle,  vResEstPar_pmle, indTvPar; obsT = change_stats_T_dgp)
         vEstSd_pmle[:,n] = vResEstPar_pmle
 
-        estPar_mle, conv_flag,UM_mle , ftot_0_mle = estimate(model_mle; indTvPar=indTvPar, obsT = stats_T_dgp)
+        estPar_mle, conv_flag,UM_mle , ftot_0_mle = estimate(model_mle; indTvPar=indTvPar, indTargPar=falses(2), obsT = stats_T_dgp)
         vResEstPar_mle = DynNets.array2VecGasPar(model_mle, estPar_mle, indTvPar)
         fVecT_filt , target_fun_val_T, sVecT_filt = gasFilter( model_mle,  vResEstPar_mle, indTvPar; obsT = stats_T_dgp)
         vEstSd_mle[:,n] = vResEstPar_mle
 
-
-        ax_mle[1].plot(fVecT_filt[1,:], "b", alpha =0.5)
-        ax_mle[2].plot(fVecT_filt[2,:], "b", alpha =0.5)
-        ax_pmle[1].plot(fVecT_filt_p[1,:], "r", alpha =0.5)
-        ax_pmle[2].plot(fVecT_filt_p[2,:], "r", alpha =0.5)
+        if plotFlag
+            ax_mle[1].plot(fVecT_filt[1,:], "b", alpha =0.5)
+            ax_mle[2].plot(fVecT_filt[2,:], "b", alpha =0.5)
+            ax_pmle[1].plot(fVecT_filt_p[1,:], "r", alpha =0.5)
+            ax_pmle[2].plot(fVecT_filt_p[2,:], "r", alpha =0.5)
+        end
 
         rmse_mle[:,n] = rmse(fVecT_filt.- parMatDgp_T)
         rmse_pmle[:,n] =rmse(fVecT_filt_p.- parMatDgp_T)

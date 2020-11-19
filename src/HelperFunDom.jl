@@ -5,8 +5,8 @@ using PyCall; pygui(:qt); using PyPlot
 
 include("./AReg.jl")
 
-Npairs(N) = N*(N-1)/2
-export Npairs
+n_pairs(N) = N*(N-1)/2
+export n_pairs
 
 logit(x) = log(x/(1-x))
 export logit
@@ -139,12 +139,12 @@ end
 export randSteps
 
 
-function dgpSin(minVal::Ty  where Ty <:Real  ,maxVal::Ty  where Ty <:Real ,Ncycles::Int,T::Int)
+function dgpSin(minVal::Ty  where Ty <:Real  ,maxVal::Ty  where Ty <:Real ,Ncycles::Int,T::Int; phase =0)
      out = zeros(T)
      maxVal<=minVal ? error() : ()
      medVal = (maxVal + minVal)./2
      amplitude = abs.(maxVal-minVal)
-     out = (medVal .+ (amplitude/2) .* sin.(2π*Ncycles/T .*  Vector(1:T)))
+     out = (medVal .+ (amplitude/2) .* sin.(2π*Ncycles/T .*  Vector(1:T) .+ phase))
      return out
 end
 export dgpSin

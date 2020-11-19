@@ -1,10 +1,10 @@
-module ScoreDrivenExponentialRandomGraphs
+# module ScoreDrivenExponentialRandomGraphs
 
 
-include("./StaticNets.jl")
-export StaticNets
+# include("./StaticNets.jl")
+# export StaticNets
 
-include("./DynNets.jl")
-export DynNets
+# include("./DynNets.jl")
+# export DynNets
 
-end
+# end

@@ -61,13 +61,13 @@ function samplSingMatCan(Model::NetModelDirBin0Rec0, diadProbsVec::Array{<:Real,
 function statsFromMat(Model::NetModelDirBin0Rec0, A ::Matrix{<:Real})
     L = sum(A)
     R = sum(A'.*A)/2
+    N=size(A)[1]
 
-return [L, R]
+return [L, R, N]
 end
 
 function estimate(Model::NetModelDirBin0Rec0, A)
-    L, R = statsFromMat(Model, A) 
-    N = size(A)[1]
+    L, R, N = statsFromMat(Model, A) 
     return estimate(Model, L, R, N)
 end
 function estimate(Model::NetModelDirBin0Rec0, L, R, N)
@@ -96,8 +96,7 @@ function logLikelihood(Model::NetModelDirBin0Rec0, L, R, N, par)
 end
 
 function logLikelihood(Model::NetModelDirBin0Rec0, A::Matrix, par)
-    N=size(A)[1]
-    L, R = statsFromMat(Model, A)
+    L, R, N = statsFromMat(Model, A)
     return logLikelihood(Model, L, R, N, par)
 end
 
@@ -134,17 +133,19 @@ function pseudo_loglikelihood_from_sdergm(Model::NetModelDirBin0Rec0, par::Array
 end
 
 
+"""
+return the ergm parameters that fix on average the input values for the ergm statistics:
+    - mean_sum is the mean value of ∑_i>j A_ij + A_ji
+    - mean_rec is the mean value of ∑_i>j A_ij * A_ji /2
+"""
+function ergm_par_from_mean_vals(model::NetModelDirBin0Rec0, mean_sum, mean_rec, N)
 
-function ergm_par_from_mean_vals(model::NetModelDirBin0Rec0, mean_sum, mean_prod, N)
-    # mean_sum is the mean value of ∑_i>j A_ij + A_ji
-    # mean_prod is the mean value of ∑_i>j A_ij * A_ji
 
+    Npairs = n_pairs(N)
 
-    Npairs = N*(N-1)/2
-    
     # average values per pair
     α = mean_sum/Npairs
-    β = mean_prod/Npairs
+    β = mean_rec/Npairs
 
     x = (α/2-β)/(1+β-α)
     θ = log(x)
