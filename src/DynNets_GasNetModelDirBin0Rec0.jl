@@ -499,12 +499,12 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
 
 
         ## estimate SD
-        estPar_pmle, conv_flag,UM_mple , ftot_0_mple = estimate(model_pmle; indTvPar=indTvPar,indTargPar=falses(2), obsT = change_stats_T_dgp)
+        estPar_pmle, conv_flag,UM_mple , ftot_0_mple = estimate(model_pmle; indTvPar=indTvPar,indTargPar=indTvPar, obsT = change_stats_T_dgp)
         vResEstPar_pmle = DynNets.array2VecGasPar(model_pmle, estPar_pmle, indTvPar)
         fVecT_filt_p , target_fun_val_T_p, sVecT_filt_p = gasFilter( model_pmle,  vResEstPar_pmle, indTvPar; obsT = change_stats_T_dgp)
         vEstSd_pmle[:,n] = vResEstPar_pmle
 
-        estPar_mle, conv_flag,UM_mle , ftot_0_mle = estimate(model_mle; indTvPar=indTvPar, indTargPar=falses(2), obsT = stats_T_dgp)
+        estPar_mle, conv_flag,UM_mle , ftot_0_mle = estimate(model_mle; indTvPar=indTvPar, indTargPar=indTvPar, obsT = stats_T_dgp)
         vResEstPar_mle = DynNets.array2VecGasPar(model_mle, estPar_mle, indTvPar)
         fVecT_filt , target_fun_val_T, sVecT_filt = gasFilter( model_mle,  vResEstPar_mle, indTvPar; obsT = stats_T_dgp)
         vEstSd_mle[:,n] = vResEstPar_mle
