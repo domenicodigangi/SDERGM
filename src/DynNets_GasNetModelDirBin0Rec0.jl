@@ -437,23 +437,22 @@ function target_function_t(model::GasNetModelDirBin0Rec0_pmle, obs_t, par)
 end
 
 
-function dgp_missp(model::GasNetModelDirBin0Rec0, T, θ_0, η_0, percAmpl, dgpType)
+function dgp_missp(model::GasNetModelDirBin0Rec0, T, θ_0_minMax, η_0_minMax, dgpType)
     parMatDgp_T = zeros(2,T)
     Nsteps1= 2
-    minmax(par_0, percAmpl) =sort( par_0 .* ( 1 .+ [-percAmpl, percAmpl]))
 
     if dgpType=="sin"
         phase = 10rand()
-        parMatDgp_T[1,:] = dgpSin(minmax(θ_0, percAmpl)[1], minmax(θ_0, percAmpl)[2],Nsteps1,T; phase = phase)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-        parMatDgp_T[2,:] = dgpSin(minmax(η_0, percAmpl)[1], minmax(η_0, percAmpl)[2],Nsteps1,T;phase= phase + 2/T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+        parMatDgp_T[1,:] = dgpSin(θ_0_minMax[1], θ_0_minMax[2], Nsteps1,T; phase = phase)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+        parMatDgp_T[2,:] = dgpSin(η_0_minMax[1], η_0_minMax[2], Nsteps1,T;phase= phase + 2/T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
     elseif dgpType=="steps"
-        parMatDgp_T[1,:] = randSteps(minmax(θ_0, percAmpl)[1], minmax(θ_0, percAmpl)[2],Nsteps1,T)
-        parMatDgp_T[2,:] = randSteps(minmax(η_0, percAmpl)[1], minmax(η_0, percAmpl)[2],Nsteps1,T)     
+        parMatDgp_T[1,:] = randSteps(θ_0_minMax[1], θ_0_minMax[2], Nsteps1,T)
+        parMatDgp_T[2,:] = randSteps(η_0_minMax[1], η_0_minMax[2], Nsteps1,T)
     elseif dgpType=="AR"
         B = 0.95
         sigma = 0.1
-        parMatDgp_T[1,:] = dgpAR(θ_0,B,sigma,T,minMax=minmax(θ_0, percAmpl))
-        parMatDgp_T[2,:] = dgpAR(η_0,B,sigma,T;minMax = minmax(η_0, percAmpl) )
+        parMatDgp_T[1,:] = dgpAR(mean(θ_0_minMax),B,sigma,T; minMax=θ_0_minMax )
+        parMatDgp_T[2,:] = dgpAR(mean(η_0_minMax),B,sigma,T; minMax = η_0_minMax )
     end
     return parMatDgp_T
 end
@@ -472,7 +471,7 @@ end
 
 
 
-function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsample; plotFlag = true) 
+function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsample; plotFlag = true, regimeString="") 
     model_mle = fooGasNetModelDirBin0Rec0_mle
     model_pmle = fooGasNetModelDirBin0Rec0_pmle
 
@@ -529,16 +528,16 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
         ax_pmle[1].plot(parMatDgp_T[1,:], "k")
         ax_pmle[2].plot(parMatDgp_T[2,:], "k")
 
-        ax_mle[1].set_title("MLE-SDERGM  N= $N , θ rmse = $(avg_rmse_mle[1])")   
-        ax_mle[2].set_title("MLE-SDERGM  N= $N , η rmse = $(avg_rmse_mle[2])")   
+        ax_mle[1].set_title("MLE-SDERGM  N= $N , θ rmse = $(avg_rmse_mle[1]) " * regimeString)   
+        ax_mle[2].set_title("MLE-SDERGM  N= $N , η rmse = $(avg_rmse_mle[2]) " * regimeString)   
         
-        ax_pmle[1].set_title("PMLE-SDERGM  N= $N , θ rmse = $(avg_rmse_pmle[1])")   
-        ax_pmle[2].set_title("PMLE-SDERGM  N= $N , η rmse = $(avg_rmse_pmle[2])")   
+        ax_pmle[1].set_title("PMLE-SDERGM  N= $N , θ rmse = $(avg_rmse_pmle[1])  " * regimeString)   
+        ax_pmle[2].set_title("PMLE-SDERGM  N= $N , η rmse = $(avg_rmse_pmle[2])  " * regimeString)   
                 
         fig1.tight_layout()
         fig2.tight_layout()
     end
     
-    return (vEstSd_mle=vEstSd_mle, vEstSd_pmle=vEstSd_pmle, rmse_mle=rmse_mle, rmse_pmle=rmse_pmle)
+    return (vEstSd_mle=vEstSd_mle, vEstSd_pmle=vEstSd_pmle, rmse_mle=avg_rmse_mle, rmse_pmle=avg_rmse_pmle)
 end
 
