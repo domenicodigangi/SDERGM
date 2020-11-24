@@ -3,10 +3,14 @@ module HelperFunDom
 using MLBase, LinearAlgebra
 using PyCall; pygui(:qt); using PyPlot
 
+
 include("./AReg.jl")
 
-n_pairs(N) = N*(N-1)/2
-export n_pairs
+n_pox_pairs(N) = N*(N-1)/2
+export n_pox_pairs
+
+n_pox_dir_links(N) = N*(N-1)
+export n_pox_dir_links
 
 logit(x) = log(x/(1-x))
 export logit

@@ -5,7 +5,7 @@ Test script for dirBin0Rec0 model: one parameter for total number of links and o
 
 include("../../add_load_paths.jl")
 
-import StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0
+import StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats
 using ergmRcall
 using PyPlot
 using RCall
@@ -20,10 +20,11 @@ model = fooNetModelDirBin0Rec0
     
 ##-------------------- Test and COmpare MLE and MPLE estimates
 #Compare for a single value of the parameters
-N=500
-meanL = n_pairs(N)/2
-meanR = n_pairs(N)/12
-θ_0, η_0 = ergm_par_from_mean_vals(model, meanL, meanR, N)
+N=100
+Ldgp = n_pox_dir_links(N)/4
+Rdgp = n_pox_pairs(N)/4-100
+
+θ_0, η_0 = Tuple(estimate(model, Ldgp, Rdgp, N))
 
 nSample = 100
 diadProb = diadProbFromPars(model, [θ_0, η_0])
@@ -33,9 +34,9 @@ pygui(true)
 
 fig, ax = subplots(2,1)
 ax[1].hist(statsVec[1,:], 30)
-ax[1].vlines(meanL, 0, 1, "k")
+ax[1].vlines(Ldgp, 0, 1, "k")
 ax[2].hist(statsVec[2,:], 30)
-ax[2].vlines(meanR, 0, 1, "k")
+ax[2].vlines(Rdgp, 0, 1, "k")
 
 
 

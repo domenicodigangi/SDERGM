@@ -283,8 +283,8 @@ function estimate(model::T where T<: GasNetModelDirBin0Rec0; obsT = model.obsT, 
 
     # #set the starting points for the optimizations
     B0_Re  = 0.98; B0_Un = log(B0_Re ./ (1 .- B0_Re ))
-    ARe_min =0.001
-    A0_Re  = 0.005 ; A0_Un = log(A0_Re  .-  ARe_min)
+    ARe_min =0.000001
+    A0_Re  = 0.0005 ; A0_Un = log(A0_Re  .-  ARe_min)
     # starting values for the vector of parameters that have to be optimized
 
     function initialize_pars(vParOptim_0)

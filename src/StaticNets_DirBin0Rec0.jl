@@ -66,26 +66,66 @@ function statsFromMat(Model::NetModelDirBin0Rec0, A ::Matrix{<:Real})
 return [L, R, N]
 end
 
+function exp_val_stats(model::NetModelDirBin0Rec0, θ, η, N)
+    x = exp(θ)
+    x2y = exp(2*θ + η)
+    z = 1 + 2*x + x2y
+    Nlinks = n_pox_dir_links(N)
+    α = (x + x2y)/z
+    β = 0.5 * (x2y)/z
+    L = Nlinks * α
+    R = Nlinks * β
+    return L, R
+end
+
+"""
+return the ergm parameters that fix on average the input values for the ergm statistics:
+    - L is  ∑_i>j A_ij + A_ji
+    - R is  of ∑_i>j A_ij * A_ji /2
+"""
+function ergm_par_from_mean_vals(model::NetModelDirBin0Rec0, L, R, N)
+    Nlinks = n_pox_dir_links(N)
+    # average values per pair
+    α = L/Nlinks
+    β = R/Nlinks
+
+    x = (2β-α)/(2α-2β-1)
+    θ = log(x)
+
+    y = 2(2*β^2  + β- 2*α*β )/((2β-α)^2)
+    η =  log(y)
+
+    return θ, η 
+end
+
+
+
 function estimate(Model::NetModelDirBin0Rec0, A)
     L, R, N = statsFromMat(Model, A) 
     return estimate(Model, L, R, N)
 end
-function estimate(Model::NetModelDirBin0Rec0, L, R, N)
-    L_bar = L / (N*(N-1))
-    R_bar = R / (N*(N-1)) 
 
-    tmp = 1+2*R_bar-2*L_bar
-    x = (L_bar - 2*R_bar)/tmp
-    # y = (L_bar + (2L_bar-1)*x )/(x^2)
-    y = (L_bar + (2*L_bar-1)*x )/((1-L_bar)*x^2)
-    # y = (2*R_bar*(1-2*x))/(x^2*(1-2*R_bar))
-    # y = 1 + (2R_bar-4R_bar*L_bar-8R_bar^2*L_bar+4R_bar*L_bar-L_bar^2)
-    θ_est = log(x)
-    η_est = log(y)
-    # η_est = log( 2*R_bar*tmp*(1-L_bar) /((L_bar-2*R_bar)^2)   )
+
+function estimate(model::NetModelDirBin0Rec0, L, R, N)
+    # α = L / (N*(N-1))
+    # β = R / (N*(N-1)) 
+    # tmp = 1+2*β-2*α
+    # x = (α - 2*β)/tmp
+    # # y = (α + (2α-1)*x )/(x^2)
+    # y = (α + (2*α-1)*x )/((1-α)*x^2)
+    # # y = (2*β*(1-2*x))/(x^2*(1-2*β))
+    # # y = 1 + (2β-4β*α-8β^2*α+4β*α-α^2)
+    # θ_est = log(x)
+    # η_est = log(y)
+    # # η_est = log( 2*β*tmp*(1-α) /((α-2*β)^2)   )
+   
+    θ_est, η_est = ergm_par_from_mean_vals(model, L, R, N)
     vPar = [θ_est, η_est]
     return vPar
 end
+
+
+
 
 
 
@@ -132,26 +172,3 @@ function pseudo_loglikelihood_from_sdergm(Model::NetModelDirBin0Rec0, par::Array
     return logpseudolike_t
 end
 
-
-"""
-return the ergm parameters that fix on average the input values for the ergm statistics:
-    - mean_sum is the mean value of ∑_i>j A_ij + A_ji
-    - mean_rec is the mean value of ∑_i>j A_ij * A_ji /2
-"""
-function ergm_par_from_mean_vals(model::NetModelDirBin0Rec0, mean_sum, mean_rec, N)
-
-
-    Npairs = n_pairs(N)
-
-    # average values per pair
-    α = mean_sum/Npairs
-    β = mean_rec/Npairs
-
-    x = (α/2-β)/(1+β-α)
-    θ = log(x)
-
-    y = (β/(1-β)) * ( 1 + 2x )/(x^2) 
-    η =  log(y)
-
-    return θ, η 
-end
