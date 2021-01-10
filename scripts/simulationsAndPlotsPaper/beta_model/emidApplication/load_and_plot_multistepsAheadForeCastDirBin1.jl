@@ -1,7 +1,7 @@
 #script that estimates the dir bin gas network model on emid data and evaluates GAS
 # forecasting performances
 
-using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase,DynNets
+using Utilities,AReg,StaticNets,JLD,MLBase,StatsBase,DynNets
 using PyCall; pygui(:qt); using PyPlot
 #estimate and save for half the datase (after LTRO) or whole data?
 

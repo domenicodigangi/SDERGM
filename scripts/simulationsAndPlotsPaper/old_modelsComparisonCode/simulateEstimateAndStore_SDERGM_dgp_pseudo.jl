@@ -1,9 +1,9 @@
 
 # sample sequences of ergms with different parameters' values from R package ergm
 # and test the PseudoLikelihoodScoreDrivenERGM filter
-using HelperFunDom,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
+using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  using PyCall; pygui(); using PyPlot
- using ergmRcall
+ using ErgmRcall
 
 
 # load packages needed in R
@@ -44,7 +44,7 @@ while n <= Nsample
         library(network)
         sessionInfo()"
     try
-        obsT,statsT,fVecT = ergmRcall.sdergmDGPpaper_Rcall(  DynNets.fooGasNetModelDirBinGlobalPseudo, indTvPar ,T,N, UM = UM, B_Re = B_Re,A_Re = A_Re)
+        obsT,statsT,fVecT = ErgmRcall.sdergmDGPpaper_Rcall(  DynNets.fooGasNetModelDirBinGlobalPseudo, indTvPar ,T,N, UM = UM, B_Re = B_Re,A_Re = A_Re)
         model = DynNets.GasNetModelDirBinGlobalPseudo(obsT,DynNets.fooGasPar,indTvPar,"")
         estPar,convFlag[n],UM_est,startPoint = DynNets.estimate(model;indTvPar = indTvPar, indTargPar = indTargPar)
         obsT_all[n] = obsT
@@ -64,9 +64,9 @@ save_fold = "./data/estimatesTest/sdergmTest/distrib_static_pars/"
 end
 #
 #
-# using HelperFunDom,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
+# using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
 #  using PyCall; pygui(); using PyPlot
-#  using JLD,HelperFunDom, GLM
+#  using JLD,Utilities, GLM
 #  ## load R MCMC simulation and estimates and estimate sdergmTest
 #
 #  if false

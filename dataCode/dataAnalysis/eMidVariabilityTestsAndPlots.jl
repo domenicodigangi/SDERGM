@@ -1,7 +1,7 @@
 
 # script that wants to numerically test chatteris diaconis (misspelled with 99% prob)
 # for the estimates of beta, fitness,ergm (many names..) in the DirBin1 case
-using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase,KernelDensity,DynNets
+using Utilities,AReg,StaticNets,JLD,MLBase,StatsBase,KernelDensity,DynNets
 using PyCall; pygui(); using PyPlot
 
 Nsample = 100
@@ -115,7 +115,7 @@ tmp = (sum(prevDegEqFlagI,1) - N).*(sum(prevDegEqFlagO,1) - N)/(N*(N-1))
 plot(tmp')
 
 ##
-using HelperFunDom
+using Utilities
 plot(mean(degsIO_T,2),autocor(degsIO_T',[1],demean=true)',".")
 
 nnzDegs_T  = degsIO_T[sumSq(degsIO_T.>0,2).>T/10,:]

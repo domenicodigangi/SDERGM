@@ -7,7 +7,7 @@
 #add packages to LOAD path
 push!(LOAD_PATH,"./DynNets/src/")
 
-using  HelperFunDom, DynNets, StaticNets, StatsBase
+using  Utilities, DynNets, StaticNets, StatsBase
 
 
 #%% Sample DGP

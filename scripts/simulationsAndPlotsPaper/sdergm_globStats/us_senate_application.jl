@@ -1,5 +1,5 @@
 
-using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase,CSV, RCall,DynNets,StaticNets
+using Utilities,AReg,StaticNets,JLD,MLBase,StatsBase,CSV, RCall,DynNets,StaticNets
 using PyCall; pygui(); using PyPlot
 
 @load("/home/Domenico/Dropbox/Dynamic_Networks/data/congress_covoting_US/juliaEstimates.jld",estParSS_T,obsMat_T,changeStats_T,
@@ -14,7 +14,7 @@ end
 #changeStats_T2 = changeStats_T
 t=1
 # sortrows(sum(obsMat_T[t],dims = 2),rev=true)
-# display(sortrowsHelperFunDom(changeStats_T[t],2))
+# display(sortrowsUtilities(changeStats_T[t],2))
 
 pvals_SD,~,vConstPar = DynNets.pValStatic_SDERGM(DynNets.GasNetModelDirBinGlobalPseudo(changeStats_T,DynNets.fooGasPar,trues(Nterms),""))
 indTvPar = trues(Nterms)#BitArray([true,true])# pvals_SD.< 0.01 #

@@ -1,4 +1,4 @@
-using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase
+using Utilities,AReg,StaticNets,JLD,MLBase,StatsBase
 using PyCall; pygui(:qt); using PyPlot
 
 

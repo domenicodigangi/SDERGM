@@ -1,11 +1,11 @@
 
 # sample sequences of ergms with different parameters' values from R package ergm
 # and test the PseudoLikelihoodScoreDrivenERGM filter
-using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase,CSV, RCall
+using Utilities,AReg,StaticNets,JLD,MLBase,StatsBase,CSV, RCall
 using PyCall; pygui(); using PyPlot
 
 
-using JLD,HelperFunDom, GLM
+using JLD,Utilities, GLM
 ## load R MCMC simulation and estimates and estimate sdergmTest
 
 Nsample = 100

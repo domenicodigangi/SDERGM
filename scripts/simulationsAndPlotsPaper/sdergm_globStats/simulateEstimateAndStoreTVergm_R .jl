@@ -1,7 +1,7 @@
 
 # sample sequences of ergms with different parameters' values from R package ergm
 # and test the PseudoLikelihoodScoreDrivenERGM filter
-using HelperFunDom,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
+using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  using PyCall; pygui(); using PyPlot
  # load the required packages in R
  R"library(statnet)
@@ -61,7 +61,7 @@ using HelperFunDom,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  estParSS_T = @rget(estParSS_T_R);#tmp = zeros(Nterms,T); for t=1:T tmp[:,t] = estParSS_T[t]; end ; estParSS_T = tmp
  changeStats_T = @rget changeStats_T_R;# tmp = Array{Array{Float64,2}}(T); for t=1:T tmp[t] =  changeStats_T[t];end;changeStats_T = tmp
  stats_T = @rget(stats_T_R); #tmp = zeros(Nterms,T); for t=1:T tmp[:,t] = stats_T[t];end;stats_T = tmp
- estParSS_T = HelperFunDom.collapseArr3(estParSS_T)
+ estParSS_T = Utilities.collapseArr3(estParSS_T)
 
 # Save all Sampled Data
 save_fold = "./data/estimatesTest/sdergmTest/R_MCMC_estimates/"
@@ -69,9 +69,9 @@ save_fold = "./data/estimatesTest/sdergmTest/R_MCMC_estimates/"
               stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,Nsample,T,N)
 
 
-using HelperFunDom,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
+using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  using PyCall; pygui(); using PyPlot
- using JLD,HelperFunDom, GLM
+ using JLD,Utilities, GLM
  ## load R MCMC simulation and estimates and estimate sdergmTest
 
  if false

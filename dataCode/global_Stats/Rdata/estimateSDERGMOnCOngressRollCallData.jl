@@ -1,7 +1,7 @@
 
 # sample sequences of ergms with different parameters' values from R package ergm
 # and test the PseudoLikelihoodScoreDrivenERGM filter
-using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase,CSV, RCall
+using Utilities,AReg,StaticNets,JLD,MLBase,StatsBase,CSV, RCall
 using PyCall; pygui(); using PyPlot
 
 @load("/home/Domenico/Dropbox/Dynamic_Networks/data/congress_covoting_US/coVotingMatrices_julia.jld",
@@ -97,7 +97,7 @@ end
 #changeStats_T2 = changeStats_T
 t=1
 sortrows(sum(obsMat_T[t],2),rev=true)
-display(sortrowsHelperFunDom(changeStats_T[t],2))
+display(sortrowsUtilities(changeStats_T[t],2))
 
 pvals,~,vConstPar = DynNets.pValStatic_SDERGM(DynNets.GasNetModelDirBinGlobalPseudo(changeStats_T,DynNets.fooGasPar,trues(Nterms),""))
 indTvPar = pvals.< 0.01 #trues(Nterms)#BitArray([true,true])#

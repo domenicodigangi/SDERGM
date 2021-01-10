@@ -68,7 +68,7 @@ function simulate(ar::ARp,T::Int=1000)
     epsilon_T = sigma.* randn(T)
     Y_T = epsilon_T
 
-    if isempty(start_vals) # if no start values are given pick them at ranHelperFunDom
+    if isempty(start_vals) # if no start values are given pick them at ranUtilities
         if p>0
             start_vals = sigma.*randn(p)
         else

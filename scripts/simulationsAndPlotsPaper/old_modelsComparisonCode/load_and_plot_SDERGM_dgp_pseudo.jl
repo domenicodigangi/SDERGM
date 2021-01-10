@@ -1,9 +1,9 @@
 
 # sample sequences of ergms with different parameters' values from R package ergm
 # and test the PseudoLikelihoodScoreDrivenERGM filter
-using HelperFunDom,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
+using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  using PyCall; pygui(); using PyPlot
- using ergmRcall
+ using ErgmRcall
 
 #load simulations results divided in chunks
 T = 500

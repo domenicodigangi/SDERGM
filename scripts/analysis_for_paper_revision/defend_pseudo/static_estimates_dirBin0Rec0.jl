@@ -3,17 +3,17 @@
 Test script for dirBin0Rec0 model: one parameter for total number of links and one for reciprocity
 """
 
-include("../../add_load_paths.jl")
+
 
 import StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats
-using ergmRcall
+using ErgmRcall
 using PyPlot
 using RCall
 using Statistics
 
-using HelperFunDom
+using Utilities
 
-ergmRcall.clean_start_RCall()
+ErgmRcall.clean_start_RCall()
 ergmTermsString = "edges +  mutual"
 R"""options(warn=-1) """
 model = fooNetModelDirBin0Rec0
@@ -54,7 +54,7 @@ ax[2].vlines(θ_0, 0, 1, "k")
 ax[2].vlines(η_0, 0, 1, "k")
 ax[2].set_title("mple")
 
-function mle_pmle_comparison(model::NetModelDirBin0Rec0, netSizes, linkFun, recFun; nSample=30)
+function mle_pmle_comparison_var_Net_size(model::NetModelDirBin0Rec0, netSizes, linkFun, recFun; nSample=30)
     # compare the two estimators over different  par values for the dgp
     nPars = length(netSizes)
     parMmle = zeros(nPars, 2, nSample)
@@ -76,7 +76,7 @@ end
 # Compare for multiple values of the parameters
 netSizes = collect(15:5:40)
 
-parDgp, parMle, parMple = mle_pmle_comparison(model, netSizes, x->x, x->x/5 )
+parDgp, parMle, parMple = mle_pmle_comparison_var_Net_size(model, netSizes, x->x, x->x/5 )
 
 [parMle[i, :, :] ]
 

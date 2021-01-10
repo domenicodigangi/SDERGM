@@ -4,7 +4,7 @@ Analyze filtered fitnesses for emid data. Code created as part of the revision o
 """
 
 ## Load dataj
-using HelperFunDom,AReg,StaticNets,JLD,MLBase,StatsBase#,DynNets
+using Utilities,AReg,StaticNets,JLD,MLBase,StatsBase#,DynNets
 using PyCall; pygui(:qt); using PyPlot
 
 

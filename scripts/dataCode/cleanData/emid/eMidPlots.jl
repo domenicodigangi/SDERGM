@@ -1,4 +1,4 @@
-using JLD, Plots,DynNets,HelperFunDom,StatPlots,StatsBase
+using JLD, Plots,DynNets,Utilities,StatPlots,StatsBase
 plotly()
 
 load_fold =   "/home/Domenico/Dropbox/Dynamic_Networks/data/emid_data/juliaFiles/"

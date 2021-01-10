@@ -2,7 +2,7 @@
 # functions that allow to sample sequences of ergms with different parameters' values from R package ergm
 # and estimate the ergm
 
-module ergmRcall
+module ErgmRcall
 
 using DataFrames
 using RCall
@@ -123,7 +123,7 @@ function estimateErgmRcall(sampledMat_T_R , formula_ergm_str)
 
     # import sampled networks in julia
     estParSS_T = @rget(estParSS_T_R);#tmp = zeros(Nterms,T); for t=1:T tmp[:,t] = estParSS_T[t]; end ; estParSS_T = tmp
-    estParSS_T = HelperFunDom.collapseArr3(estParSS_T)
+    estParSS_T = Utilities.collapseArr3(estParSS_T)
     return estParSS_T
 end
 export estimateErgmRcall

@@ -15,7 +15,7 @@ addprocs(4)
 @everywhere push!(LOAD_PATH,"./DynNets/src/")
 
 
-@everywhere using SharedArrays, Statistics, HelperFunDom, DynNets, StaticNets, JLD
+@everywhere using SharedArrays, Statistics, Utilities, DynNets, StaticNets, JLD
 
 @everywhere begin
     function simWrap1(N,T, NTV;dynType = "SIN", degIOUncMeans =0, degb = [10, 40],

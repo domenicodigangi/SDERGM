@@ -1,13 +1,12 @@
-__precompile__(false)
 module StaticNets
 
 using Distributions, StatsBase,Optim, LineSearches, StatsFuns,Roots,MLBase, Statistics, LinearAlgebra, Random
 
-using HelperFunDom
-# using PyCall;# pygui(:qt);
-# using PyPlot
+using ..AReg
+using ..Utilities
+using ..ErgmRcall
 
-export maxLargeVal
+
 
 ## STATIC NETWORK MODEL
 abstract type NetModel end
@@ -18,19 +17,23 @@ abstract type NetModelBin <: NetModel end
 
 #constants
 targetErrValStaticNets = 1e-2
+export targetErrValStaticNets
+
 targetErrValStaticNetsW = 1e-5
+export targetErrValStaticNetsW
+
 bigConstVal = 10^6
+export bigConstVal
+
 maxLargeVal =  1e40# 1e-10 *sqrt(prevfloat(Inf))
+export maxLargeVal
+
 minSmallVal = 1e2*eps()
+export minSmallVal
 
-include("./AReg.jl")
-
-include("./HelperFunDom.jl")
-include("./ergmRCall.jl")
-
-include("./StaticNets_Bin1.jl")
-include("./StaticNets_DirBin1.jl")
-include("./StaticNets_DirBin0Rec0.jl")
+include("./StaticNets_models/StaticNets_Bin1.jl")
+include("./StaticNets_models/StaticNets_DirBin1.jl")
+include("./StaticNets_models/StaticNets_DirBin0Rec0.jl")
 
 
 end

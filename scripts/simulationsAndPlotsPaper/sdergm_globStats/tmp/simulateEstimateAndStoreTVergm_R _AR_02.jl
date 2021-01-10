@@ -1,7 +1,7 @@
 
 # sample sequences of ergms with different parameters' values from R package ergm
 # and test the PseudoLikelihoodScoreDrivenERGM filter
- using HelperFunDom,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
+ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  using PyCall; pygui(); using PyPlot
  # load the required packages in R
  R"library(statnet)
@@ -98,16 +98,16 @@
  stats_T = @rget(stats_T_R); #tmp = zeros(Nterms,T); for t=1:T tmp[:,t] = stats_T[t];end;stats_T = tmp
 
 
- estParSS_T = HelperFunDom.collapseArr3(estParSS_T)
+ estParSS_T = Utilities.collapseArr3(estParSS_T)
 
  save_fold = "./data/estimatesTest/sdergmTest/R_MCMC_estimates/"
  @save(save_fold*"test_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE.jld",
               stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,Nsample,T,N)
 
 
-using HelperFunDom,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
+using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  using PyCall; pygui(); using PyPlot
- using JLD,HelperFunDom, GLM
+ using JLD,Utilities, GLM
  ## load R MCMC simulation and estimates and estimate sdergmTest
 
  if false
