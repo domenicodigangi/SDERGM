@@ -112,7 +112,7 @@ gasParVec = zeros(sum(indTvPar)*3); for i=0:(sum(indTvPar)-1) gasParVec[1+3i : 3
 constParVec = zeros(sum(!indTvPar)); for i=1:sum(.!indTvPar) constParVec[i] = estPar[.!indTvPar][i][1]; end
 vParOptim_0 = gasParVec# [ 0.303867, 0.9, 0.001, 0.1, 0.9, 0.01] #[0.0528737, 0.9, 0.05, -0.0163459, 0.9, 0.05] # [0.0528737, 0.9, 0.0000000005 ] #
  #constParVec = -4.06563 *ones(1)
- gasFiltPar , pseudolike = DynNets.gasFilter(model,vParOptim_0,indTvPar;
+ gasFiltPar , pseudolike = DynNets.score_driven_filter(model,vParOptim_0,indTvPar;
                               vConstPar = constParVec,ftot_0 = ftot_0)
 
 

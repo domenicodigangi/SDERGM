@@ -4,6 +4,7 @@ using Distributions, StatsBase,Optim, LineSearches, StatsFuns,Roots,MLBase, Stat
 
 using ..AReg
 using ..Utilities
+using ..Scalings
 using ..ErgmRcall
 
 

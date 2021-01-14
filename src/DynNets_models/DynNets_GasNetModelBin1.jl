@@ -162,7 +162,7 @@ function updatedGasPar( Model::GasNetModelBin1,N::Int,degs_t::Array{<:Real,1},
     ftot_tp1 = ftot_t
     return ftot_tp1,I_t,loglike_t,s_t
  end
-function gasFilter( Model::GasNetModelBin1,
+function score_driven_filter( Model::GasNetModelBin1,
                                 vResGasPar::Array{<:Real,1};
                                 obsT::Array{<:Real,2}=Model.obsT,
                                 groupsInds:: Array{Array{<:Real,1},1}=Model.groupsInds,
@@ -222,7 +222,7 @@ function gasFilter( Model::GasNetModelBin1,
     end
     end
 sampl(Mod::GasNetModelBin1,T::Int) = (  N = length(Mod.groupsInds[1]) ;
-                                        tmpTuple = gasFilter(Mod,[Mod.Par[1];Mod.Par[2];Mod.Par[3]];  dgpTN = (T,N) );
+                                        tmpTuple = score_driven_filter(Mod,[Mod.Par[1];Mod.Par[2];Mod.Par[3]];  dgpTN = (T,N) );
                                         degs_T = dropdims(sum(tmpTuple[1],dims = 2),2);
                                         (GasNetModelBin1(degs_T,Mod.Par,Mod.groupsInds,Mod.scoreScalingType),tmpTuple[1],tmpTuple[2]) )
 
@@ -282,7 +282,7 @@ function estimate(Model::GasNetModelBin1;start_values = [zeros(Real,10),zeros(Re
     vGasParAll0_Un = unRestrictGasPar(Model,[W0_Groups ;B0_ReGroups;A0_ReGroups ] ) # vGasParGroups0_Un#
     # objective function for the optimization
     function objfunGas(vparUn::Array{<:Real,1})# a function of the groups parameters
-              foo,loglikelValue = gasFilter( Model,restrictGasPar(Model,vparUn))
+              foo,loglikelValue = score_driven_filter( Model,restrictGasPar(Model,vparUn))
            return - loglikelValue
     end
 
@@ -353,7 +353,7 @@ function estimateTargeting(Model::GasNetModelBin1)
          ReB = vecReAB[1:GBA]
          WGroups = WGroupsFromB(ReB)
          vecReGasPar = [WGroups;vecReAB]
-         foo,loglikelValue = gasFilter( Model,vecReGasPar )
+         foo,loglikelValue = score_driven_filter( Model,vecReGasPar )
          return - loglikelValue
     end
     #Run the optimization

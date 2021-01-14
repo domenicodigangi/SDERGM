@@ -1,44 +1,62 @@
 module Utilities
+
 using MLBase, LinearAlgebra
 using PyCall; pygui(:qt); using PyPlot
-
 
 using ..AReg
 
 
-n_pox_pairs(N) = N*(N-1)/2
-export n_pox_pairs
-
-n_pox_dir_links(N) = N*(N-1)
-export n_pox_dir_links
-
 logit(x) = log(x/(1-x))
 export logit
+
+
 inv_logit(x) = 1/(1+exp(-x))
 export inv_logit
+
+link_R_in_0_1(x) = inv_logit(x)
+export link_R_in_0_1
+
+inv_link_R_in_0_1(x) = logit(x)
+export inv_link_R_in_0_1
+
+link_R_in_R_pos(x) = exp(x) 
+export link_R_in_R_pos
+
+inv_link_R_in_R_pos(x) = log(x) 
+export inv_link_R_in_R_pos
+
+
 
 drop_nan_col(x::Matrix) = x[:, .!dropdims(any(isnan.(x), dims=1), dims=1) ]
 export drop_nan_col
 
+
 drop_nan_row(x::Matrix) = x[.!dropdims(any(isnan.(x), dims=2), dims=2), : ]
 export drop_nan_row
+
 
 #Funzioni che uso spesso
 sumSq(array :: AbstractArray,Dim::Int) = dropdims(sum(array,dims = Dim),dims =Dim)
 sumSq(array :: AbstractArray) = sumSq(array,1)
 export sumSq
+
+
 meanSq(array::AbstractArray,Dim::Int) = dropdims(mean(array,dims = Dim),dims =Dim)
 export meanSq
+
 
 splitVec(Vec::AbstractArray{<:Any,1}) = (Nhalf = round(Int,length(Vec)/2); (Nhalf,Vec[1:Nhalf],Vec[Nhalf+1:2Nhalf]) )
 export splitVec
 
+
 splitMat(Mat::AbstractArray{<:Any,2}) = (Nhalf = round(Int,length(Mat[1,:])/2); (Nhalf,Mat[:,1:Nhalf],Mat[:,Nhalf+1:2Nhalf]) )
 export splitMat
 
- """put to zero diagonal of matrices"""
+
+"""put to zero diagonal of matrices"""
 putZeroDiag!(Matr::Array{T,2} where T<: Real) =   for i=1:length(Matr[:,1]) Matr[i,i] = 0 end
 export putZeroDiag!
+
 
 #putZeroDiag!(Matr::Symmetric{T,Array{T,2}} where T<: Real) =   for i=1:length(Matr[:,1]) Matr[i,i] = 0 end
 putZeroDiag(Matr::Array{T,2} where T<: Real) = (tmp = Matr; putZeroDiag!(tmp); tmp)
@@ -46,6 +64,7 @@ putZeroDiag(Matr::Array{T,2} where T<: Real) = (tmp = Matr; putZeroDiag!(tmp); t
 putZeroDiag!(Matr::BitArray{2}) =   for i=1:length(Matr[:,1]) Matr[i,i] = false end
 putZeroDiag(Matr::BitArray{2}) = (tmp = Matr; putZeroDiag!(tmp); tmp)
 export putZeroDiag
+
 
 putZeroDiag_no_mut(Matr::Array{T,2} where T<: Real) = (Matr - Diagonal(Diagonal(Matr)))
 export putZeroDiag_no_mut
@@ -56,9 +75,12 @@ function sortrowsUtilities(A::Matrix{<:Number},rowInd::Int;rev = true)
     return A[tmp,:]
 end
 export sortrowsUtilities
+
+
 #define an adjacency matrix that has falses on diagonals: central upper and lower
 tmpAjacMatTridiagFalses(N::Int) = (tmp = trues(N,N);for i=1:N tmp[i,i] = false; i>1 ? tmp[i,i-1]= 0 : (); i<N ? tmp[i,i+1]=0 : ()  end;tmp)
 export tmpAjacMatTridiagFalses
+
 
 function tmpArrayAdjmatrEqual(N::Int,T::Int;matGenFun::Function = tmpAjacMatTridiagFalses)
     out = trues(N,N,T)
@@ -70,6 +92,7 @@ function tmpArrayAdjmatrEqual(N::Int,T::Int;matGenFun::Function = tmpAjacMatTrid
 end
 export tmpArrayAdjmatrEqual
 
+
 function distributeAinB!(A::Array{<:Real,1},B::Array{<:Real,1})
     NA = length(A)
     NB = length(B)
@@ -78,6 +101,7 @@ function distributeAinB!(A::Array{<:Real,1},B::Array{<:Real,1})
     B[Int64(GroupSize*(NA-1))+1:end] = A[NA];
 end
 export distributeAinB!
+
 
 function distributeAinVecN(A::Array{<:Real,1},N::I where I<: Int64)
     if length(A) == 0
@@ -90,6 +114,7 @@ function distributeAinVecN(A::Array{<:Real,1},N::I where I<: Int64)
 end
 distributeAinVecN(A::UnitRange,N::I where I<: Int64) = distributeAinVecN(Array{Int,1}(A),N)
 export distributeAinVecN
+
 
 function rocCurve(realVals::BitArray{1},foreVals::Vector{Float64}; Th::Vector{Float64}=Vector(0:0.00001:1),plotFlag = true)
     #Given binary observations and estimated probabilityes plot the roc and return true positives and false positives
@@ -120,6 +145,7 @@ function collapseArr3(arr)
      return tmp
 end
 export collapseArr3
+
 
 function randSteps(startVal,endVal,Nsteps::Int,T::Int;rand=true)
      out = zeros(T)
@@ -152,6 +178,7 @@ function dgpSin(minVal::Ty  where Ty <:Real  ,maxVal::Ty  where Ty <:Real ,Ncycl
      return out
 end
 export dgpSin
+
 
 function dgpAR(mu,B,sigma,T::Int;minMax=zeros(2),scaling = "uniform")
   ar1 = AReg.ARp([mu*(1-B) , B],sigma,[mu])

@@ -204,7 +204,7 @@ end
 #
 #     @show Nlinksnnc =sum(noDiagIndnnc)
 #     # forecast fitnesses using Gas parameters and observations
-#     foreFit,~ = gasFilter( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+#     foreFit,~ = score_driven_filter( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
 #
 #     TRoc = Ttest-1
 #     #storage variables

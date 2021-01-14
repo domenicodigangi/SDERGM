@@ -42,7 +42,7 @@ ParSnapT =  Array{Array{Float64,3},1}(N_ind)
     obsT = ObsAllT[indT][:,:,n]
     vecParEst =  [estPar_1[indT,n,:]; estPar_2[indT,n];  estPar_3[indT,n]]
     GroupIndsEst = groupsIndsEst
-    tmpParFil[:,:,n] =   DynNets.gasFilterAndLikeliood(tmpModelEst,vecParEst,
+    tmpParFil[:,:,n] =   DynNets.score_driven_filterAndLikeliood(tmpModelEst,vecParEst,
                                                 degsT = obsT,
                                                 groupsInds = GroupIndsEst )[1]
 

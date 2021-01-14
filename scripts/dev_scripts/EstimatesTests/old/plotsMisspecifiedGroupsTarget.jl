@@ -67,7 +67,7 @@ end
     vecParDgp =  [simPar_1[indT,n,:]; simPar_2[indT,n];  simPar_3[indT,n]]
 
     GroupIndsEst  = groupsIndsEst ;
-    tmpParFil[:,:,n] =   DynNets.gasFilterAndLikeliood(tmpModelEst,vecParEst,
+    tmpParFil[:,:,n] =   DynNets.score_driven_filterAndLikeliood(tmpModelEst,vecParEst,
                                                 degsT = obsT,
                                                 groupsInds = GroupIndsEst )[1]
 
@@ -86,7 +86,7 @@ end
 
 
     GroupIndsDgp =  groupsIndsEst
-    tmpParDgp[:,:,n] = DynNets.gasFilterAndLikeliood(tmpModelDgp,vecParDgp,
+    tmpParDgp[:,:,n] = DynNets.score_driven_filterAndLikeliood(tmpModelDgp,vecParDgp,
                                                 degsT = obsT,
                                                 groupsInds = GroupIndsDgp )[1]
 

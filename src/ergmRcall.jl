@@ -8,12 +8,6 @@ using DataFrames
 using RCall
 
 using RCall
-R"""options(warn=-1) """
-
-R"""local({r <- getOption("repos")
-       r["CRAN"] <- "http://cran.r-project.org" 
-       options(repos=r)})"""
-
 
 
 
@@ -28,6 +22,18 @@ function clean_start_RCall()
    R"set.seed(0)"
 end
 export clean_start_RCall
+
+
+function __init__()
+    R"""options(warn=-1) """
+
+    R"""local({r <- getOption("repos")
+        r["CRAN"] <- "http://cran.r-project.org" 
+        options(repos=r)})"""
+
+    clean_start_RCall()
+end
+
 
 function sampleErgmRcall(parMatDgp_T,N,Nsample,formula_ergm_str)
     """

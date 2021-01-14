@@ -38,7 +38,7 @@ gasFiltAndForeFitFromRollEst = zeros(2N,T)
 modGasDirBin1_eMidTrain = DynNets.GasNetModelDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG")
 gasParEstOnTrain_roll_t,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS[:,1:Ttrain] )
 gasEst_rolling[1] = gasParEstOnTrain_roll_t
-GasforeFit,~ = DynNets.gasFilter( DynNets.GasNetModelDirBin1(degsIO_T[:,1:Ttrain+1]),
+GasforeFit,~ = DynNets.score_driven_filter( DynNets.GasNetModelDirBin1(degsIO_T[:,1:Ttrain+1]),
                                     [gasParEstOnTrain_roll_t[1];gasParEstOnTrain_roll_t[2];gasParEstOnTrain_roll_t[3]])
 gasforeFit = Float64.(GasforeFit)
 gasFiltAndForeFitFromRollEst[:,1:Ttrain+1] = gasforeFit[:,1:Ttrain+1]
@@ -49,7 +49,7 @@ for t = 2:T-Ttrain
  modGasDirBin1_eMidTrain = DynNets.GasNetModelDirBin1(degsIO_T[:,t:Ttrain+t],"FISHER-DIAG")
  gasParEstOnTrain_roll_t,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS[:,1+t:Ttrain+t] )
  gasEst_rolling[t] = gasParEstOnTrain_roll_t
- GasforeFit,~ = DynNets.gasFilter( DynNets.GasNetModelDirBin1(degsIO_T[:,t:Ttrain+t]),
+ GasforeFit,~ = DynNets.score_driven_filter( DynNets.GasNetModelDirBin1(degsIO_T[:,t:Ttrain+t]),
                                      [gasParEstOnTrain_roll_t[1];gasParEstOnTrain_roll_t[2];gasParEstOnTrain_roll_t[3]])
  gasforeFit = Float64.(GasforeFit)
  # add the last value from this sequence of filtered ones (for which the rolling gas estimates are used) to the sequence of filtered parameters

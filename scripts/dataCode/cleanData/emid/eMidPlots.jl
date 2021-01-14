@@ -48,13 +48,13 @@ end
 
 ## Filter and Plot
 estModNpar = DynNets.GasNetModelDirBin1(degsIO_T,estGas[1],[Vector(1:N),ones(Int,N),ones(Int,N)])
-filterParNpar = DynNets.gasFilter(estModNpar)[1]
+filterParNpar = DynNets.score_driven_filter(estModNpar)[1]
 plotFilter(filterParNpar, "N W Par")
 
 estMod1par = DynNets.GasNetModelDirBin1(degsIO_T,estGas_1GW[1],[ones(Int,N),ones(Int,1),ones(Int,1)])
-filterPar1par = DynNets.gasFilter(estMod1par)[1]
+filterPar1par = DynNets.score_driven_filter(estMod1par)[1]
 plotFilter(filterPar1par,"1 W Par")
-filtPar_T,like = DynNets.gasFilter(estMod1par)
+filtPar_T,like = DynNets.score_driven_filter(estMod1par)
 plotSingSnapSeq(estSS)
 
 

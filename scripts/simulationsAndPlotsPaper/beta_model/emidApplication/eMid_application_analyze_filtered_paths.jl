@@ -38,7 +38,7 @@ matY_T = YeMidWeekly_T[1:N_test,1:N_test,3:end]
 model = GasNetModelDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG", "ONE_PAR_ALL")
 gasParEstOnTrain,~ = estimateTarg(model;SSest = allFitSS[:,1:Ttrain] )
 
-#f(x) = DynNets.gasFilter(model, x;groupsInds = model.groupsInds)[2]
+#f(x) = DynNets.score_driven_filter(model, x;groupsInds = model.groupsInds)[2]
 GBA = 1
 allpar0 = array2VecGasPar(model, gasParEstOnTrain)
 BA_re_hat = allpar0[end-1:end]
@@ -102,8 +102,8 @@ allpar_sample = samp[:, indsToKeep][:, 1:N_samp_par]
 
 #%%
 ftotIO_0 = meanSq(estimateSnapSeq(model; degsIO_T = obsT[:, 1:5]), 2)
-ftot_T_est, _ = gasFilter(model, allpar0,ftotIO_0 = ftotIO_0)
-ftot_T, _ = gasFilter(model, allpar_sample[:,3],  ftotIO_0 = ftotIO_0)
+ftot_T_est, _ = score_driven_filter(model, allpar0,ftotIO_0 = ftotIO_0)
+ftot_T, _ = score_driven_filter(model, allpar_sample[:,3],  ftotIO_0 = ftotIO_0)
 plot(ftot_T_est')
 #plot(ftot_T')
 
@@ -112,7 +112,7 @@ Nterms = 2*N
 global gasFiltPar_conf = zeros(N_samp_par, Nterms, T_train)
       for i= 1:N_samp_par
        # @show(i)
-       global gasFiltPar_conf[i,:,:], _ = gasFilter(model, allpar_sample[:,i],  ftotIO_0 = ftotIO_0)
+       global gasFiltPar_conf[i,:,:], _ = score_driven_filter(model, allpar_sample[:,i],  ftotIO_0 = ftotIO_0)
       end
 
 indsToRem = [any(isnan.(gasFiltPar_conf[i, : , :])) for i in 1:N_samp_par ]

@@ -267,7 +267,7 @@ function updatedGasPar( Model::GasNetModelDirBinGlobalPseudo, obs_t::Array{<:Rea
 end
 
 
-function gasFilter( Model::GasNetModelDirBinGlobalPseudo,
+function score_driven_filter( Model::GasNetModelDirBinGlobalPseudo,
                                 vResGasPar::Array{<:Real,1}, indTvPar::BitArray{1};vConstPar ::Array{<:Real,1} = zeros(Real,2),
                                 obsT:: Array{Array{Float64,2},1}=Model.obsT ,ftot_0::Array{<:Real,1} = zeros(Real,2))
     """GAS Filter the Dynamic Fitnesses from the Observed degrees, given the GAS parameters
@@ -484,7 +484,7 @@ function estimate(Model::GasNetModelDirBinGlobalPseudo;indTvPar::BitArray{1}=tru
         vecReGasParAll,vecConstPar = divideCompleteRestrictPar(vecUnPar)
 
         oneInADterms  = (maxLargeVal + vecUnPar[1])/maxLargeVal
-        foo,loglikelValue = gasFilter(Model,vecReGasParAll,indTvPar;
+        foo,loglikelValue = score_driven_filter(Model,vecReGasParAll,indTvPar;
                                         obsT = changeStats_T,vConstPar =  vecConstPar,ftot_0 = ftot_0 .* oneInADterms)
         #println(vecReGasPar)
          return - loglikelValue
@@ -529,7 +529,7 @@ function estimate(Model::GasNetModelDirBinGlobalPseudo;indTvPar::BitArray{1}=tru
         #Total likelihood as a function of the restricted parameters
         function likeFun(vecReGasParAll::Array{<:Real,1})
             oneInADterms  = (maxLargeVal + vecReGasParAll[1])/maxLargeVal
-            foo,loglikelValue = gasFilter(Model,vecReGasParAll,indTvPar;
+            foo,loglikelValue = score_driven_filter(Model,vecReGasParAll,indTvPar;
                                             obsT = changeStats_T,vConstPar =  vecAllParConstHat,ftot_0 = ftot_0 .* oneInADterms)
             #println(vecReGasPar)
              return - loglikelValue

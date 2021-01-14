@@ -94,7 +94,7 @@ figure()
 #   indTvPar = trues(2);indTvPar[1] = false
 #   testModel = DynNets.GasNetModelDirBinGlobalPseudo(changeStats_T,testGasPar,trues(1),"")
 # #
-#   gasFiltPar , pseudolike = DynNets.gasFilter(testModel,testGasPar[2],indTvPar;
+#   gasFiltPar , pseudolike = DynNets.score_driven_filter(testModel,testGasPar[2],indTvPar;
 #     obsT = changeStats_T,vConstPar = testGasPar[1])
 #     close()
 #     subplot(2,2,1);  plot(1:T,sumSq(sumSq(sampledMat_T,1),1)./(N^2-N))
@@ -111,7 +111,7 @@ figure()
 #  parVals=linspace(-3,3,Npoints)
 #  for n=1:Npoints
 #      testGasPar = [[parVals[n]],[0.5]]
-#     ~,testPseudoLike[n]  = gasFilter(testModel,zeros(1),indTvPar;
+#     ~,testPseudoLike[n]  = score_driven_filter(testModel,zeros(1),indTvPar;
 #        obsT = changeStats_T,vConstPar = [testGasPar[1]; testGasPar[2]])
 #  end
 #  plot(parVals,testPseudoLike)
@@ -128,7 +128,7 @@ um = 0.5
 
 #gasParVec[1] = -0.101
  #gasParVec[3] = 0.01
-gasFiltPar , pseudolike = gasFilter(GasNetModelDirBinGlobalPseudo(changeStats_T,testGasPar,trues(2),""),gasParVec,indTvPar;
+gasFiltPar , pseudolike = score_driven_filter(GasNetModelDirBinGlobalPseudo(changeStats_T,testGasPar,trues(2),""),gasParVec,indTvPar;
                           vConstPar = constParVec,ftot_0= ftot_0)
 
  close()

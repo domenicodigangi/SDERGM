@@ -45,7 +45,7 @@ allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.NetModelDirBin1(meanSq(d
  estTargDirBin1_eMidTrain,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS )
  gasParEstOnTrain = estTargDirBin1_eMidTrain
  modAllObs =  DynNets.GasNetModelDirBin1(degsIO_T,"FISHER-DIAG")
- GasforeFit,~ = DynNets.gasFilter(modAllObs,[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+ GasforeFit,~ = DynNets.score_driven_filter(modAllObs,[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
  gasforeFit = Float64.(GasforeFit)
 
 load_fold = "./data/multiStepForecast/"
@@ -155,7 +155,7 @@ close()
 #
 #     @show Nlinksnnc =sum(noDiagIndnnc)
 #     # forecast fitnesses using Gas parameters and observations
-#     foreFit,~ = gasFilter( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+#     foreFit,~ = score_driven_filter( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
 #
 #     TRoc = Ttest-1
 #     #storage variables

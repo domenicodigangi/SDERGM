@@ -20,6 +20,7 @@ using PyPlot
 
 using ..AReg
 using ..Utilities
+using ..Scalings
 using ..ErgmRcall
 using ..StaticNets
 

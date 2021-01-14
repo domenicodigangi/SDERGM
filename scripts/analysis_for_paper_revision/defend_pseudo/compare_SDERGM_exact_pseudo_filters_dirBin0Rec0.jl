@@ -8,14 +8,18 @@ To Do:
 """
 
 
-
-using StaticNets:ergm_par_from_mean_vals
-using DynNets:fooGasNetModelDirBin0Rec0_mle, sample_est_mle_pmle, dgp_missp, GasNetModelDirBin0Rec0_mle
-using Utilities
-import StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,exp_val_stats, diadProbFromPars, samplSingMatCan, statsFromMat
 using Statistics
 using PyPlot
 pygui(true)
+
+using ScoreDrivenExponentialRandomGraphs
+using ScoreDrivenExponentialRandomGraphs.Utilities
+using ScoreDrivenExponentialRandomGraphs.Scalings
+
+using StaticNets:ergm_par_from_mean_vals
+using DynNets:fooGasNetModelDirBin0Rec0_mle, sample_est_mle_pmle, dgp_missp, GasNetModelDirBin0Rec0_mle
+
+import StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,exp_val_stats, diadProbFromPars, samplSingMatCan, statsFromMat
 
 
 
@@ -24,33 +28,12 @@ staModel = fooNetModelDirBin0Rec0
 
 
 
-"""
-Number of links for various network size, in dense regime
-"""
-denseLScal(N)  = 0.2 * n_pox_dir_links(N)
 
-"""
-Number of links for various network size, in semiDense regime
-"""
-semiDenseLScal(N)  = 0.1 * n_pox_dir_links(N)/sqrt(N)
-
-"""
-Number of links for various network size, in sparse regime
-"""
-sparseLScal(N) =  4 * N 
-
-"""
-Average number of reciprocal pairs in Erdos Reny Model 
- - avgL is the expected number of links, related to the probability p of a single link being present by expL = (N^2-N) * p  
-
-"""
-erdosRenyRecScal(expL, N) = expL^2/(2*(N^2-N)) 
 
 ## Search an appropriate dgp, i.e. one that stays away form physical bounds
 
-
-
-function scaled_sin_sample_est_mle_pmle(alphaMeanVal::Function, N, T, Nsample; regimeString ="", plotDgpOrigin=false, plotFlag=false)
+#The following could be updated using dgp_misspecified()
+function scaled_sin_sample_est_mle_pmle_var_N(alphaMeanVal::Function, N, T, Nsample; regimeString ="", plotDgpOrigin=false, plotFlag=false)
     
     betaMeanVal(N) = alphaMeanVal(N)/5 
 
@@ -59,7 +42,7 @@ function scaled_sin_sample_est_mle_pmle(alphaMeanVal::Function, N, T, Nsample; r
 
     nCycles = 2
 
-    get_alpha_beta_seq(N) = hcat(dgpSin( (1-amplAlpha/2)*alphaMeanVal(N), (1+amplAlpha/2)*alphaMeanVal(N), nCycles, T; phase = 10*rand()), dgpSin( (1-amplBeta/2)*betaMeanVal(N), (1+amplBeta/2)*betaMeanVal(N), nCycles, T; phase = 10*rand()))
+    alpha_beta_seq_given_N(N) = hcat(dgpSin( (1-amplAlpha/2)*alphaMeanVal(N), (1+amplAlpha/2)*alphaMeanVal(N), nCycles, T; phase = 10*rand()), dgpSin( (1-amplBeta/2)*betaMeanVal(N), (1+amplBeta/2)*betaMeanVal(N), nCycles, T; phase = 10*rand()))
 
 
 
@@ -67,11 +50,11 @@ function scaled_sin_sample_est_mle_pmle(alphaMeanVal::Function, N, T, Nsample; r
 
     theta_eta_to_alpha_beta(θ, η, N) =  collect(exp_val_stats(staModel, θ, η, N))./n_pox_dir_links(N)
 
-    get_theta_eta_seq(N) = reduce(hcat, [alpha_beta_to_theta_eta(ab[1], ab[2], N) for ab in eachrow(get_alpha_beta_seq(N))])
+    get_theta_eta_seq_from_alpha_beta(N) = reduce(hcat, [alpha_beta_to_theta_eta(ab[1], ab[2], N) for ab in eachrow(alpha_beta_seq_given_N(N))])
 
 
     if plotDgpOrigin
-        startAlphaBetaSeq = get_alpha_beta_seq(N)
+        startAlphaBetaSeq = alpha_beta_seq_given_N(N)
         thetaEtaSeq = permutedims(reduce(hcat, [alpha_beta_to_theta_eta(ab[1], ab[2], N) for ab in eachrow(startAlphaBetaSeq)]))
 
         fig, ax = subplots(2,2) 
@@ -91,18 +74,18 @@ function scaled_sin_sample_est_mle_pmle(alphaMeanVal::Function, N, T, Nsample; r
     # minNPairs = 10
     # lBoundBeta = minNPairs/n_pox_dir_links(N)
     # uBoundBeta = alphaMeanVal(N)/2 -  minNPairs/n_pox_dir_links(N)
-    # startLRSeq = get_alpha_beta_seq(N).*n_pox_dir_links(N)
-    # endAlphaBetaSeq = permutedims( reduce(hcat, [theta_eta_to_alpha_beta(θ, η, N) for (θ, η) in eachcol(get_theta_eta_seq(N))]) )
-    # θ_0, η_0 = get_theta_eta_seq(N)[:,1]
+    # startLRSeq = alpha_beta_seq_given_N(N).*n_pox_dir_links(N)
+    # endAlphaBetaSeq = permutedims( reduce(hcat, [theta_eta_to_alpha_beta(θ, η, N) for (θ, η) in eachcol(get_theta_eta_seq_from_alpha_beta(N))]) )
+    # θ_0, η_0 = get_theta_eta_seq_from_alpha_beta(N)[:,1]
     # A_vec = [statsFromMat(staModel, samplSingMatCan(staModel, diadProbFromPars(staModel, [θ_0, η_0]), N)) for i=1:100]
 
-    return sample_est_mle_pmle(model_mle, get_theta_eta_seq(N), N, Nsample; plotFlag=plotFlag, regimeString=regimeString)
+    return sample_est_mle_pmle(model_mle, get_theta_eta_seq_from_alpha_beta(N), N, Nsample; plotFlag=plotFlag, regimeString=regimeString)
 end
 
 # Check that misspecified filters run without evident issues on few samples at N extrema
 
-denseAlphaScal(N) = denseLScal(N)/n_pox_dir_links(N)
-sparseAlphaScal(N) = sparseLScal(N)/n_pox_dir_links(N)
+denseAlphaScal(N) = denseLScal_DirBin(N)/n_pox_dir_links(N)
+sparseAlphaScal(N) = sparseLScal_DirBin(N)/n_pox_dir_links(N)
 T = 200
 scaled_sin_sample_est_mle_pmle(denseAlphaScal, 10, T, 2, regimeString = "Dense", plotDgpOrigin=true)
 scaled_sin_sample_est_mle_pmle(sparseAlphaScal, 10, T, 2, regimeString = "Sparse", plotDgpOrigin=true)
@@ -176,8 +159,8 @@ ax[1,2].set_title("Dense  regime")
 
 
 # N=80
-# linkScal(N) = semiDenseLScal(N)
-# recScal(N) = min(5 + 10 * erdosRenyRecScal(linkScal(N), N), linkScal(N)/2 -1)
+# linkScal(N) = semiDenseLScal_DirBin(N)
+# recScal(N) = min(5 + 10 * erdosRenyRecScal_DirBin(linkScal(N), N), linkScal(N)/2 -1)
 # percAmpl = 0.5
 # θ_0_min, η_0_min = ergm_par_from_mean_vals(staModel, linkScal(N)*(1-percAmpl), recScal(N)*(1-percAmpl), N)
 # θ_0_max, η_0_max = ergm_par_from_mean_vals(staModel, linkScal(N)*(1+percAmpl), recScal(N)*(1+percAmpl), N)

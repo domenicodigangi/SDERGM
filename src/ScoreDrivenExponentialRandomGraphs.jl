@@ -10,6 +10,9 @@ export AReg
 include("./Utilities.jl")
 export Utilities
 
+include("./Scalings.jl")
+export Scalings
+
 include("./StaticNets.jl")
 export StaticNets
 

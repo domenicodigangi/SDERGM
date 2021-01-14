@@ -22,11 +22,11 @@ mod2Samp = GasNetModelDirW1(ones(T,2N), [ zeros(2N) ,0.9  * ones(1), 0.01 * ones
 NumberOfGroupsAndABindNodes(mod2Samp,groupsInds)
 
 
-Y_T, Fitness_TIO = gasFilter(mod2Samp,[W;B;A];dgpTN = (T,N))
+Y_T, Fitness_TIO = score_driven_filter(mod2Samp,[W;B;A];dgpTN = (T,N))
 StrI = sumSq(Y_T,3) ; StrO = sumSq(Y_T,2); StrIO = [StrI  StrO]
 Mod2est = GasNetModelDirW1(StrIO,dgpParArr, groupsInds,scalingType)
 #test filter
-Fitness_TIO_Fil, loglike = gasFilter(Mod2est,dgpParVec; groupsInds = groupsInds)
+Fitness_TIO_Fil, loglike = score_driven_filter(Mod2est,dgpParVec; groupsInds = groupsInds)
 Fitness_TIO - Fitness_TIO_Fil
 estimateSnapSeq(Mod2est;print_t = true)
 
@@ -73,7 +73,7 @@ W_prob_tmp=    [-Inf         -324.547
 W_prob = [W_prob_tmp[1:N];W_prob_tmp[N+1:2N]]
 Umean_prob =StaticNets.uBndPar2bndPar(StaMod, W_prob./(1-B_prob))
 display(StaticNets.expMatrix(StaMod,Umean_prob))
-Y_T, Fitness_TIO =gasFilter(Mod2est,[W_prob;B_prob;A_prob]; groupsInds = groupsInds)
+Y_T, Fitness_TIO =score_driven_filter(Mod2est,[W_prob;B_prob;A_prob]; groupsInds = groupsInds)
 
 
 ##

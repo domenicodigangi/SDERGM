@@ -31,19 +31,19 @@ load_path = save_fold*file_nameStart* "_Bin1_" *file_nameEnd#
 
 N = round(Int,length(degsIO_T[:,1])/2)
 eMidMod = DynNets.GasNetModelDirBin1(degsIO_T,estGas_1GW[1], [Int.(ones(2N)),Int.(ones(1)),Int.(ones(1))],"")
-gasFilter(eMidMod,[estGas_1GW[1][1];estGas_1GW[1][2];estGas_1GW[1][3]])
+score_driven_filter(eMidMod,[estGas_1GW[1][1];estGas_1GW[1][2];estGas_1GW[1][3]])
 estSS =  DynNets.estimateSnapSeq(eMidMod1Snap)'
 ## test fisher scoring on data
 #time = @elapsed  out = estimate(eMidMod)
 
 println((T,N,GW ,round(time),out[1][2],out[1][3]))
-Fitness_T_estTarg, tmp = gasFilter( Mod, [out[1][1];out[1][2];out[1][3]])
+Fitness_T_estTarg, tmp = score_driven_filter( Mod, [out[1][1];out[1][2];out[1][3]])
 out
 #test the pox of autodiff loglikelihood
 function loglikeRE(BAvecRe::Vector)
     B = BAvecRe[1]
     A = BAvecRe[2]
-    ~, ll = gasFilter( eMidMod, [SSMean;B;A])
+    ~, ll = score_driven_filter( eMidMod, [SSMean;B;A])
     return ll
 end
 loglikeUN(BAvecUn::Vector) = ( ReB = exp(BAvecUn[1])./(1+exp(BAvecUn[1])); ReA = exp(BAvecUn[2]) ; loglikeRE([ReB;ReA]) )
@@ -70,7 +70,7 @@ x0Re = [0.05;0.5]
     end
 
 
-plot(gasFilter( eMidMod, [SSMean;x0Re])[1][:,1+N:end])
+plot(score_driven_filter( eMidMod, [SSMean;x0Re])[1][:,1+N:end])
 ##
 Fitness_T = Float64.(Fitness_T)
 corrMat=  squeeze(StatsBase.crosscor( Fitness_T,Fitness_T,[0]),1)
@@ -86,7 +86,7 @@ estOutTarg = estimateTargeting(Mod)
 Mod_estTarg = GasNetModelBin1(Mod.obsT,estOutTarg[1],groupsInd,scoreScal)
 
 vresParTarg = [Mod_estTarg.Par[1];Mod_estTarg.Par[2];Mod_estTarg.Par[3]]
-Fitness_T_estTarg, tmp = gasFilter( Mod, vresParTarg)
+Fitness_T_estTarg, tmp = score_driven_filter( Mod, vresParTarg)
 
 ppar = plot(Fitness_T_estTarg,title = "$(round.(squeeze(mean(Fitness_T_estTarg,1),1),1))  $(round.(UMdgp,1))")
 pdegs = plot(degs_T,title = "$(dgpdegs)  $(round.(squeeze(mean(degs_T,1),1),1))")
@@ -98,7 +98,7 @@ estOut = estimate(Mod)
 Mod_est = GasNetModelBin1(Mod.obsT,estOut[1],groupsInds,scoreScal)
 
 vresPar = [Mod_est.Par[1];Mod_est.Par[2];Mod_est.Par[3]]
-Fitness_T_est, tmp = gasFilter( Mod, vresPar)
+Fitness_T_est, tmp = score_driven_filter( Mod, vresPar)
 
 ppar = plot(Fitness_T_est,title = "$(round.(squeeze(mean(Fitness_T_est,1),1),1))  $(round.(UMdgp,1))")
 pdegs = plot(degs_T,title = "$(dgpdegs)  $(round.(squeeze(mean(degs_T,1),1),1))")
@@ -128,7 +128,7 @@ estDataT = @load(save_path,groupsIndsEst,groupsIndsDgp,allObs,
         simPar_1,simPar_2,simPar_3,estPar_1,estPar_2,estPar_3,est_conv_flag,est_times)
 
 vestPar = [estPar_1[1,n,:]; estPar_2[n];estPar_3[n]]
-Fitness_Tfil ,like= gasFilter( Mod,vestPar)
+Fitness_Tfil ,like= score_driven_filter( Mod,vestPar)
 
 
     pparfil = plot(Fitness_Tfil)
@@ -136,7 +136,7 @@ Fitness_Tfil ,like= gasFilter( Mod,vestPar)
     plot(ppar,pparfil,layout = (2,1),legend=:none,size = (1200,600))
 ##
 vResGasPar = [Mod.Par[1];Mod.Par[2];Mod.Par[3];]
-Fitness_Tfil ,like= gasFilter( Mod,vResGasPar)
+Fitness_Tfil ,like= score_driven_filter( Mod,vResGasPar)
 
 
     pparfil = plot(Fitness_Tfil)
@@ -212,7 +212,7 @@ Fitness_Tfil ,like= gasFilter( Mod,vResGasPar)
 # plot(tmpAsh)
 # ##
 # vResGasPar = [Mod.Par[1];Mod.Par[2];Mod.Par[3];]
-# Fitness_Tfil ,like= gasFilterAndLikeliood( Mod,vResGasPar)
+# Fitness_Tfil ,like= score_driven_filterAndLikeliood( Mod,vResGasPar)
 #
 #
 #     pparIfil = plot(Fitness_Tfil[:,1:N])

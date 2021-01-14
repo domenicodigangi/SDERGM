@@ -61,7 +61,7 @@ allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.NetModelDirBin1(meanSq(d
  modGasDirBin1_eMidTrain = DynNets.GasNetModelDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG")
  estTargDirBin1_eMidTrain,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS )
  gasParEstOnTrain = estTargDirBin1_eMidTrain
- GasforeFitTrain,~ = DynNets.gasFilter( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+ GasforeFitTrain,~ = DynNets.score_driven_filter( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
  gasforeFitTrain = Float64.(GasforeFitTrain)
 
 

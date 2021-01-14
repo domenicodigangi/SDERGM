@@ -9,64 +9,56 @@ struct  GasNetModelDirBin0Rec0_pmle <: GasNetModelDirBin0Rec0
      indTvPar :: BitArray{1} #  what parameters are time varying   ?
      scoreScalingType::String # String that specifies the rescaling of the score. For a list of possible
      # choices see function scalingMatGas
-  end
+end
+
 
 fooGasPar = [ones(2), ones(2), ones(2)]
+
 fooChangeStat = zeros(4,2)
+
 fooGasNetModelDirBin0Rec0_pmle = GasNetModelDirBin0Rec0_pmle( [fooChangeStat, fooChangeStat], fooGasPar, trues(2), "")
 
 export fooGasNetModelDirBin0Rec0_pmle
 
+
+""" A gas model based on pseudolikelihood (as objective function) for  Directed binary networks and probability depending on a generic vector of global statistics each associated with a time varying parameters.
+"""
 struct  GasNetModelDirBin0Rec0_mle <: GasNetModelDirBin0Rec0
-     """ A gas model based on pseudolikelihood (as objective function) for
-            Directed binary networks and probability depending on a generic vector
-            of global statistics each associated with a time varying parameters.
-         """
      obsT:: Array{Array{Float64,1},1}# for each t we have 2 statistics: L and R and the network size N
      Par::Array{Array{<:Real,1},1} #  each time varying parameter has 3 static parameters in this specification.
                          # if a parameter is constant than only 1 gas parameteris present
      indTvPar :: BitArray{1} #  what parameters are time varying   ?
-     scoreScalingType::String # String that specifies the rescaling of the score. For a list of possible
-     # choices see function scalingMatGas
-  end
+     scoreScalingType::String # String that specifies the rescaling of the score. For a list of possible  choices see function scalingMatGas
+end
 
 fooGasPar = [ones(2), ones(2), ones(2)]
+
 fooGasNetModelDirBin0Rec0_mle = GasNetModelDirBin0Rec0_mle( [zeros(2), zeros(2), 10 .* ones(Int, 2)], fooGasPar, trues(2), "")
 
 export fooGasNetModelDirBin0Rec0_mle
 
-statsFromMat(Model::T where T<: GasNetModelDirBin0Rec0, A ::Matrix{<:Real}) = StaticNets.statsFromMat(StaticNets.fooNetModelDirBin0Rec0, A ::Matrix{<:Real}) 
+
+statsFromMat(Model::GasNetModelDirBin0Rec0_mle, A ::Matrix{<:Real}) = StaticNets.statsFromMat(StaticNets.fooNetModelDirBin0Rec0, A ::Matrix{<:Real}) 
 
 
-# Relations between Static and Dynamical models: conventions on storage for
-# parameters and observations
 StaModType(model::T where T<: GasNetModelDirBin0Rec0 ) = StaticNets.fooNetModelDirBin0Rec0# to be substituted with a conversion mechanism
 
-# options and conversions of parameters for optimization
+
 setOptionsOptim(model::T where T<: GasNetModelDirBin0Rec0) = setOptionsOptim(fooGasNetModelDirBin1)
 
-array2VecGasPar(model::T where T<: GasNetModelDirBin0Rec0,
-                ArrayGasPar, indTvPar :: BitArray{1}) =
-                array2VecGasPar(fooGasNetModelDirBinGlobalPseudo,
-                                ArrayGasPar, indTvPar )
 
-vec2ArrayGasPar(model::T where T<: GasNetModelDirBin0Rec0, VecGasPar::Array{<:Real,1},
-                indTvPar :: BitArray{1}) =
-                vec2ArrayGasPar(fooGasNetModelDirBinGlobalPseudo, VecGasPar,
-                                indTvPar)
+array2VecGasPar(model::T where T<: GasNetModelDirBin0Rec0, ArrayGasPar, indTvPar :: BitArray{1}) = array2VecGasPar(fooGasNetModelDirBinGlobalPseudo, ArrayGasPar, indTvPar )
 
-restrictGasPar(model::T where T<: GasNetModelDirBin0Rec0, vecUnGasPar::Array{<:Real,1},
-                        indTvPar :: BitArray{1}) =
-                        restrictGasPar(fooGasNetModelDirBinGlobalPseudo,
-                                        vecUnGasPar, indTvPar )
 
-unRestrictGasPar(model::T where T<: GasNetModelDirBin0Rec0,
-                        vecReGasPar::Array{<:Real,1},
-                        indTvPar :: BitArray{1})=
-                        unRestrictGasPar(fooGasNetModelDirBinGlobalPseudo ,
-                                            vecReGasPar,  indTvPar )
+vec2ArrayGasPar(model::T where T<: GasNetModelDirBin0Rec0, VecGasPar::Array{<:Real,1}, indTvPar :: BitArray{1}) = vec2ArrayGasPar(fooGasNetModelDirBinGlobalPseudo, VecGasPar, indTvPar)
 
-#Gas Filter Functions
+
+restrictGasPar(model::T where T<: GasNetModelDirBin0Rec0, vecUnGasPar::Array{<:Real,1}, indTvPar :: BitArray{1}) = restrictGasPar(fooGasNetModelDirBinGlobalPseudo, vecUnGasPar, indTvPar )
+
+
+unRestrictGasPar(model::T where T<: GasNetModelDirBin0Rec0, vecReGasPar::Array{<:Real,1}, indTvPar :: BitArray{1}) = unRestrictGasPar(fooGasNetModelDirBinGlobalPseudo, vecReGasPar,  indTvPar )
+
+
 function identify(model::T where T<: GasNetModelDirBin0Rec0,parIO::Array{<:Real,1})
     # "Given a vector of parameters, return the transformed vector that verifies
     # an identification condition. Do not do anything if the model is identified."
@@ -82,6 +74,7 @@ function identify(model::T where T<: GasNetModelDirBin0Rec0,parIO::Array{<:Real,
     # parIO = [ parI - shift ;  parO + shift ]
     return parIO
 end
+
 
 function scalingMatGas(model::T where T<: GasNetModelDirBin0Rec0,expMat::Array{<:Real,2},I_tm1::Array{<:Real,2})
     "Return the matrix required for the scaling of the score, given the expected
@@ -114,31 +107,50 @@ function scalingMatGas(model::T where T<: GasNetModelDirBin0Rec0,expMat::Array{<
     return scalingMat
 end
 
-function target_function_t(model::GasNetModelDirBin0Rec0_mle, obs_t, par)
+
+function target_function_t(model::GasNetModelDirBin0Rec0_mle, obs_t, f_t)
+
     L, R, N = obs_t
-    return StaticNets.logLikelihood( StaticNets.fooNetModelDirBin0Rec0, L, R, N, par)
+
+    return StaticNets.logLikelihood( StaticNets.fooNetModelDirBin0Rec0, L, R, N, f_t)
 end
 
 
-function updatedGasPar( model::T where T<: GasNetModelDirBin0Rec0, obs_t,
-                         ftot_t::Array{<:Real,1}, I_tm1::Array{<:Real,2},
-                         indTvPar::BitArray{1}, Wgas::Array{<:Real,1},
-                         Bgas::Array{<:Real,1}, Agas::Array{<:Real,1};
-                         matrixScaling=false)
-    #= likelihood and gradients depend on all the parameters (ftot_t), but
-    only the time vaying ones (f_t) are to be updated=#
-    NergmPar = 2
-    NtvPar = sum(indTvPar)
-    f_t = ftot_t[indTvPar] #Time varying ergm parameters
+function target_function_t_grad(model::T where T<: GasNetModelDirBin0Rec0, obs_t, f_t)
 
     target_fun_t(x) = target_function_t(model, obs_t, x)
+    
+    grad_tot_t = ForwardDiff.gradient(target_fun_t, f_t)
 
-    target_fun_val_t = target_fun_t(f_t)
-    grad_tot_t = ForwardDiff.gradient(target_fun_t,f_t)
+    return grad_tot_t
+end
+
+
+function target_function_t_hess(model::T where T<: GasNetModelDirBin0Rec0, obs_t, f_t)
+
+    target_fun_t(x) = target_function_t(model, obs_t, x)
+    
+    hess_tot_t = ForwardDiff.hessian(target_fun_t, f_t)
+
+    return hess_tot_t
+end
+
+
+function updatedGasPar( model::T where T<: GasNetModelDirBin0Rec0, obs_t, ftot_t::Array{<:Real,1}, I_tm1::Array{<:Real,2}, indTvPar::BitArray{1}, Wgas::Array{<:Real,1}, Bgas::Array{<:Real,1}, Agas::Array{<:Real,1};matrixScaling=false)
+    
+    
+    #= likelihood and gradients depend on all the parameters (ftot_t), but
+    only the time vaying ones (f_t) are to be updated=#
+    
+
+    target_fun_val_t = target_function_t(model, obs_t, ftot_t)
+    
+    grad_tot_t = target_function_t_grad(model, obs_t, ftot_t)
 
     # No rescaling
     I_t = I_tm1
 
+    f_t = ftot_t[indTvPar] #Time varying ergm parameters
     s_t = grad_tot_t[indTvPar]
     f_tp1 = Wgas .+ Bgas.* f_t .+ Agas.*s_t
     ftot_tp1 = copy(ftot_t)
@@ -147,17 +159,17 @@ function updatedGasPar( model::T where T<: GasNetModelDirBin0Rec0, obs_t,
 end
 
 
-function gasFilter( model::T where T<: GasNetModelDirBin0Rec0, vResGasPar::Array{<:Real,1}, indTvPar::BitArray{1}; vConstPar ::Array{<:Real,1} = zeros(Real,2),
-                    obsT=model.obsT, ftot_0::Array{<:Real,1} = zeros(Real,2), dgpNT = (0,0))
-    """GAS Filter the Dynamic Fitnesses from the Observed degrees, given the GAS parameters
-     given T observations for the degrees in TxN vector degsT
-     """
+"""
+GAS Filter the Dynamic Fitnesses from the Observed degrees, given the parameters
+given T observations for the degrees in TxN vector degsT . For pseudolikelihood models, only filtering is allowed (no SD dgp sampling)
+"""
+function score_driven_filter( model::T where T<: GasNetModelDirBin0Rec0, vResGasPar::Array{<:Real,1}, indTvPar::BitArray{1}; vConstPar ::Array{<:Real,1} = zeros(Real,2), obsT=model.obsT, ftot_0::Array{<:Real,1} = zeros(Real,2), dgpNT = (0,0))
 
-     #Per i modelli con pseudolikelihood this funciton allows only filtering
+    sum(dgpNT) == 0 ? dgp = false : dgp = true
 
-    sum(dgpNT) == 0   ?     dgp = false : dgp = true
     NergmPar = 2#
     NTvPar   = sum(indTvPar)
+
     if dgp
         T = dgpNT[2]
         N_const = dgpNT[1]
@@ -165,11 +177,11 @@ function gasFilter( model::T where T<: GasNetModelDirBin0Rec0, vResGasPar::Array
     else
         T= length(obsT);
     end
+
     # Organize parameters of the GAS update equation
     Wvec = vResGasPar[1:3:3*NTvPar]
     Bvec = vResGasPar[2:3:3*NTvPar]
     Avec = vResGasPar[3:3:3*NTvPar]
-
 
     # start values equal the unconditional mean,and  constant ones remain equal to the unconditional mean, hence initialize as:
     UMallPar = zeros(Real,NergmPar)
@@ -177,36 +189,42 @@ function gasFilter( model::T where T<: GasNetModelDirBin0Rec0, vResGasPar::Array
     if !all(indTvPar) # if not all parameters are time varying
         UMallPar[.!indTvPar] = vConstPar
     end
-    #println(UMallPar)
+
     fVecT = ones(Real,NergmPar,T)
     sVecT = ones(Real,NergmPar,T)
 
-    sum(ftot_0)==0  ?    ftot_0 = UMallPar : ()# identify(model,UMallNodesIO)
-
+    sum(ftot_0)==0 ? ftot_0 = UMallPar : ()# identify(model,UMallNodesIO)
     ftot_t = copy(ftot_0)
+
     if NTvPar==0
         I_tm1 = ones(1,1)
     else
         I_tm1 = Float64.(Diagonal{Real}(I,NTvPar))
     end
+
     loglike = 0
+
     if dgp
         A_T = zeros(Int8, N, N, T)
     end
+
     fVecT[:,1] = ftot_t
+
     for t=2:T
     #    println(t)
         if dgp
             diadProb = StaticNets.diadProbFromPars(StaticNets.fooNetModelDirBin0Rec0, ftot_t )
+
             A_t = StaticNets.samplSingMatCan(StaticNets.fooNetModelDirBin0Rec0, diadProb, N)
+            
             A_T[:, : , t] = A_t
-            obs_t = StaticNets.statsFromMat(StaticNets.fooNetModelDirBin0Rec0, A_t)
+            
+            obs_t = statsFromMat(model, A_t)
 
         else   
             obs_t = obsT[t]
         end
 
-        #print((t,I_tm1))
         ftot_t,loglike_t,I_tm1,grad_t = updatedGasPar(model,obs_t, ftot_t,I_tm1,indTvPar,Wvec,Bvec,Avec)
         fVecT[:,t] = ftot_t #store the filtered parameters from previous iteration
         sVecT[:,t] = grad_t #store the filtered parameters from previous iteration
@@ -219,7 +237,7 @@ function gasFilter( model::T where T<: GasNetModelDirBin0Rec0, vResGasPar::Array
     end
 end
 
-# Estimation
+
 function setOptionsOptim(model::T where T<: GasNetModelDirBin0Rec0)
     "Set the options for the optimization required in the estimation of the model.
     For the optimization use the Optim package."
@@ -242,6 +260,7 @@ function setOptionsOptim(model::T where T<: GasNetModelDirBin0Rec0)
       return opt, algo
 end
 
+
 function static_estimate(model::GasNetModelDirBin0Rec0_mle, statsT)
     L_mean  = mean([stat[1] for stat in statsT ])
     R_mean  = mean([stat[2] for stat in statsT ])
@@ -252,7 +271,8 @@ function static_estimate(model::GasNetModelDirBin0Rec0_mle, statsT)
     return staticPars
 end
 
-function estimate(model::T where T<: GasNetModelDirBin0Rec0; obsT = model.obsT, indTvPar::BitArray{1}=trues(2), indTargPar::BitArray{1} = indTvPar, UM:: Array{<:Real,1} = zeros(2), ftot_0 :: Array{<:Real,1} = zeros(2), hess_opt_flag = false)
+
+function estimate(model::T where T<: GasNetModelDirBin0Rec0; obsT = model.obsT, indTvPar::BitArray{1}=trues(2), indTargPar::BitArray{1} = indTvPar, UM:: Array{<:Real,1} = zeros(2), ftot_0 :: Array{<:Real,1} = zeros(2))
     "Estimate the GAS and static parameters  "
 
     T = length(obsT);
@@ -349,7 +369,7 @@ function estimate(model::T where T<: GasNetModelDirBin0Rec0; obsT = model.obsT, 
 
         oneInADterms  = (StaticNets.maxLargeVal + vecUnPar[1])/StaticNets.maxLargeVal
 
-        foo, target_fun_val_T, foo1 = gasFilter( model,  vecReGasParAll, indTvPar; obsT = obsT, vConstPar =  vecConstPar, ftot_0 = ftot_0 .* oneInADterms)
+        foo, target_fun_val_T, foo1 = score_driven_filter( model,  vecReGasParAll, indTvPar; obsT = obsT, vConstPar =  vecConstPar, ftot_0 = ftot_0 .* oneInADterms)
 
         #println(vecReGasPar)
          return - target_fun_val_T
@@ -387,39 +407,21 @@ function estimate(model::T where T<: GasNetModelDirBin0Rec0; obsT = model.obsT, 
 
     arrayAllParHat = reshape_results(vecAllParGasHat)
     conv_flag =  Optim.converged(optim_out2)
-
-    # println(optim_out2)
-    if hess_opt_flag
-        #if required return the hessian for the restricted parameters computed at MLE
-        #Total likelihood as a function of the restricted parameters
-        function likeFun(vecReGasParAll::Array{<:Real,1})
-            oneInADterms  = (maxLargeVal + vecReGasParAll[1])/maxLargeVal
-            foo,loglikelValue = gasFilter(model,vecReGasParAll,indTvPar;
-                                            obsT = changeStats_T,vConstPar =  vecAllParConstHat,ftot_0 = ftot_0 .* oneInADterms)
-            #println(vecReGasPar)
-             return - loglikelValue
-        end
-
-        likeFun(vecAllParGasHat)
-        print( ForwardDiff.gradient(likeFun,vecAllParGasHat))
-        hess_opt =  ForwardDiff.hessian(likeFun,vecAllParGasHat)
-        return  arrayAllParHat, conv_flag,UM , ftot_0 , hess_opt
-    else
-        return  arrayAllParHat, conv_flag,UM , ftot_0
-    end
+   
+    return  arrayAllParHat, conv_flag,UM , ftot_0
+   
 end
 
-#--------Pseudologlikelihood SDERGM
+#region  Pseudologlikelihood SDERGM
 
 function change_stats(model::T where T<: GasNetModelDirBin0Rec0, A_T::Array{Matrix{<:Real},1})
     return [StaticNets.change_stats(StaticNets.fooNetModelDirBin0Rec0, A) for A in A_T]
 end
 
+
 function change_stats(model::T where T<: GasNetModelDirBin0Rec0, A_T::Array{<:Real,3})
     return [StaticNets.change_stats(StaticNets.fooNetModelDirBin0Rec0, A_T[:,:,t]) for t in 1:size(A_T)[3]]
 end
-
-
 
 
 function static_estimate(model::GasNetModelDirBin0Rec0_pmle, A_T)
@@ -428,30 +430,72 @@ function static_estimate(model::GasNetModelDirBin0Rec0_pmle, A_T)
     return staticPars
 end
 
+
 function target_function_t(model::GasNetModelDirBin0Rec0_pmle, obs_t, par)
+ 
     changeStat, response, weights = ErgmRcall.decomposeMPLEmatrix(obs_t)
+ 
     return StaticNets.pseudo_loglikelihood_strauss_ikeda( StaticNets.fooNetModelDirBin0Rec0, par, changeStat, response, weights)
 end
 
+#endregion
 
-function dgp_missp(model::GasNetModelDirBin0Rec0, T, θ_0_minMax, η_0_minMax, dgpType)
-    parMatDgp_T = zeros(2,T)
+#region misspecified dgps
+import ..StaticNets:ergm_par_from_mean_vals
+
+alpha_beta_to_theta_eta(α, β, N) = collect(ergm_par_from_mean_vals(fooNetModelDirBin0Rec0, α*n_pox_dir_links(N), β*n_pox_dir_links(N), N))
+
+
+theta_eta_to_alpha_beta(θ, η, N) =  collect(exp_val_stats(fooNetModelDirBin0Rec0, θ, η, N))./n_pox_dir_links(N)
+
+
+
+get_theta_eta_seq_from_alpha_beta(alpha_beta_seq, N) = reduce(hcat, [alpha_beta_to_theta_eta(ab[1], ab[2], N) for ab in eachcol(alpha_beta_seq)])
+
+
+function beta_min_max_from_alpha_min(minValAlpha, N; minPairsNumberDiffSupBound = 10, minPairsNumber = 10 )
+    # min beta val such that the minimum exp value rec links is not close zero   
+    minValBeta = minPairsNumber / n_pox_dir_links(N)
+
+    # min beta val such that the maximum exp value rec links is not close to the physical upper bound 
+    
+    physicalUpperBound = minValAlpha/2
+    maxValBeta =  physicalUpperBound - minPairsNumberDiffSupBound /n_pox_dir_links(N) 
+    
+    minValBeta >= maxValBeta ? error() : ()
+
+    return minValBeta, maxValBeta 
+end
+
+
+function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValAlpha = 0.25, maxValAlpha = 0.3)
+
+    
+    minValBeta, maxValBeta =  beta_min_max_from_alpha_min(minValAlpha, N)
+
+    phaseAlpha = 10*rand()
+    phaseBeta = 10*rand()
+
+
+    α_β_parMatDgp_T = zeros(2,T)
     Nsteps1= 2
 
     if dgpType=="sin"
-        phase = 10rand()
-        parMatDgp_T[1,:] = dgpSin(θ_0_minMax[1], θ_0_minMax[2], Nsteps1,T; phase = phase)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-        parMatDgp_T[2,:] = dgpSin(η_0_minMax[1], η_0_minMax[2], Nsteps1,T;phase= phase + 2/T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+        α_β_parMatDgp_T[1,:] = dgpSin(minValAlpha, maxValAlpha, Nsteps1,T; phase = phaseAlpha)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+        α_β_parMatDgp_T[2,:] = dgpSin(minValBeta, maxValBeta, Nsteps1,T;phase= phaseBeta )# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
     elseif dgpType=="steps"
-        parMatDgp_T[1,:] = randSteps(θ_0_minMax[1], θ_0_minMax[2], Nsteps1,T)
-        parMatDgp_T[2,:] = randSteps(η_0_minMax[1], η_0_minMax[2], Nsteps1,T)
+        α_β_parMatDgp_T[1,:] = randSteps(θ_0_minMax[1], θ_0_minMax[2], Nsteps1,T)
+        α_β_parMatDgp_T[2,:] = randSteps(η_0_minMax[1], η_0_minMax[2], Nsteps1,T)
     elseif dgpType=="AR"
         B = 0.95
         sigma = 0.1
-        parMatDgp_T[1,:] = dgpAR(mean(θ_0_minMax),B,sigma,T; minMax=θ_0_minMax )
-        parMatDgp_T[2,:] = dgpAR(mean(η_0_minMax),B,sigma,T; minMax = η_0_minMax )
+        α_β_parMatDgp_T[1,:] = dgpAR(mean(θ_0_minMax),B,sigma,T; minMax=θ_0_minMax )
+        α_β_parMatDgp_T[2,:] = dgpAR(mean(η_0_minMax),B,sigma,T; minMax = η_0_minMax )
     end
-    return parMatDgp_T
+
+    θ_η_parMatDgp_T = get_theta_eta_seq_from_alpha_beta(α_β_parMatDgp_T, N)
+
+    return θ_η_parMatDgp_T
 end
 
 
@@ -466,9 +510,8 @@ function sample_dgp(model::GasNetModelDirBin0Rec0, parMatDgp_T::Matrix, N )
 end
 
 
+function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsample; plotFlag = true, regimeString="")
 
-
-function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsample; plotFlag = true, regimeString="") 
     model_mle = fooGasNetModelDirBin0Rec0_mle
     model_pmle = fooGasNetModelDirBin0Rec0_pmle
 
@@ -484,8 +527,8 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
 
     rmse_mle = zeros(2,Nsample)
     rmse_pmle = zeros(2,Nsample)
-    vEstSd_mle = zeros(6, Nsample)
-    vEstSd_pmle = zeros(6, Nsample)
+    vEstSd_mle = zeros(8, Nsample)
+    vEstSd_pmle = zeros(8, Nsample)
 
     for n=1:Nsample
         ## sample dgp
@@ -497,13 +540,13 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
         ## estimate SD
         estPar_pmle, conv_flag,UM_mple , ftot_0_mple = estimate(model_pmle; indTvPar=indTvPar,indTargPar=indTvPar, obsT = change_stats_T_dgp)
         vResEstPar_pmle = DynNets.array2VecGasPar(model_pmle, estPar_pmle, indTvPar)
-        fVecT_filt_p , target_fun_val_T_p, sVecT_filt_p = gasFilter( model_pmle,  vResEstPar_pmle, indTvPar; obsT = change_stats_T_dgp, ftot_0 = ftot_0_mple)
-        vEstSd_pmle[:,n] = vResEstPar_pmle
+        fVecT_filt_p , target_fun_val_T_p, sVecT_filt_p = score_driven_filter( model_pmle,  vResEstPar_pmle, indTvPar; obsT = change_stats_T_dgp, ftot_0 = ftot_0_mple)
+        vEstSd_pmle[:,n] = vcat(vResEstPar_pmle, ftot_0_mple)
 
         estPar_mle, conv_flag,UM_mle , ftot_0_mle = estimate(model_mle; indTvPar=indTvPar, indTargPar=indTvPar, obsT = stats_T_dgp)
         vResEstPar_mle = DynNets.array2VecGasPar(model_mle, estPar_mle, indTvPar)
-        fVecT_filt , target_fun_val_T, sVecT_filt = gasFilter( model_mle,  vResEstPar_mle, indTvPar; obsT = stats_T_dgp, ftot_0=ftot_0_mle)
-        vEstSd_mle[:,n] = vResEstPar_mle
+        fVecT_filt , target_fun_val_T, sVecT_filt = score_driven_filter( model_mle,  vResEstPar_mle, indTvPar; obsT = stats_T_dgp, ftot_0=ftot_0_mle)
+        vEstSd_mle[:,n] = vcat(vResEstPar_mle, ftot_0_mle)
 
         if plotFlag
             ax_mle[1].plot(fVecT_filt[1,:], "b", alpha =0.5)
@@ -535,6 +578,7 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
         fig2.tight_layout()
     end
     
-    return (vEstSd_mle=vEstSd_mle, vEstSd_pmle=vEstSd_pmle, rmse_mle=avg_rmse_mle, rmse_pmle=avg_rmse_pmle)
+    return (; vEstSd_mle, vEstSd_pmle, avg_rmse_mle, avg_rmse_pmle)
 end
 
+#endregion

@@ -92,7 +92,7 @@ gasParSampled[n] = sampled_gas_par
     startPointEst[n] = startPoint
     gasParVec = zeros(sum(indTvPar)*3); for i=0:(sum(indTvPar)-1) gasParVec[1+3i : 3(i+1)] = estPar[indTvPar][i+1]; end
     constParVec = zeros(sum(.!indTvPar)); for i=1:sum(.!indTvPar) constParVec[i] = estPar[.!indTvPar][i][1]; end
-    gasFiltPar , pseudolike = DynNets.gasFilter(model,gasParVec,indTvPar;
+    gasFiltPar , pseudolike = DynNets.score_driven_filter(model,gasParVec,indTvPar;
                               vConstPar = constParVec)#,ftot_0= startPoint )
 
 
@@ -134,7 +134,7 @@ gasFiltPar_conf_all = fill(zeros(N_samp_par,Nterms,T),Nsample)
         @show(i)
         samPar = gasParSampled[n][:,i]
         gasParVec = samPar
-        tmp, ~ = DynNets.gasFilter(model,gasParVec,indTvPar )
+        tmp, ~ = DynNets.score_driven_filter(model,gasParVec,indTvPar )
             gasFiltPar_conf[i,:,:] = tmp
     end
     gasFiltPar_conf_all[n] = gasFiltPar_conf

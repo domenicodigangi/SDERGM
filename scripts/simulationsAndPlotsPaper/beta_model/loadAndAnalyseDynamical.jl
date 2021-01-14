@@ -161,7 +161,7 @@ indN,s,d = 2,2,2
  degsIO_T = dynDegsSam[indN,s,d]
  modGasDirBin1 = DynNets.GasNetModelDirBin1(degsIO_T)
  parGas,~ =  DynNets.estimateTarg(modGasDirBin1;SSest = estFitSS[indN,s,d])
- gasFiltFit,~ = DynNets.gasFilter( DynNets.GasNetModelDirBin1(degsIO_T),[parGas[1];parGas[2];0.05])
+ gasFiltFit,~ = DynNets.score_driven_filter( DynNets.GasNetModelDirBin1(degsIO_T),[parGas[1];parGas[2];0.05])
  sqrt.(meanSq((dynFitDgp[indN,s,d] - gasFiltFit).^2,2))
 
 plot(gasFiltFit')

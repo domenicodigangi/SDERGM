@@ -158,7 +158,7 @@ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
     startPointEst[n] = startPoint
     gasParVec = zeros(sum(indTvPar)*3); for i=0:(sum(indTvPar)-1) gasParVec[1+3i : 3(i+1)] = estPar[indTvPar][i+1]; end
     constParVec = zeros(sum(!indTvPar)); for i=1:sum(.!indTvPar) constParVec[i] = estPar[.!indTvPar][i][1]; end
-    gasFiltPar , pseudolike = DynNets.gasFilter(model,gasParVec,indTvPar;
+    gasFiltPar , pseudolike = DynNets.score_driven_filter(model,gasParVec,indTvPar;
                               vConstPar = constParVec,ftot_0= startPoint )
 
 

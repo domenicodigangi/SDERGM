@@ -57,7 +57,7 @@ Nvals = [ 2000,3000] #[50,60,80,90,100,125,150,200,300,400]# 200##40 #
              tmprmseSSandGas[:,1,s] =sqrt.(meanSq((dynFitDgp[indN,s,d] - estFitSS[indN,s,d]).^2,2))
              #estimate single snapshot sequence
               round(s/Nsample,1)>prog? (prog = round(s/Nsample,1);println(prog)):()
-              #estimate gasFilter
+              #estimate score_driven_filter
               ## e ora stima il gasPar
               degsIO_T = dynDegsSam[indN,s,d]
               modGasDirBin1 = DynNets.GasNetModelDirBin1(degsIO_T,"FISHER-DIAG")
@@ -65,7 +65,7 @@ Nvals = [ 2000,3000] #[50,60,80,90,100,125,150,200,300,400]# 200##40 #
                #parGas = [[0.989525],[0.0680809]]
               storeGasPar[indN,s,d] = parGas
               display(parGas[2:3])
-              gasFiltFit,~ = DynNets.gasFilter(modGasDirBin1,[parGas[1];parGas[2];parGas[3]])
+              gasFiltFit,~ = DynNets.score_driven_filter(modGasDirBin1,[parGas[1];parGas[2];parGas[3]])
               tmprmseSSandGas[:,2,s] =sqrt.(meanSq((dynFitDgp[indN,s,d] - gasFiltFit).^2,2))
               filFitGas[indN,s,d] = gasFiltFit
               end
@@ -123,7 +123,7 @@ T=300
        simWrap1(N,T,NTV;degIOUncMeans =unifDeg*ones(2N),degb = degb)
     tmprmseSSandGas_test =sqrt.(meanSq((dynFitDgp_test - estFitSS_test).^2,2))
     #estimate single snapshot sequence
-    #estimate gasFilter
+    #estimate score_driven_filter
     ## e ora stima il gasPar
     degsIO_T = dynDegsSam_test
 
@@ -132,10 +132,10 @@ T=300
 
  modGasDirBin1_2 = DynNets.GasNetModelDirBin1(degsIO_T,"FISHER-DIAG")#"")###
   parGas2,convGasFlag_test  =  DynNets.estimateTarg(modGasDirBin1_2;SSest = estFitSS_test)
- #gasFiltFit,~ = DynNets.gasFilter( DynNets.GasNetModelDirBin1(degsIO_T),[parGas[1];parGas[2];0.07])
+ #gasFiltFit,~ = DynNets.score_driven_filter( DynNets.GasNetModelDirBin1(degsIO_T),[parGas[1];parGas[2];0.07])
  println((parGas[2],parGas[3]))
 println((parGas2[2],parGas2[3]))
-gasFiltFit,~ = DynNets.gasFilter( modGasDirBin1,[parGas[1];parGas[2];parGas[3]])
+gasFiltFit,~ = DynNets.score_driven_filter( modGasDirBin1,[parGas[1];parGas[2];parGas[3]])
     tmprmseSSandGas_test =sqrt.(meanSq((dynFitDgp_test - gasFiltFit).^2,2))
     filFitGas_test = gasFiltFit
  indsNodesPlot = [1,N]
@@ -154,8 +154,8 @@ gasFiltFit,~ = DynNets.gasFilter( modGasDirBin1,[parGas[1];parGas[2];parGas[3]])
        1:T,estFitSS_test[indsNodesPlot[2],:],".")
     plot(1:T,gasFiltFit[indsNodesPlot[2],:],"-")
 
- #gasFiltFit,~ = DynNets.gasFilter( DynNets.GasNetModelDirBin1(degsIO_T),[parGas2[1];parGas2[2];0.07])
- gasFiltFit,~ = DynNets.gasFilter( modGasDirBin1_2,[parGas2[1];parGas2[2];parGas2[3]])
+ #gasFiltFit,~ = DynNets.score_driven_filter( DynNets.GasNetModelDirBin1(degsIO_T),[parGas2[1];parGas2[2];0.07])
+ gasFiltFit,~ = DynNets.score_driven_filter( modGasDirBin1_2,[parGas2[1];parGas2[2];parGas2[3]])
     tmprmseSSandGas_test =sqrt.(meanSq((dynFitDgp_test - gasFiltFit).^2,2))
     filFitGas_test = gasFiltFit
  indsNodesPlot = [1,N]
