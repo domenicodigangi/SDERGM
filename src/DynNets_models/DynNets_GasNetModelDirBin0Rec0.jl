@@ -210,7 +210,7 @@ function score_driven_filter( model::T where T<: GasNetModelDirBin0Rec0, vResGas
 
     fVecT[:,1] = ftot_t
 
-    for t=2:T
+    for t=1:T-1
     #    println(t)
         if dgp
             diadProb = StaticNets.diadProbFromPars(StaticNets.fooNetModelDirBin0Rec0, ftot_t )
@@ -226,8 +226,8 @@ function score_driven_filter( model::T where T<: GasNetModelDirBin0Rec0, vResGas
         end
 
         ftot_t,loglike_t,I_tm1,grad_t = updatedGasPar(model,obs_t, ftot_t,I_tm1,indTvPar,Wvec,Bvec,Avec)
-        fVecT[:,t] = ftot_t #store the filtered parameters from previous iteration
-        sVecT[:,t] = grad_t #store the filtered parameters from previous iteration
+        fVecT[:,t+1] = ftot_t #store the filtered parameters from previous iteration
+        sVecT[:,t+1] = grad_t #store the filtered parameters from previous iteration
         loglike += loglike_t
     end
     if dgp
@@ -468,7 +468,7 @@ function beta_min_max_from_alpha_min(minValAlpha, N; minPairsNumberDiffSupBound 
 end
 
 
-function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValAlpha = 0.25, maxValAlpha = 0.3)
+function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValAlpha = 0.25, maxValAlpha = 0.3, nCycles = 2)
 
     
     minValBeta, maxValBeta =  beta_min_max_from_alpha_min(minValAlpha, N)
@@ -481,8 +481,8 @@ function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValA
     Nsteps1= 2
 
     if dgpType=="sin"
-        α_β_parMatDgp_T[1,:] = dgpSin(minValAlpha, maxValAlpha, Nsteps1,T; phase = phaseAlpha)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-        α_β_parMatDgp_T[2,:] = dgpSin(minValBeta, maxValBeta, Nsteps1,T;phase= phaseBeta )# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+        α_β_parMatDgp_T[1,:] = dgpSin(minValAlpha, maxValAlpha, nCycles,T; phase = phaseAlpha)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+        α_β_parMatDgp_T[2,:] = dgpSin(minValBeta, maxValBeta, nCycles,T;phase= phaseBeta )# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
     elseif dgpType=="steps"
         α_β_parMatDgp_T[1,:] = randSteps(θ_0_minMax[1], θ_0_minMax[2], Nsteps1,T)
         α_β_parMatDgp_T[2,:] = randSteps(η_0_minMax[1], η_0_minMax[2], Nsteps1,T)
