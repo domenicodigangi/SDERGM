@@ -116,7 +116,7 @@ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  Nsteps1 ,Nsteps2 = 0,1
  load_fold = "./data/estimatesTest/sdergmTest/conf_bands/"
  @load(load_fold*"conf_bands_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE_target_$(targetAllTv)_N_conf_$(Nconf_bands)_robust.jld" ,
-     stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,
+     stats_T, changeStats_T,estParSS_T,sampledMat_T ,parDgpT,
      Nsample,T,N,filtPar_T_Nsample,gasParEst,convFlag,pVals_Nsample,scoreAutoc_Nsample,staticEst,gasParSampled)
 
 gasFiltPar_conf_all = fill(zeros(N_samp_par,Nterms,T),Nsample)
@@ -161,7 +161,7 @@ figure()
      gasFiltPar  = filtPar_T_Nsample[:,:,n]
      parInd = 1
      subplot(1,2,1);
-     plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=4)
+     plot(1:T,parDgpT[parInd,:],"k",linewidth=4)
      plot(1:T,gasFiltPar[parInd,:],"r")
      plt.fill_between(1:T, conf_band[1,:,parInd], y2 =conf_band[2,:,parInd],color =(0.9, 0.2 , 0.2, 0.1)  )#, color='b', alpha=.1)
      #N_bands = length(gasFiltPar_conf_all[n])
@@ -170,7 +170,7 @@ figure()
      # end
     parInd = 2
     subplot(1,2,2);
-    plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=4)
+    plot(1:T,parDgpT[parInd,:],"k",linewidth=4)
     plot(1:T,gasFiltPar[parInd,:],"r")
      plt.fill_between(1:T, conf_band[1,:,parInd], y2 =conf_band[2,:,parInd],color =(0.9, 0.2 , 0.2, 0.1)  )#, color='b', alpha=.1)
     namePar1 = "Number of Links"

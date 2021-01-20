@@ -1,42 +1,13 @@
-struct  GasNetModelDirBin0Rec0_pmle <: GasNetModelDirBin0Rec0
-     """ A gas model based on pseudolikelihood (as objective function) for
-            Directed binary networks and probability depending on a generic vector
-            of global statistics each associated with a time varying parameters.
-         """
-     obsT:: Array{Array{Float64,2},1}# for each t we have a matrix of change statistics: L and R and the network size N
-     Par::Array{Array{<:Real,1},1} #  each time varying parameter has 3 static parameters in this specification.
-                         # if a parameter is constant than only 1 gas parameteris present
-     indTvPar :: BitArray{1} #  what parameters are time varying   ?
-     scoreScalingType::String # String that specifies the rescaling of the score. For a list of possible
-     # choices see function scalingMatGas
+
+Base.@kwdef struct  GasNetModelDirBin0Rec0_mle <: GasNetModelDirBin0Rec0
+     indTvPar :: BitArray{1} = trues(2) #  what parameters are time varying   ?
+     scoreScalingType::String = "" # String that specifies the rescaling of the score. For a list of possible choices see function scalingMatGas
 end
+export GasNetModelDirBin0Rec0_mle
 
 
-fooGasPar = [ones(2), ones(2), ones(2)]
 
-fooChangeStat = zeros(4,2)
-
-fooGasNetModelDirBin0Rec0_pmle = GasNetModelDirBin0Rec0_pmle( [fooChangeStat, fooChangeStat], fooGasPar, trues(2), "")
-
-export fooGasNetModelDirBin0Rec0_pmle
-
-
-""" A gas model based on pseudolikelihood (as objective function) for  Directed binary networks and probability depending on a generic vector of global statistics each associated with a time varying parameters.
-"""
-struct  GasNetModelDirBin0Rec0_mle <: GasNetModelDirBin0Rec0
-     obsT:: Array{Array{Float64,1},1}# for each t we have 2 statistics: L and R and the network size N
-     Par::Array{Array{<:Real,1},1} #  each time varying parameter has 3 static parameters in this specification.
-                         # if a parameter is constant than only 1 gas parameteris present
-     indTvPar :: BitArray{1} #  what parameters are time varying   ?
-     scoreScalingType::String # String that specifies the rescaling of the score. For a list of possible  choices see function scalingMatGas
-end
-
-fooGasPar = [ones(2), ones(2), ones(2)]
-
-fooGasNetModelDirBin0Rec0_mle = GasNetModelDirBin0Rec0_mle( [zeros(2), zeros(2), 10 .* ones(Int, 2)], fooGasPar, trues(2), "")
-
-export fooGasNetModelDirBin0Rec0_mle
-
+name(x::GasNetModelDirBin0Rec0_mle) = "GasNetModelDirBin0Rec0_mle"
 
 statsFromMat(Model::GasNetModelDirBin0Rec0_mle, A ::Matrix{<:Real}) = StaticNets.statsFromMat(StaticNets.fooNetModelDirBin0Rec0, A ::Matrix{<:Real}) 
 
@@ -50,13 +21,169 @@ setOptionsOptim(model::T where T<: GasNetModelDirBin0Rec0) = setOptionsOptim(foo
 array2VecGasPar(model::T where T<: GasNetModelDirBin0Rec0, ArrayGasPar, indTvPar :: BitArray{1}) = array2VecGasPar(fooGasNetModelDirBinGlobalPseudo, ArrayGasPar, indTvPar )
 
 
-vec2ArrayGasPar(model::T where T<: GasNetModelDirBin0Rec0, VecGasPar::Array{<:Real,1}, indTvPar :: BitArray{1}) = vec2ArrayGasPar(fooGasNetModelDirBinGlobalPseudo, VecGasPar, indTvPar)
+number_ergm_par(model::T where T <:GasNetModelDirBin0Rec0) = 2
+
+"""
+Given the flag of constant parameters, a starting value for their unconditional means (their constant value, for those constant), return a starting point for the optimization
+"""
+function starting_point_optim(model::T where T <:GasNetModel, indTvPar, UM; indTargPar =  falses(100))
+    
+    nTvPar = sum(indTvPar)
+    NTargPar = sum(indTargPar)
+    nErgmPar = length(indTvPar)
+    
+    # #set the starting points for the optimizations
+    B0_Re  = 0.98; B0_Un = log(B0_Re ./ (1 .- B0_Re ))
+    ARe_min =0.000001
+    A0_Re  = 0.0005 ; A0_Un = log(A0_Re  .-  ARe_min)
+    
+    # starting values for the vector of parameters that have to be optimized
+    vParOptim_0 = zeros(nErgmPar + nTvPar*2 - NTargPar)
+    last = 0
+    for i=1:nErgmPar
+        if indTvPar[i]
+            if indTargPar[i]
+                vParOptim_0[last+1:last+2] = [ B0_Un; A0_Un]
+                last+=2
+            else
+                vParOptim_0[last+1:last+3] = [UM[i]*(1 .- B0_Re) ; B0_Un; A0_Un]
+                last+=3
+            end
+        else
+            vParOptim_0[last+1] = UM[i]
+            last+=1
+        end
+    end
+    return vParOptim_0
+end
 
 
-restrictGasPar(model::T where T<: GasNetModelDirBin0Rec0, vecUnGasPar::Array{<:Real,1}, indTvPar :: BitArray{1}) = restrictGasPar(fooGasNetModelDirBinGlobalPseudo, vecUnGasPar, indTvPar )
+"""
+Given vecAllPar divide it into a vector of Score Driven parameters and one of costant parameters
+"""
+function divide_SD_par_from_const(model::T where T <:GasNetModel, indTvPar,  vecAllPar::Array{<:Real,1})
+
+    nTvPar = sum(indTvPar)
+    nErgmPar = length(indTvPar)
+
+    vecSDParAll = zeros(Real,3nTvPar )
+    vConstPar = zeros(Real,nErgmPar-nTvPar)
+
+    lastInputInd = 0
+    lastIndSD = 0
+    lastConstInd = 0
+    #extract the vector of gas parameters, addimng w from targeting when needed
+    for i=1:nErgmPar
+        if indTvPar[i] 
+            vecSDParAll[lastIndSD+1] = vecAllPar[lastInputInd + 1]
+            vecSDParAll[lastIndSD+2] = vecAllPar[lastInputInd + 2]
+            vecSDParAll[lastIndSD+3] = vecAllPar[lastInputInd + 3]
+            lastInputInd +=3
+            lastIndSD +=3
+        else
+            vConstPar[lastConstInd+1] = vecAllPar[lastInputInd  + 1]
+            lastInputInd +=1
+            lastConstInd +=1
+        end
+    end
+    return vecSDParAll, vConstPar
+end
 
 
-unRestrictGasPar(model::T where T<: GasNetModelDirBin0Rec0, vecReGasPar::Array{<:Real,1}, indTvPar :: BitArray{1}) = unRestrictGasPar(fooGasNetModelDirBinGlobalPseudo, vecReGasPar,  indTvPar )
+function merge_SD_par_and_const(model::T where T <:GasNetModel, indTvPar,  vecSDPar::Array{<:Real,1}, vConstPar)
+
+    nTvPar = sum(indTvPar)
+    nConstPar = sum(.!indTvPar)
+    nConstPar == length(vConstPar) ? () : error()
+
+    nErgmPar = length(indTvPar)
+    nAllPar = 3*nTvPar + nConstPar
+
+    vecAllPar = zeros(Real, nAllPar)
+
+    lastIndAll = 0
+    lastIndSD = 0
+    lastIndConst = 0
+    for i=1:nErgmPar
+        if indTvPar[i] 
+            
+            vecAllPar[lastIndAll+1] = vecSDPar[lastIndSD + 1]
+            vecAllPar[lastIndAll+2] = vecSDPar[lastIndSD + 2]
+            vecAllPar[lastIndAll+3] = vecSDPar[lastIndSD + 3]
+
+            lastIndAll +=3
+            lastIndSD +=3
+        else
+            vecAllPar[lastIndAll+1] = vConstPar[lastIndConst + 1]
+                        
+            lastInputInd +=1
+            lastConstInd +=1
+        end
+    end
+    return vecAllPar
+end
+
+
+"""
+Restrict the  Score Driven parameters  to appropriate link functions to ensure that they remain in the region where the SD dynamics is well specified (basically 0<=B<1  A>=0)
+"""
+function restrict_SD_static_par(model::T where T <:GasNetModel, vecUnSDPar::Array{<:Real,1})
+
+    nSDPar = length(vecUnSDPar)
+    nTvPar, rem = divrem(nSDPar,3)
+
+    rem == 0 ? () : error()
+
+    arrayOfVecsReSd = [ [vecUnSDPar[i], link_R_in_0_1(vecUnSDPar[i+1]), link_R_in_R_pos(vecUnSDPar[i+2]) ] for i in 1:3:nSDPar]
+
+    vecReSDPar = reduce(vcat, arrayOfVecsReSd)
+
+    return vecReSDPar
+end
+
+
+"""
+Restrict the  Score Driven parameters  to appropriate link functions to ensure that they remain in the region where the SD dynamics is well specified (basically 0<=B<1  A>=0)
+"""
+function unrestrict_SD_static_par(model::T where T <:GasNetModel, vecReSDPar::Array{<:Real,1})
+
+    nSDPar = length(vecReSDPar)
+    nTvPar, rem = divrem(nSDPar,3)
+
+    rem == 0 ? () : error()
+
+    arrayOfVecsUnSd = [ [vecReSDPar[i], inv_link_R_in_0_1(vecReSDPar[i+1]), inv_link_R_in_R_pos(vecReSDPar[i+2]) ] for i in 1:3:nSDPar]
+
+    vecUnSDPar = reduce(vcat, arrayOfVecsUnSd)
+
+    return vecUnSDPar
+end
+
+
+
+function unrestrict_all_par(model, indTvPar, vAllPar)
+    vSDRe, vConst = divide_SD_par_from_const(model, indTvPar, vAllPar)
+
+    vSDUn = unrestrict_SD_static_par(model, vSDRe)
+
+    merge_SD_par_and_const(model, indTvPar, vSDUn, vConst)
+end
+
+
+function restrict_all_par(model, indTvPar, vAllPar)
+    vSDUn, vConst = divide_SD_par_from_const(model, indTvPar, vAllPar)
+
+    vSDRe = restrict_SD_static_par(model, vSDUn)
+
+    merge_SD_par_and_const(model, indTvPar, vSDRe, vConst)
+end
+
+"""
+To be filled in in case we want to explore conf bands in targeted models
+"""
+function target_unc_mean(UM, indTargPar)
+
+end
 
 
 function identify(model::T where T<: GasNetModelDirBin0Rec0,parIO::Array{<:Real,1})
@@ -159,10 +286,6 @@ function updatedGasPar( model::T where T<: GasNetModelDirBin0Rec0, obs_t, ftot_t
 end
 
 
-"""
-GAS Filter the Dynamic Fitnesses from the Observed degrees, given the parameters
-given T observations for the degrees in TxN vector degsT . For pseudolikelihood models, only filtering is allowed (no SD dgp sampling)
-"""
 function score_driven_filter( model::T where T<: GasNetModelDirBin0Rec0, vResGasPar::Array{<:Real,1}, indTvPar::BitArray{1}; vConstPar ::Array{<:Real,1} = zeros(Real,2), obsT=model.obsT, ftot_0::Array{<:Real,1} = zeros(Real,2), dgpNT = (0,0))
 
     sum(dgpNT) == 0 ? dgp = false : dgp = true
@@ -272,7 +395,7 @@ function static_estimate(model::GasNetModelDirBin0Rec0_mle, statsT)
 end
 
 
-function estimate(model::T where T<: GasNetModelDirBin0Rec0; obsT = model.obsT, indTvPar::BitArray{1}=trues(2), indTargPar::BitArray{1} = indTvPar, UM:: Array{<:Real,1} = zeros(2), ftot_0 :: Array{<:Real,1} = zeros(2))
+function estimate(model::T where T<: GasNetModelDirBin0Rec0, obsT; indTvPar::BitArray{1}=trues(2), indTargPar::BitArray{1} = indTvPar, UM:: Array{<:Real,1} = zeros(2), ftot_0 :: Array{<:Real,1} = zeros(2))
     "Estimate the GAS and static parameters  "
 
     T = length(obsT);
@@ -292,7 +415,7 @@ function estimate(model::T where T<: GasNetModelDirBin0Rec0; obsT = model.obsT, 
     # ftot_0 is a vector with initial values (to be used in the SD iteration)
     # if not given as input estimate on first 3 observations
     if prod(ftot_0.== 0 )&(!prod(.!indTvPar))
-        ftot_0 =  static_estimate(model, obsT[1:10])
+        ftot_0 =  static_estimate(model, obsT[1:2])
     end
     #UM = ftot_0
 
@@ -414,6 +537,15 @@ end
 
 #region  Pseudologlikelihood SDERGM
 
+Base.@kwdef struct  GasNetModelDirBin0Rec0_pmle <: GasNetModelDirBin0Rec0
+     indTvPar :: BitArray{1} = trues(2) #  what parameters are time varying   ?
+     scoreScalingType::String = "" # String that specifies the rescaling of the score. For a list of possible choices see function scalingMatGas
+end
+export GasNetModelDirBin0Rec0_pmle
+
+name(x::GasNetModelDirBin0Rec0_pmle) = "GasNetModelDirBin0Rec0_pmle"
+
+
 function change_stats(model::T where T<: GasNetModelDirBin0Rec0, A_T::Array{Matrix{<:Real},1})
     return [StaticNets.change_stats(StaticNets.fooNetModelDirBin0Rec0, A) for A in A_T]
 end
@@ -422,6 +554,9 @@ end
 function change_stats(model::T where T<: GasNetModelDirBin0Rec0, A_T::Array{<:Real,3})
     return [StaticNets.change_stats(StaticNets.fooNetModelDirBin0Rec0, A_T[:,:,t]) for t in 1:size(A_T)[3]]
 end
+
+
+statsFromMat(Model::GasNetModelDirBin0Rec0_pmle, A ::Matrix{<:Real}) = StaticNets.change_stats(StaticNets.fooNetModelDirBin0Rec0, A)
 
 
 function static_estimate(model::GasNetModelDirBin0Rec0_pmle, A_T)
@@ -453,7 +588,7 @@ theta_eta_to_alpha_beta(θ, η, N) =  collect(exp_val_stats(fooNetModelDirBin0Re
 get_theta_eta_seq_from_alpha_beta(alpha_beta_seq, N) = reduce(hcat, [alpha_beta_to_theta_eta(ab[1], ab[2], N) for ab in eachcol(alpha_beta_seq)])
 
 
-function beta_min_max_from_alpha_min(minValAlpha, N; minPairsNumberDiffSupBound = 10, minPairsNumber = 10 )
+function beta_min_max_from_alpha_min(minValAlpha, N; minPairsNumberDiffSupBound = minValAlpha*n_pox_dir_links(N)/5, minPairsNumber = minValAlpha*n_pox_dir_links(N)/5 )
     # min beta val such that the minimum exp value rec links is not close zero   
     minValBeta = minPairsNumber / n_pox_dir_links(N)
 
@@ -462,60 +597,70 @@ function beta_min_max_from_alpha_min(minValAlpha, N; minPairsNumberDiffSupBound 
     physicalUpperBound = minValAlpha/2
     maxValBeta =  physicalUpperBound - minPairsNumberDiffSupBound /n_pox_dir_links(N) 
     
-    minValBeta >= maxValBeta ? error() : ()
+    minValBeta >= maxValBeta ? error((minValBeta, maxValBeta)) : ()
 
     return minValBeta, maxValBeta 
 end
 
 
-function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValAlpha = 0.25, maxValAlpha = 0.3, nCycles = 2)
+function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValAlpha = 0.25, maxValAlpha = 0.3, nCycles = 2, phaseshift = 0.1, plotFlag=false, phaseAlpha = 0)
 
-    
     minValBeta, maxValBeta =  beta_min_max_from_alpha_min(minValAlpha, N)
+    @show minValBeta, maxValBeta
+    @show minValAlpha, maxValAlpha
+    
+    minValBetaSin, maxValBetaSin = minValBeta, maxValBeta# .* [1,1.5]
+    betaConst = minValBeta#(maxValBeta - minValBeta)/2
+    #phaseAlpha = rand()  * 2π
+    phaseBeta = phaseAlpha + phaseshift * 2π
 
-    phaseAlpha = 10*rand()
-    phaseBeta = 10*rand()
 
-
-    α_β_parMatDgp_T = zeros(2,T)
+    α_β_parDgpT = zeros(2,T)
     Nsteps1= 2
 
     if dgpType=="sin"
-        α_β_parMatDgp_T[1,:] = dgpSin(minValAlpha, maxValAlpha, nCycles,T; phase = phaseAlpha)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-        α_β_parMatDgp_T[2,:] = dgpSin(minValBeta, maxValBeta, nCycles,T;phase= phaseBeta )# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+        α_β_parDgpT[1,:] = dgpSin(minValAlpha, maxValAlpha, nCycles, T; phase = phaseAlpha)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+        α_β_parDgpT[2,:] .= dgpSin(minValBetaSin, maxValBetaSin, nCycles, T;phase= phaseBeta )# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
     elseif dgpType=="steps"
-        α_β_parMatDgp_T[1,:] = randSteps(θ_0_minMax[1], θ_0_minMax[2], Nsteps1,T)
-        α_β_parMatDgp_T[2,:] = randSteps(η_0_minMax[1], η_0_minMax[2], Nsteps1,T)
+        α_β_parDgpT[1,:] = randSteps(θ_0_minMax[1], θ_0_minMax[2], Nsteps1,T)
+        α_β_parDgpT[2,:] = randSteps(η_0_minMax[1], η_0_minMax[2], Nsteps1,T)
     elseif dgpType=="AR"
         B = 0.95
         sigma = 0.1
-        α_β_parMatDgp_T[1,:] = dgpAR(mean(θ_0_minMax),B,sigma,T; minMax=θ_0_minMax )
-        α_β_parMatDgp_T[2,:] = dgpAR(mean(η_0_minMax),B,sigma,T; minMax = η_0_minMax )
+        α_β_parDgpT[1,:] = dgpAR(mean(θ_0_minMax),B,sigma,T; minMax=θ_0_minMax )
+        α_β_parDgpT[2,:] = dgpAR(mean(η_0_minMax),B,sigma,T; minMax = η_0_minMax )
     end
 
-    θ_η_parMatDgp_T = get_theta_eta_seq_from_alpha_beta(α_β_parMatDgp_T, N)
+    θ_η_parDgpT = get_theta_eta_seq_from_alpha_beta(α_β_parDgpT, N)
 
-    return θ_η_parMatDgp_T
+    if plotFlag
+        fig, ax = subplots(2,2)
+        ax[1].plot(α_β_parDgpT[1,:], "k")
+        ax[2].plot(α_β_parDgpT[2,:], "k")
+        ax[3].plot(θ_η_parDgpT[1,:], "k")
+        ax[4].plot(θ_η_parDgpT[2,:], "k")
+    end
+    return θ_η_parDgpT
 end
 
 
-function sample_dgp(model::GasNetModelDirBin0Rec0, parMatDgp_T::Matrix, N )
-    T = size(parMatDgp_T)[2]
+function sample_dgp(model::GasNetModelDirBin0Rec0, parDgpT::Matrix, N )
+    T = size(parDgpT)[2]
     A_T_dgp = zeros(Int8, N, N, T)
     for t=1:T
-        diadProb = StaticNets.diadProbFromPars(StaticNets.fooNetModelDirBin0Rec0, parMatDgp_T[:,t] )
+        diadProb = StaticNets.diadProbFromPars(StaticNets.fooNetModelDirBin0Rec0, parDgpT[:,t] )
         A_T_dgp[:,:,t] = StaticNets.samplSingMatCan(StaticNets.fooNetModelDirBin0Rec0, diadProb, N)
     end
     return A_T_dgp
 end
 
 
-function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsample; plotFlag = true, regimeString="")
+function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parDgpT, N, Nsample; plotFlag = true, regimeString="")
 
-    model_mle = fooGasNetModelDirBin0Rec0_mle
-    model_pmle = fooGasNetModelDirBin0Rec0_pmle
+    model_mle = GasNetModelDirBin0Rec0_mle()
+    model_pmle = GasNetModelDirBin0Rec0_pmle()
 
-    T = size(parMatDgp_T)[2]
+    T = size(parDgpT)[2]
     indTvPar = trues(2)
    
     if plotFlag
@@ -532,18 +677,18 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
 
     for n=1:Nsample
         ## sample dgp
-        A_T_dgp = sample_dgp(model_mle, parMatDgp_T, N)
+        A_T_dgp = sample_dgp(model_mle, parDgpT, N)
         stats_T_dgp = [statsFromMat(model_mle, A_T_dgp[:,:,t]) for t in 1:T ]
         change_stats_T_dgp = change_stats(model_pmle, A_T_dgp)
 
 
         ## estimate SD
-        estPar_pmle, conv_flag,UM_mple , ftot_0_mple = estimate(model_pmle; indTvPar=indTvPar,indTargPar=indTvPar, obsT = change_stats_T_dgp)
+        estPar_pmle, conv_flag,UM_mple , ftot_0_mple = estimate(model_pmle, change_stats_T_dgp; indTvPar=indTvPar,indTargPar=indTvPar)
         vResEstPar_pmle = DynNets.array2VecGasPar(model_pmle, estPar_pmle, indTvPar)
         fVecT_filt_p , target_fun_val_T_p, sVecT_filt_p = score_driven_filter( model_pmle,  vResEstPar_pmle, indTvPar; obsT = change_stats_T_dgp, ftot_0 = ftot_0_mple)
         vEstSd_pmle[:,n] = vcat(vResEstPar_pmle, ftot_0_mple)
 
-        estPar_mle, conv_flag,UM_mle , ftot_0_mle = estimate(model_mle; indTvPar=indTvPar, indTargPar=indTvPar, obsT = stats_T_dgp)
+        estPar_mle, conv_flag,UM_mle , ftot_0_mle = estimate(model_mle, stats_T_dgp; indTvPar=indTvPar, indTargPar=indTvPar)
         vResEstPar_mle = DynNets.array2VecGasPar(model_mle, estPar_mle, indTvPar)
         fVecT_filt , target_fun_val_T, sVecT_filt = score_driven_filter( model_mle,  vResEstPar_mle, indTvPar; obsT = stats_T_dgp, ftot_0=ftot_0_mle)
         vEstSd_mle[:,n] = vcat(vResEstPar_mle, ftot_0_mle)
@@ -555,18 +700,18 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
             ax_pmle[2].plot(fVecT_filt_p[2,:], "r", alpha =0.5)
         end
 
-        rmse_mle[:,n] = rmse(fVecT_filt.- parMatDgp_T)
-        rmse_pmle[:,n] =rmse(fVecT_filt_p.- parMatDgp_T)
+        rmse_mle[:,n] = rmse(fVecT_filt.- parDgpT)
+        rmse_pmle[:,n] =rmse(fVecT_filt_p.- parDgpT)
     end
     
     avg_rmse_pmle = round.(mean(drop_nan_col(rmse_pmle), dims=2), digits=3)
     avg_rmse_mle = round.(mean(drop_nan_col(rmse_mle), dims=2), digits=3)
 
     if plotFlag
-        ax_mle[1].plot(parMatDgp_T[1,:], "k")
-        ax_mle[2].plot(parMatDgp_T[2,:], "k")
-        ax_pmle[1].plot(parMatDgp_T[1,:], "k")
-        ax_pmle[2].plot(parMatDgp_T[2,:], "k")
+        ax_mle[1].plot(parDgpT[1,:], "k")
+        ax_mle[2].plot(parDgpT[2,:], "k")
+        ax_pmle[1].plot(parDgpT[1,:], "k")
+        ax_pmle[2].plot(parDgpT[2,:], "k")
 
         ax_mle[1].set_title("MLE-SDERGM  N= $N , θ rmse = $(avg_rmse_mle[1]) " * regimeString)   
         ax_mle[2].set_title("MLE-SDERGM  N= $N , η rmse = $(avg_rmse_mle[2]) " * regimeString)   
@@ -580,5 +725,224 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parMatDgp_T, N, Nsam
     
     return (; vEstSd_mle, vEstSd_pmle, avg_rmse_mle, avg_rmse_pmle)
 end
+
+#endregion
+
+#region Uncertainties filtered parameters
+
+
+function white_estimators_of_A0_B0_obj_SD_filter_time_seq(model, obsT, vecUnParAll, indTvPar, ftot_0)
+
+    T = length(obsT)
+    nPar = length(vecUnParAll)
+    gradT = zeros(nPar, T)
+    hessT = zeros(nPar, nPar, T)
+    
+    for t = 2:T
+        function obj_fun_t(xUn)
+
+            vecSDParUn, vConstPar = divide_SD_par_from_const(model, indTvPar, xUn)
+
+            vecSDParRe = restrict_SD_static_par(model, vecSDParUn)
+
+            oneInADterms  = (StaticNets.maxLargeVal + vecSDParRe[1])/StaticNets.maxLargeVal
+
+            fVecT_filt, target_fun_val_T, ~ = DynNets.score_driven_filter( model,  vecSDParRe, indTvPar; obsT = obsT[1:t-1], vConstPar =  vConstPar, ftot_0 = ftot_0 .* oneInADterms)
+        
+            return - DynNets.target_function_t(model, obsT[t-1], fVecT_filt[:,end])
+        end
+
+
+        obj_fun_t(vecUnParAll)
+
+        gradT[:,t] = ForwardDiff.gradient(obj_fun_t, vecUnParAll)
+        hessT[:,:,t] =  ForwardDiff.hessian(obj_fun_t, vecUnParAll)
+    end
+
+    # function obj_fun_T(xUn)
+
+    #     vecSDParUn, vConstPar = DynNets.divide_SD_par_from_const(model, indTvPar, xUn)
+
+    #     vecSDParRe = DynNets.restrict_SD_static_par(model, vecSDParUn)
+
+    #     oneInADterms  = (StaticNets.maxLargeVal + vecSDParRe[1])/StaticNets.maxLargeVal
+
+    #     fVecT_filt, target_fun_val_T, ~ = DynNets.score_driven_filter( model,  vecSDParRe, indTvPar; obsT = obsT, vConstPar =  vConstPar, ftot_0 = ftot_0 .* oneInADterms)
+
+    #     return - target_fun_val_T
+    # end
+    # hessCumT =  ForwardDiff.hessian(obj_fun_T, vecUnParAll)
+    # B0hat = hessCumT./(T-2)
+
+    A0hat = mean([gt * gt' for gt in eachcol(gradT[:,2:end])] )
+    B0hat = dropdims(mean(hessT[:,:,2:end], dims=3 ), dims=3)
+
+    return A0hat, B0hat
+end
+
+
+function divide_in_B_A_mats(model::GasNetModelDirBin0Rec0, indTvPar, vEstSdResPar)
+  
+    nErgmPar = number_ergm_par(model)
+    B = zeros(nErgmPar, nErgmPar)
+    A = zeros(nErgmPar, nErgmPar)
+    
+    lasInd = 0
+    for e in 1:nErgmPar
+        if indTvPar[e]
+            bInd = lastInd+2
+            aInd = lastInd+3
+            B[e,e] = vEstSdResPar[bInd] 
+            A[e,e] = vEstSdResPar[aInd] 
+            lasInd += 3
+        else
+            lasInd += 1
+        end
+
+    end
+    return B, A
+end
+
+function conf_bands_par_uncertainty(model, obsT, indTvPar, ftot_0, vEstSdResPar; nSample = 500, quantilesVals = [0.975, 0.025])
+
+    T = length(obsT)
+    nErgmPar = number_ergm_par(model)
+    
+    # sample parameters in unrestricted space
+    vecUnParAll = unrestrict_all_par(model, indTvPar, vEstSdResPar)
+
+    A0hat, B0hat = white_estimators_of_A0_B0_obj_SD_filter_time_seq(model, obsT, vecUnParAll, indTvPar, ftot_0)
+
+    parCovHat = pinv(A0hat) * B0hat * pinv(A0hat)
+    
+    parCovHatPosDef, minEigenVal = make_pos_def(Symmetric(parCovHat))
+    
+
+    parCovHatPosDef
+    filtCovHat 
+
+    confBand = zeros(length(quantilesVals), nErgmPar,T)
+
+    if minEigenVal < -10
+        errFlag =true
+    else
+        errFlag =false
+        sampleUnParAll = rand(MvNormal(zeros(6), Symmetric(covHatPos)), nSample )
+
+        sampleResParAll = reduce(hcat,[restrict_all_par(model, indTvPar,vecUnParAll.+ sampleUnParAll[:,i]) for i in 1:size(sampleUnParAll)[2]])
+
+        nErgmPar = number_ergm_par(model)
+        confFilteredSD = zeros( nSample, nErgmPar,T)
+
+        for n=1:nSample
+            vResPar = sampleResParAll[:,n]
+            
+            confFilteredSD[n, :, :] , ~, ~ = DynNets.score_driven_filter( model,  vResPar, indTvPar; obsT = obsT, ftot_0=ftot_0)
+        end
+
+        # Compute confidence bands as sequence of quantiles for each tine
+        for n=1:nSample
+            for t=1:T
+                for k=1:nErgmPar
+                    filt_t = confFilteredSD[:,k,t]
+                    confBand[:,k,t] = Statistics.quantile(filt_t[.!isnan.(filt_t)],quantilesVals)
+                end
+            end
+        end
+    end
+    return confBand, errFlag
+end
+
+
+function filter_and_conf_bands(model, A_T_dgp, quantilesVals; indTvPar = model.indTvPar,  plotFlag = false, parDgpT=zeros(2,2))
+    
+    N = size(A_T_dgp)[1]
+    T = size(A_T_dgp)[3]
+    obsT = [statsFromMat(model, A_T_dgp[:,:,t]) for t in 1:T ]
+
+    estSdResPar, conv_flag, UM_mple, ftot_0 = estimate(model, obsT; indTvPar=indTvPar, indTargPar=falses(2))
+
+
+    vEstSdResPar = array2VecGasPar(model, estSdResPar, indTvPar)
+
+    fVecT_filt , target_fun_val_T, sVecT_filt = DynNets.score_driven_filter(model,  vEstSdResPar, indTvPar; obsT = obsT, ftot_0 = ftot_0)
+    
+    vecUnParAll = unrestrict_all_par(model, indTvPar, vEstSdResPar)
+
+    confBands, errFlag = conf_bands_par_uncertainty(model, obsT, indTvPar, ftot_0, vEstSdResPar; quantilesVals = quantilesVals)
+    
+    for parInd =1:number_ergm_par(model)
+        confBands[:,parInd,1] = confBands[:,parInd,2] .+ (fVecT_filt[parInd,1] .- fVecT_filt[parInd,2])
+    end
+
+    nQuant = length(quantilesVals)
+    nBands = div(nQuant,2)
+    if plotFlag 
+        fig1, ax = subplots(2,1)
+        for parInd in 1:2
+            x = 1:T
+            bottom = minimum(fVecT_filt[parInd,:])
+            top = maximum(fVecT_filt[parInd,:])
+            if parDgpT != zeros(2,2)
+                ax[parInd].plot(x, parDgpT[parInd,:], "k", alpha =0.5)
+                bottom = minimum(parDgpT[parInd,:])
+                top = maximum(parDgpT[parInd,:])
+            end
+            delta = top-bottom
+            margin = 0.5*delta
+            ax[parInd].plot(x, fVecT_filt[parInd,:], "b", alpha =0.5)
+            ax[parInd].set_ylim([bottom - margin, top + margin])
+            for b in 1:nBands
+                ax[parInd].fill_between(x, confBands[b,parInd, :], y2 =confBands[end-b+1,parInd,:],color =(0.9, 0.2 , 0.2, 0.1), alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
+            end
+            ax[parInd].grid()
+            
+        end
+        ax[1].set_title("$(name(model)), N = $N, T=$T")
+        
+    end
+    return obsT, vEstSdResPar, fVecT_filt, confBands, errFlag
+end
+
+function conf_bands_coverage(model, parDgpT, N; nSampleCoverage=100, quantilesVals = [0.975, 0.95, 0.05, 0.025])
+
+    T = size(parDgpT)[2]
+    nQuant = length(quantilesVals)
+    nBands, check = divrem(nQuant,2)
+    check!=0 ? error("quantiles should be eaven to define bands") : ()
+    nErgmPar = number_ergm_par(model)
+    # obs have different types for different models. storing them might require some additional steps
+    #allObsT = Array{Array{Array{Float64,2},1},1}(undef, nSampleCoverage)
+    allvEstSdResPar = zeros(3*nErgmPar, nSampleCoverage)
+    allfVecT_filt = zeros(nErgmPar, T, nSampleCoverage)
+    allConfBands = zeros(nQuant, nErgmPar, T, nSampleCoverage)
+    allErrFlags = falses(nSampleCoverage)
+    allCover = zeros(nErgmPar, T, nSampleCoverage)
+
+    for k=1:nSampleCoverage
+        
+        A_T_dgp = sample_dgp(model, parDgpT,N)
+        allObsT, allvEstSdResPar[:,k], allfVecT_filt[:,:,k], allConfBands[:,:,:,k], allErrFlags[k] = filter_and_conf_bands(model, A_T_dgp, quantilesVals)
+
+        for b in 1:nBands
+            for parInd in 1:nErgmPar 
+                for t in 1:T
+                    ub = allConfBands[b, parInd, t, k]
+                    lb = allConfBands[end-b+1,parInd,t, k]
+                    ub<lb ? error("wrong bands ordering") : ()
+                    isCovered = lb <= allfVecT_filt[parInd, t, k] <= ub 
+                    allCover[parInd, t, k] = isCovered
+                end
+            end
+        end
+        
+    end
+
+    fractErr = mean(allErrFlags)
+
+    return allCover, allvEstSdResPar, allfVecT_filt, allConfBands, fractErr
+end
+
+
 
 #endregion

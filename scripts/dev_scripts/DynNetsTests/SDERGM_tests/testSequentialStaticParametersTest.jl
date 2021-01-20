@@ -16,7 +16,7 @@ Nsample = 50
  Nsteps1 ,Nsteps2 = 2,1
  load_fold = "./data/estimatesTest/sdergmTest/R_MCMC_estimates/"
  @load(load_fold*"test_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE.jld",
-             stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,Nsample)
+             stats_T, changeStats_T,estParSS_T,sampledMat_T ,parDgpT,Nsample)
 
 
 onlyTest = false

@@ -1,6 +1,8 @@
 module Utilities
 
-using MLBase, LinearAlgebra
+using Logging
+using MLBase
+using LinearAlgebra
 using PyCall; pygui(:qt); using PyPlot
 
 using ..AReg
@@ -24,6 +26,25 @@ export link_R_in_R_pos
 
 inv_link_R_in_R_pos(x) = log(x) 
 export inv_link_R_in_R_pos
+
+function make_pos_def( M; smallVal = 1e-3, warnTh = 0.01) 
+    eig = eigen(M)
+    minEigenVal = minimum(eig.values)
+    if minEigenVal < smallVal
+        absMinEigVal = abs(minEigenVal)
+
+        deltaEigenVal = absMinEigVal + smallVal
+
+        absMinEigVal > warnTh ? Logging.@warn("large negative eigenvalue $minEigenVal") : ()
+
+        eig.values[eig.values.< smallVal] .+= deltaEigenVal
+
+        M = Matrix(eig)
+    end
+    
+    return M, minEigenVal
+end
+export make_pos_def
 
 
 
@@ -169,7 +190,7 @@ end
 export randSteps
 
 
-function dgpSin(minVal::Ty  where Ty <:Real  ,maxVal::Ty  where Ty <:Real ,Ncycles::Int,T::Int; phase =0)
+function dgpSin(minVal::Ty  where Ty <:Real  ,maxVal::Ty  where Ty <:Real ,Ncycles,T::Int; phase =0)
      out = zeros(T)
      maxVal<=minVal ? error() : ()
      medVal = (maxVal + minVal)./2

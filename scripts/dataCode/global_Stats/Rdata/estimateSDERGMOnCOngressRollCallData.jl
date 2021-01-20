@@ -129,9 +129,9 @@ vParOptim_0 = gasParVec# [ 0.303867, 0.9, 0.001, 0.1, 0.9, 0.01] #[0.0528737, 0.
 
 #SE SIMULO E STIMO PARAMETRI COSTANTI UGUALI A QUELLI CHE STIMO SUI DATI COSA OTTENGO?
 staticPar,convFlag = estimate(model;UM = startUM,indTvPar = falses(Nterms))
-tmp = zeros(Nterms); for i=1:Nterms tmp[i] = staticPar[i][1]; end;parMatDgp_T = repmat(tmp,1,T)
+tmp = zeros(Nterms); for i=1:Nterms tmp[i] = staticPar[i][1]; end;parDgpT = repmat(tmp,1,T)
 Nsample = 30
-@rput(parMatDgp_T)
+@rput(parDgpT)
 @rput(Nsample)
 R"
 
@@ -150,8 +150,8 @@ R"
        stats_t_R = list()
        print(t)
        for(n in 1:Nsample){
-           print(parMatDgp_T[,t])
-            net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parMatDgp_T[,t],control = control.simulate.formula(MCMC.burnin = 100000))
+           print(parDgpT[,t])
+            net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parDgpT[,t],control = control.simulate.formula(MCMC.burnin = 100000))
             #sampledMat_T_R[,,t,n] <- as.matrix.network( net)
 
             tmp <- ergm(formula_ergm,estimate = 'MPLE')

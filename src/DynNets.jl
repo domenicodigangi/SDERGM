@@ -6,6 +6,7 @@ using StatsBase
 using Optim
 using LineSearches
 using StatsFuns
+using Statistics
 using Roots
 using MLBase
 using GLM

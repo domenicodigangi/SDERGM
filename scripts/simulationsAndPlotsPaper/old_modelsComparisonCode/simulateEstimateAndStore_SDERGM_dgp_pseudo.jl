@@ -78,7 +78,7 @@ end
 #  Nsteps1 ,Nsteps2 = 0,1
 #  load_fold = "./data/estimatesTest/sdergmTest/R_MCMC_estimates/"
 #  @load(load_fold*"test_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE.jld",
-#              stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,Nsample)
+#              stats_T, changeStats_T,estParSS_T,sampledMat_T ,parDgpT,Nsample)
 #  end
 #
 #  onlyTest = false
@@ -128,7 +128,7 @@ end
 #  save_fold = "./data/estimatesTest/sdergmTest/"*
 #             "gas_MCMC_comparison_estimates/"
 #  @save(save_fold*"test_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE_target_$(targetAllTv).jld" ,
-#      stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,
+#      stats_T, changeStats_T,estParSS_T,sampledMat_T ,parDgpT,
 #      Nsample,T,N,filtPar_T_Nsample,gasParEst,convFlag,pVals_Nsample,scoreAutoc_Nsample,staticEst)
 #
 #
@@ -146,13 +146,13 @@ end
 #      subplot(1,2,1);plot(1:T,ones(T)*staticEst[n][parInd],"-b")
 #                     plot(1:T,gasFiltPar[parInd,:],"r")
 #                     plot(1:T,estParSS_T[n,:,parInd],".b")
-#                     plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+#                     plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
 #
 #      parInd = 2
 #      subplot(1,2,2);plot(1:T,ones(T)*staticEst[n][parInd],"-b")
 #                     plot(1:T,gasFiltPar[parInd,:],"r")
 #                     plot(1:T,estParSS_T[n,:,parInd],".b")
-#                     plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+#                     plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
 #      end
 #      namePar1 = "Number of Links"
 #      namePar2 = "GWESP"

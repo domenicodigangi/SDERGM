@@ -17,7 +17,7 @@ Nsample = 100
  Nsteps1 ,Nsteps2 = 2,2
  load_fold = "./data/estimatesTest/sdergmTest/gas_MCMC_comparison_estimates/"
  @load(load_fold *"test_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE_target_$(targetAllTv).jld" ,
-     stats_T, changeStats_T,estParSS_T, parMatDgp_T,
+     stats_T, changeStats_T,estParSS_T, parDgpT,
      Nsample,T,N,filtPar_T_Nsample,gasParEst,convFlag,pVals_Nsample,scoreAutoc_Nsample,staticEst)
 
 pValTh = 0.05
@@ -27,9 +27,9 @@ pValTh = 0.05
 MSE_sample  = zeros(Nterms,3,Nsample)
  for n=1:Nsample
      if sum(isnan(filtPar_T_Nsample[:,:,n]))==0
-    ssDiff = ssFiltPar = estParSS_T[n,:,:]' .-parMatDgp_T
-    constDiff =   staticEst[n] .-parMatDgp_T
-    gasDiff = filtPar_T_Nsample[:,:,n].-parMatDgp_T
+    ssDiff = ssFiltPar = estParSS_T[n,:,:]' .-parDgpT
+    constDiff =   staticEst[n] .-parDgpT
+    gasDiff = filtPar_T_Nsample[:,:,n].-parDgpT
     #MSE_sample[:,1,n] = mean(constDiff.^2,2)
     MSE_sample[:,2,n] = mean(ssDiff.^2,2)
     MSE_sample[:,3,n] = mean(gasDiff.^2,2)
@@ -59,13 +59,13 @@ close()
  subplot(1,2,1);#plot(1:T,ones(T)*staticEst[n][parInd],"-b")
                 plot(1:T,gasFiltPar[parInd,:],"r")
                 plot(1:T,estParSS_T[n,:,parInd],".b",markersize = 2)
-                plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+                plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
 
  parInd = 2
  subplot(1,2,2);#plot(1:T,ones(T)*staticEst[n][parInd],"-b")
                 plot(1:T,gasFiltPar[parInd,:],"r")
                 plot(1:T,estParSS_T[n,:,parInd],".b",markersize = 2)
-                plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+                plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
  end
  namePar1 = "Number of Links"
  namePar2 = "GWESP"

@@ -593,41 +593,41 @@ function dgp_paper_SDERGM(model::GasNetModelDirBinGlobalPseudo;dgpType = "sin", 
                             Nterms = 2, Nsteps1 = 1 ,Nsteps2 = 0)
      #Generate the matrix of parameters values for each t, i.e. the DGP path for
      #the TV parametrs
-     parMatDgp_T = zeros(Nterms,T)
+     parDgpT = zeros(Nterms,T)
      minpar1 = -3#-5
      maxpar1 = -2.5# -1.5
      minpar2 = 0.05#0.02
      maxpar2 = 0.5#0.7
      if dgpType =="sin"
-         parMatDgp_T[1,:] = dgpSin(minpar1,maxpar1,Nsteps1,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-         parMatDgp_T[2,:] = dgpSin(minpar2,maxpar2,Nsteps2,T) #
+         parDgpT[1,:] = dgpSin(minpar1,maxpar1,Nsteps1,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+         parDgpT[2,:] = dgpSin(minpar2,maxpar2,Nsteps2,T) #
 
      elseif dgpType=="steps"
-         parMatDgp_T[1,:] = randSteps(minpar1,maxpar1,Nsteps1,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-         parMatDgp_T[2,:] = randSteps(minpar2,maxpar2,Nsteps2,T)#
-         #parMatDgp_T[2,:] = 0.25
+         parDgpT[1,:] = randSteps(minpar1,maxpar1,Nsteps1,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+         parDgpT[2,:] = randSteps(minpar2,maxpar2,Nsteps2,T)#
+         #parDgpT[2,:] = 0.25
      elseif dgpType=="AR"
          B = 0.95
          sigma = 0.1
-         parMatDgp_T[1,:] = dgpAR(minpar1,B,sigma,T,minMax=[minpar1,maxpar1])
-         Nsteps1==0 ? parMatDgp_T[1,:] =minpar1 : ()# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-         parMatDgp_T[2,:] = dgpAR((maxpar2 + minpar2)/2,B,sigma,T;minMax = [minpar2,maxpar2])#
-         nonoInds = parMatDgp_T[2,:].<0
+         parDgpT[1,:] = dgpAR(minpar1,B,sigma,T,minMax=[minpar1,maxpar1])
+         Nsteps1==0 ? parDgpT[1,:] =minpar1 : ()# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+         parDgpT[2,:] = dgpAR((maxpar2 + minpar2)/2,B,sigma,T;minMax = [minpar2,maxpar2])#
+         nonoInds = parDgpT[2,:].<0
          if sum(nonoInds)>0
-             parMatDgp_T[2,:] = parMatDgp_T[2,:] - minimum(parMatDgp_T[2,nonoInds])
+             parDgpT[2,:] = parDgpT[2,:] - minimum(parDgpT[2,nonoInds])
          end
-         Nsteps2==0 ? parMatDgp_T[2,:] =maxpar2 : ()
+         Nsteps2==0 ? parDgpT[2,:] =maxpar2 : ()
           load_fold = "./data/estimatesTest/sdergmTest/R_MCMC_estimates/"
-         @load(load_fold * "ARpath_edges_and_GWESP.jld",parMatDgp_T_store)
-         parMatDgp_T = parMatDgp_T_store'
+         @load(load_fold * "ARpath_edges_and_GWESP.jld",parDgpT_store)
+         parDgpT = parDgpT_store'
          parInd = 1
          # close()
-         # subplot(1,2,1);plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+         # subplot(1,2,1);plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
          # parInd = 2
-         # subplot(1,2,2);plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+         # subplot(1,2,2);plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
      end
 
-     return parMatDgp_T
+     return parDgpT
 end
 
 

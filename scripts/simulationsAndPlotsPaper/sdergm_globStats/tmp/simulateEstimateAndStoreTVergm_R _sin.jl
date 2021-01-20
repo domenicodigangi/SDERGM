@@ -21,40 +21,40 @@
  Nterms = 2
  Nsteps1 ,Nsteps2 = 0,1
  # the matrix of parameters values for each t
- parMatDgp_T = zeros(Nterms,T)
+ parDgpT = zeros(Nterms,T)
  minpar1 = -3#-5
  maxpar1 = -2.5# -1.5
  minpar2 = 0.05#0.02
  maxpar2 = 0.5#0.7
  if dgpType =="sin"
-     parMatDgp_T[1,:] = dgpSin(minpar1,maxpar1,Nsteps1,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-     parMatDgp_T[2,:] = dgpSin(minpar2,maxpar2,Nsteps2,T) #
+     parDgpT[1,:] = dgpSin(minpar1,maxpar1,Nsteps1,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+     parDgpT[2,:] = dgpSin(minpar2,maxpar2,Nsteps2,T) #
 
  elseif dgpType=="steps"
-     parMatDgp_T[1,:] = randSteps(minpar1,maxpar1,Nsteps1,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-     parMatDgp_T[2,:] = randSteps(minpar2,maxpar2,Nsteps2,T)#
-     #parMatDgp_T[2,:] = 0.25
+     parDgpT[1,:] = randSteps(minpar1,maxpar1,Nsteps1,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+     parDgpT[2,:] = randSteps(minpar2,maxpar2,Nsteps2,T)#
+     #parDgpT[2,:] = 0.25
  elseif dgpType=="AR"
      B = 0.95
      sigma = 0.1
-     parMatDgp_T[1,:] = dgpAR(minpar1,B,sigma,T,minMax=[minpar1,maxpar1])
-     Nsteps1==0?parMatDgp_T[1,:] =minpar1:()# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-     parMatDgp_T[2,:] = dgpAR((maxpar2 + minpar2)/2,B,sigma,T;minMax = [minpar2,maxpar2])#
-     nonoInds = parMatDgp_T[2,:].<0
+     parDgpT[1,:] = dgpAR(minpar1,B,sigma,T,minMax=[minpar1,maxpar1])
+     Nsteps1==0?parDgpT[1,:] =minpar1:()# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+     parDgpT[2,:] = dgpAR((maxpar2 + minpar2)/2,B,sigma,T;minMax = [minpar2,maxpar2])#
+     nonoInds = parDgpT[2,:].<0
      if sum(nonoInds)>0
-         parMatDgp_T[2,:] = parMatDgp_T[2,:] - minimum(parMatDgp_T[2,nonoInds])
+         parDgpT[2,:] = parDgpT[2,:] - minimum(parDgpT[2,nonoInds])
      end
-     Nsteps2==0?parMatDgp_T[2,:] =maxpar2:()
+     Nsteps2==0?parDgpT[2,:] =maxpar2:()
       load_fold = "./data/estimatesTest/sdergmTest/R_MCMC_estimates/"
-     @load(load_fold * "ARpath_edges_and_GWESP.jld",parMatDgp_T_store)
-     parMatDgp_T = parMatDgp_T_store'
+     @load(load_fold * "ARpath_edges_and_GWESP.jld",parDgpT_store)
+     parDgpT = parDgpT_store'
      parInd = 1
      # close()
-     # subplot(1,2,1);plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+     # subplot(1,2,1);plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
      # parInd = 2
-     # subplot(1,2,2);plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+     # subplot(1,2,2);plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
  end
- @rput T; @rput parMatDgp_T;@rput N;@rput Nsample
+ @rput T; @rput parDgpT;@rput N;@rput Nsample
  #create an empty network, the formula defining ergm, sample the ensemble and store in R
  R"
  net <- network.initialize(N)
@@ -70,8 +70,8 @@
         stats_t_R = list()
         print(t)
         for(n in 1:Nsample){
-            print(parMatDgp_T[,t])
-             net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parMatDgp_T[,t],control = control.simulate.formula(MCMC.burnin = 100000))
+            print(parDgpT[,t])
+             net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parDgpT[,t],control = control.simulate.formula(MCMC.burnin = 100000))
              sampledMat_T_R[,,t,n] <- as.matrix.network( net)
              tmp <- ergm(formula_ergm)#,estimate = 'MPLE')#)#
              estParSS_t_R[[n]] <- tmp[[1]]
@@ -102,7 +102,7 @@
 
  save_fold = "./data/estimatesTest/sdergmTest/R_MCMC_estimates/"
  @save(save_fold*"test_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE.jld",
-              stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,Nsample,T,N)
+              stats_T, changeStats_T,estParSS_T,sampledMat_T ,parDgpT,Nsample,T,N)
 
 
 using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
@@ -119,7 +119,7 @@ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  Nsteps1 ,Nsteps2 = 0,1
  load_fold = "./data/estimatesTest/sdergmTest/R_MCMC_estimates/"
  @load(load_fold*"test_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE.jld",
-             stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,Nsample)
+             stats_T, changeStats_T,estParSS_T,sampledMat_T ,parDgpT,Nsample)
  end
 
  onlyTest = false
@@ -169,7 +169,7 @@ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  save_fold = "./data/estimatesTest/sdergmTest/"*
             "gas_MCMC_comparison_estimates/"
  @save(save_fold*"test_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE_target_$(targetAllTv).jld" ,
-     stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,
+     stats_T, changeStats_T,estParSS_T,sampledMat_T ,parDgpT,
      Nsample,T,N,filtPar_T_Nsample,gasParEst,convFlag,pVals_Nsample,scoreAutoc_Nsample,staticEst)
 
 
@@ -187,13 +187,13 @@ if false
      subplot(1,2,1);plot(1:T,ones(T)*staticEst[n][parInd],"-b")
                     plot(1:T,gasFiltPar[parInd,:],"r")
                     plot(1:T,estParSS_T[n,:,parInd],".b")
-                    plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+                    plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
 
      parInd = 2
      subplot(1,2,2);plot(1:T,ones(T)*staticEst[n][parInd],"-b")
                     plot(1:T,gasFiltPar[parInd,:],"r")
                     plot(1:T,estParSS_T[n,:,parInd],".b")
-                    plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+                    plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
      end
      namePar1 = "Number of Links"
      namePar2 = "GWESP"

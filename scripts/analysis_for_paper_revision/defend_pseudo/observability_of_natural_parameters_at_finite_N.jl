@@ -7,7 +7,7 @@ Investigate the existence of regions of the θ η plane where the latters cannot
 using ScoreDrivenExponentialRandomGraphs
 using ScoreDrivenExponentialRandomGraphs.Utilities
 
-import ScoreDrivenExponentialRandomGraphs.StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats, sample_ergm
+import ScoreDrivenExponentialRandomGraphs.StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats, sample_ergm, estimate
 
 using PyPlot
 pygui(true)
@@ -32,8 +32,8 @@ function sample_dgp_static_estimate_mle(model::NetModelDirBin0Rec0, N, parDgpSeq
 
         A_vec = sample_ergm(model, N, θ_0, η_0, nSample )        
 
-        obs[i,:,:] = reduce(hcat,[statsFromMat(model, A) for A in A_vec])
-        parMle[i,:,:] = reduce(hcat,[estimate(model, A) for A in A_vec])
+        obs[i,:,:] = reduce(hcat,[StaticNets.statsFromMat(model, A) for A in A_vec])
+        parMle[i,:,:] = reduce(hcat,[StaticNets.estimate(model, A) for A in A_vec])
 
 
     end
@@ -46,9 +46,9 @@ end
 
 begin 
 figure()
-Nvals = [20, 30, 50, 70, 90]
+Nvals = [30, 50, 70, 90]
+θ_0 = -3.2
 for N in Nvals 
-    θ_0 = -5
     parDgpSeq = reduce(hcat, [ [θ_0, η ] for η = 2:0.05:7])
     parMle, obs = sample_dgp_static_estimate_mle(model, N, parDgpSeq, 150 )
     fracZeroRec = mean(obs[:,2,:].==0;dims=2)

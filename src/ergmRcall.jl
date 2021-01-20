@@ -1,4 +1,4 @@
-
+""
 # functions that allow to sample sequences of ergms with different parameters' values from R package ergm
 # and estimate the ergm
 
@@ -35,7 +35,7 @@ function __init__()
 end
 
 
-function sampleErgmRcall(parMatDgp_T,N,Nsample,formula_ergm_str)
+function sampleErgmRcall(parDgpT,N,Nsample,formula_ergm_str)
     """
     Function that samples from an ergm defined by formula_ergm_str (according to
     the notation of R package ergm)
@@ -44,10 +44,10 @@ function sampleErgmRcall(parMatDgp_T,N,Nsample,formula_ergm_str)
     """
 
     clean_start_RCall()
-    T = size(parMatDgp_T)[2]
+    T = size(parDgpT)[2]
     # For each t, sample the ERGM with parameters corresponding to the DGP at time t
     # and run a single snapeshot estimate
-    @rput T; @rput parMatDgp_T;@rput N;@rput Nsample
+    @rput T; @rput parDgpT;@rput N;@rput Nsample
 
     reval("formula_ergm = net ~ "*formula_ergm_str)
 
@@ -63,9 +63,9 @@ function sampleErgmRcall(parMatDgp_T,N,Nsample,formula_ergm_str)
             stats_t_R = list()
             print(t)
             for(n in 1:Nsample){
-                 net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parMatDgp_T[,t],control = control.simulate.formula(MCMC.burnin = 100000))
+                 net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parDgpT[,t],control = control.simulate.formula(MCMC.burnin = 100000))
                  sampledMat_T_R[,,t,n] <- as.matrix.network( net)
-                 print(c(t,n,parMatDgp_T[,t]))
+                 print(c(t,n,parDgpT[,t]))
                  chStat_t <- ergmMPLE(formula_ergm)
                  changeStats_t_R[[n]] <- cbind(chStat_t$response, chStat_t$predictor,chStat_t$weights)
                  stats_t_R[[n]] <- summary(formula_ergm)
@@ -114,8 +114,8 @@ function estimateErgmRcall(sampledMat_T_R , formula_ergm_str)
             stats_t_R = list()
             print(t)
             for(n in 1:Nsample){
-                print(parMatDgp_T[,t])
-                 net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parMatDgp_T[,t],control = control.simulate.formula(MCMC.burnin = 100000))
+                print(parDgpT[,t])
+                 net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parDgpT[,t],control = control.simulate.formula(MCMC.burnin = 100000))
                  tmp <- ergm(formula_ergm)#,estimate = 'MPLE')#)#
                  estParSS_t_R[[n]] <- tmp[[1]]
                  print(c(t,n))

@@ -20,11 +20,11 @@ N = 50
 Nterms = 2
 # the matrix of parameters values for each t
 
-parMatDgp_T = zeros(Nterms,T)
- parMatDgp_T[1,:] = randSteps(-2.5,-3,2,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
- parMatDgp_T[2,:] = randSteps(0.05,0.5,2,T)#
- #parMatDgp_T[2,:] = 0.25
- @rput T; @rput parMatDgp_T;@rput N
+parDgpT = zeros(Nterms,T)
+ parDgpT[1,:] = randSteps(-2.5,-3,2,T)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+ parDgpT[2,:] = randSteps(0.05,0.5,2,T)#
+ #parDgpT[2,:] = 0.25
+ @rput T; @rput parDgpT;@rput N
  #create an empty network, the formula defining ergm, sample the ensemble and store in R
  R"
  net <- network.initialize(N)
@@ -35,8 +35,8 @@ parMatDgp_T = zeros(Nterms,T)
    stats_T_R = list()
     for(t in 1:T){
         print(t)
-        print(parMatDgp_T[,t])
-         net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parMatDgp_T[,t],control = control.simulate.formula(MCMC.burnin = 500000))
+        print(parDgpT[,t])
+         net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parDgpT[,t],control = control.simulate.formula(MCMC.burnin = 500000))
          sampledMat_T_R[,,t] <- as.matrix.network( net)
          tmp <- ergm(formula_ergm,estimate = 'MPLE')#)#
          estParSS_T_R[[t]] <- tmp[[1]]
@@ -54,8 +54,8 @@ parMatDgp_T = zeros(Nterms,T)
 figure()
  subplot(2,2,1);  plot(1:T,sumSq(sumSq(sampledMat_T,1),1)./(N^2-N))
  subplot(2,2,2);  plot(1:T,stats_T[1,:]  )
- subplot(2,2,3); plot(1:T,parMatDgp_T[1,:],"k",1:T,estParSS_T[1,:],"c")
- subplot(2,2,4); plot(1:T,parMatDgp_T[2,:],"k",1:T,estParSS_T[2,:],"c")
+ subplot(2,2,3); plot(1:T,parDgpT[1,:],"k",1:T,estParSS_T[1,:],"c")
+ subplot(2,2,4); plot(1:T,parDgpT[2,:],"k",1:T,estParSS_T[2,:],"c")
  #cor(stats_T')
 
  estParStatic,convFlag,UM , ftot_0= estimate(GasNetModelDirBinGlobalPseudo(changeStats_T,testGasPar,trues(2),"");UM = [0;0],indTvPar = falses(Nterms))
@@ -100,7 +100,7 @@ figure()
 #     subplot(2,2,1);  plot(1:T,sumSq(sumSq(sampledMat_T,1),1)./(N^2-N))
 #     subplot(2,2,2);  plot(1:T,stats_T[1,:]  )
 #     subplot(2,2,3); plot(1:T,gasFiltPar[1,:],"k",1:T,estParSS_T[1,:],"c")
-#     subplot(2,2,4);  plot(1:T,parMatDgp_T[2,:],"k",1:T,estParSS_T[2,:],"c")
+#     subplot(2,2,4);  plot(1:T,parDgpT[2,:],"k",1:T,estParSS_T[2,:],"c")
 #     subplot(2,2,4); plot(1:T,gasFiltPar[2,:],"k",1:T,estParSS_T[2,:],"c")
 #  pseudolike
 # #
@@ -134,8 +134,8 @@ gasFiltPar , pseudolike = score_driven_filter(GasNetModelDirBinGlobalPseudo(chan
  close()
     subplot(2,2,1);  plot(1:T,sumSq(sumSq(sampledMat_T,1),1)./(N^2-N))
     subplot(2,2,2);  plot(1:T,stats_T[1,:]  )
-    subplot(2,2,3); plot(1:T,parMatDgp_T[1,:],"k",1:T,gasFiltPar[1,:],"--k",1:T,estParSS_T[1,:],"c")
-    subplot(2,2,4); plot(1:T,parMatDgp_T[2,:],"k",1:T,gasFiltPar[2,:],"--k",1:T,estParSS_T[2,:],"c")
+    subplot(2,2,3); plot(1:T,parDgpT[1,:],"k",1:T,gasFiltPar[1,:],"--k",1:T,estParSS_T[1,:],"c")
+    subplot(2,2,4); plot(1:T,parDgpT[2,:],"k",1:T,gasFiltPar[2,:],"--k",1:T,estParSS_T[2,:],"c")
 
 
 ###

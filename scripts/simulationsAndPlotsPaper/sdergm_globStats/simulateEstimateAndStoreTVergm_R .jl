@@ -14,13 +14,13 @@ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  R"set.seed(0)"
 
 
- parMatDgp_T =  dgp_paper_SDERGM(Nsample = 100,dgpType = "sin", T = 50, N = 50,
+ parDgpT =  dgp_paper_SDERGM(Nsample = 100,dgpType = "sin", T = 50, N = 50,
                               Nterms = 2, Nsteps1 = 1 ,Nsteps2 = 0)
 
 
 # For each t, sample the ERGM with parameters corresponding to the DGP at time t
 # and run a single snapeshot estimate
-@rput T; @rput parMatDgp_T;@rput N;@rput Nsample
+@rput T; @rput parDgpT;@rput N;@rput Nsample
  #create an empty network, the formula defining ergm, sample the ensemble and
  # store the sufficient statistics and change statistics in R
  R"
@@ -37,8 +37,8 @@ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
         stats_t_R = list()
         print(t)
         for(n in 1:Nsample){
-            print(parMatDgp_T[,t])
-             net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parMatDgp_T[,t],control = control.simulate.formula(MCMC.burnin = 100000))
+            print(parDgpT[,t])
+             net <- simulate(formula_ergm, nsim = 1, seed = sample(1:100000000,1), coef = parDgpT[,t],control = control.simulate.formula(MCMC.burnin = 100000))
              sampledMat_T_R[,,t,n] <- as.matrix.network( net)
              tmp <- ergm(formula_ergm)#,estimate = 'MPLE')#)#
              estParSS_t_R[[n]] <- tmp[[1]]
@@ -66,7 +66,7 @@ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
 # Save all Sampled Data
 save_fold = "./data/estimatesTest/sdergmTest/R_MCMC_estimates/"
  @save(save_fold*"test_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE.jld",
-              stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,Nsample,T,N)
+              stats_T, changeStats_T,estParSS_T,sampledMat_T ,parDgpT,Nsample,T,N)
 
 
 using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
@@ -83,7 +83,7 @@ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  Nsteps1 ,Nsteps2 = 0,1
  load_fold = "./data/estimatesTest/sdergmTest/R_MCMC_estimates/"
  @load(load_fold*"test_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE.jld",
-             stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,Nsample)
+             stats_T, changeStats_T,estParSS_T,sampledMat_T ,parDgpT,Nsample)
  end
 
  onlyTest = false
@@ -133,7 +133,7 @@ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  save_fold = "./data/estimatesTest/sdergmTest/"*
             "gas_MCMC_comparison_estimates/"
  @save(save_fold*"test_Nodes_$(N)_T_$(T)_Sample_$(Nsample)_Ns_" * dgpType * "_$(Nsteps1)_$(Nsteps2)_MPLE_target_$(targetAllTv).jld" ,
-     stats_T, changeStats_T,estParSS_T,sampledMat_T ,parMatDgp_T,
+     stats_T, changeStats_T,estParSS_T,sampledMat_T ,parDgpT,
      Nsample,T,N,filtPar_T_Nsample,gasParEst,convFlag,pVals_Nsample,scoreAutoc_Nsample,staticEst)
 
 
@@ -151,13 +151,13 @@ if false
      subplot(1,2,1);plot(1:T,ones(T)*staticEst[n][parInd],"-b")
                     plot(1:T,gasFiltPar[parInd,:],"r")
                     plot(1:T,estParSS_T[n,:,parInd],".b")
-                    plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+                    plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
 
      parInd = 2
      subplot(1,2,2);plot(1:T,ones(T)*staticEst[n][parInd],"-b")
                     plot(1:T,gasFiltPar[parInd,:],"r")
                     plot(1:T,estParSS_T[n,:,parInd],".b")
-                    plot(1:T,parMatDgp_T[parInd,:],"k",linewidth=5)
+                    plot(1:T,parDgpT[parInd,:],"k",linewidth=5)
      end
      namePar1 = "Number of Links"
      namePar2 = "GWESP"
