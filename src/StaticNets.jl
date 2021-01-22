@@ -15,6 +15,7 @@ abstract type NetModelW <: NetModel end
 abstract type NetModelBinW <: NetModel end
 abstract type NetModelWcount <: NetModelW end
 abstract type NetModelBin <: NetModel end
+abstract type NetModelDirBin <: NetModelBin end
 
 #constants
 targetErrValStaticNets = 1e-2
@@ -35,6 +36,7 @@ export minSmallVal
 include("./StaticNets_models/StaticNets_Bin1.jl")
 include("./StaticNets_models/StaticNets_DirBin1.jl")
 include("./StaticNets_models/StaticNets_DirBin0Rec0.jl")
+include("./StaticNets_models/StaticNets_DirBinErgmPseudo.jl")
 
 
 end

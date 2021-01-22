@@ -27,10 +27,12 @@ export link_R_in_R_pos
 inv_link_R_in_R_pos(x) = log(x) 
 export inv_link_R_in_R_pos
 
-function make_pos_def( M; smallVal = 1e-3, warnTh = 0.01) 
+function make_pos_def( M; negTh = 0, smallVal = 2*eps(), warnTh = 0.01) 
     eig = eigen(M)
     minEigenVal = minimum(eig.values)
-    if minEigenVal < smallVal
+
+    if minEigenVal < negTh
+        Logging.@info("negative eigenvalue $minEigenVal")
         absMinEigVal = abs(minEigenVal)
 
         deltaEigenVal = absMinEigVal + smallVal

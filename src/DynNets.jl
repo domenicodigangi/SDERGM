@@ -42,13 +42,17 @@ identify(Model::GasNetModel,UnPar::Array{<:Real,1};idType = "pinco") =
 
 
 
+include("./DynNets_models/DynNets_SDModelsUtils.jl")
+
 include("./DynNets_models/DynNets_GasNetModelBin1.jl")
 
 include("./DynNets_models/DynNets_GasNetModelDirBin1.jl")
 
-include("./DynNets_models/DynNets_DirBinGlobalPseudo.jl")
-
 include("./DynNets_models/DynNets_GasNetModelDirBin0Rec0.jl")
+
+include("./DynNets_models/DynNets_GasNetModelDirBinERGM.jl")
+
+include("./DynNets_models/DynNets_DirBinGlobalPseudo.jl")
 
 include("./DynNets_models/DynNets_paper_helper_funs.jl")
 

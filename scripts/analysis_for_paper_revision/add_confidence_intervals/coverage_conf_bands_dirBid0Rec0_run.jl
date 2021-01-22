@@ -28,24 +28,6 @@ indTvPar = trues(2)
 
 #endregion
 
-#region quick checks 
-begin
-T=500
-N=50
-quantilesVals = [0.975, 0.95, 0.05, 0.025]
-parDgpT = DynNets.dgp_misspecified(model_mle, "sin", N, T;  minValAlpha = 0.1, maxValAlpha = 0.2, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false)
-# quick visual checks
-# DynNets.sample_est_mle_pmle(model_mle, parDgpT, N, 1; plotFlag = true)
-A_T_dgp = sample_dgp(model_mle, parDgpT,N)
-res_mle = filter_and_conf_bands(model_mle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = parDgpT)
-
-# res_pmle = filter_and_conf_bands(model_pmle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = parDgpT)
-
-end
-
-
-#endregion
-
 #region coverage simulations
 model = model_pmle
 N=50
@@ -88,19 +70,7 @@ for (indT, T) in Iterators.enumerate(tVals)
             allfVecT_filtVarN[indN, indT, indM] = allfVecT_filt
             allConfBandsVarN[indN, indT, indM] = allConfBands
             fractErrVarN[indN, indT, indM] = fractErr
-            # for k=1:nSampleCoverage
-            # for b in 1:nBands
-            #     for p in 1:nErgmPar 
-            #         for t in 1:T
-            #             ub = allConfBandsVarN[indN, indT, indM][p, t, b, k] 
-            #             lb = allConfBandsVarN[indN, indT, indM][p, t, end-b+1, k] 
-            #             ub<lb ? error("wrong bands ordering") : ()
-            #             isCovered = lb <= parDgpT[p, t] <= ub 
-            #             allCoverVarN[indN, indT, indM][p, t, b, k] = isCovered
-            #         end
-            #     end
-            # end
-            # end
+       
              
         end
     end
