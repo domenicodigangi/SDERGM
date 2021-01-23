@@ -891,6 +891,56 @@ function var_filtered_par_from_filt_and_par_unc(model, obsT, indTvPar, ftot_0, v
     return parUncVarianceT, filtUncVarianceT, errFlag
 end
 
+function conf_bands_par_uncertainty(model, obsT, indTvPar, ftot_0, vEstSdResPar; nSample = 500, quantilesVals = [0.975, 0.025])
+
+    T = length(obsT)
+    nErgmPar = number_ergm_par(model)
+    
+    # sample parameters in unrestricted space
+    vecUnParAll = unrestrict_all_par(model, indTvPar, vEstSdResPar)
+
+    A0hat, B0hat = white_estimators_of_A0_B0_obj_SD_filter_time_seq(model, obsT, vecUnParAll, indTvPar, ftot_0)
+
+    parCovHat = pinv(A0hat) * B0hat * pinv(A0hat)
+    
+    parCovHatPosDef, minEigenVal = make_pos_def(Symmetric(parCovHat))
+    
+
+    parCovHatPosDef
+    filtCovHat 
+
+    confBand = zeros(length(quantilesVals), nErgmPar,T)
+
+    if minEigenVal < -10
+        errFlag =true
+    else
+        errFlag =false
+        sampleUnParAll = rand(MvNormal(zeros(6), Symmetric(covHatPos)), nSample )
+
+        sampleResParAll = reduce(hcat,[restrict_all_par(model, indTvPar,vecUnParAll.+ sampleUnParAll[:,i]) for i in 1:size(sampleUnParAll)[2]])
+
+        nErgmPar = number_ergm_par(model)
+        confFilteredSD = zeros( nSample, nErgmPar,T)
+
+        for n=1:nSample
+            vResPar = sampleResParAll[:,n]
+            
+            confFilteredSD[n, :, :] , ~, ~ = DynNets.score_driven_filter( model,  vResPar, indTvPar; obsT = obsT, ftot_0=ftot_0)
+        end
+
+        # Compute confidence bands as sequence of quantiles for each tine
+        for n=1:nSample
+            for t=1:T
+                for k=1:nErgmPar
+                    filt_t = confFilteredSD[:,k,t]
+                    confBand[:,k,t] = Statistics.quantile(filt_t[.!isnan.(filt_t)],quantilesVals)
+                end
+            end
+        end
+    end
+    return confBand, errFlag
+end
+
 
 function filter_and_conf_bands(model, A_T_dgp, quantilesVals; indTvPar = model.indTvPar,  plotFlag = false, parDgpT=zeros(2,2))
     
@@ -951,6 +1001,7 @@ function filter_and_conf_bands(model, A_T_dgp, quantilesVals; indTvPar = model.i
     end
     return obsT, vEstSdResPar, fVecT_filt, confQuantPar, confQuantParFilt, errFlag
 end
+
 
 function conf_bands_coverage(model, parDgpT, N; nSampleCoverage=100, quantilesVals = [0.975, 0.95, 0.05, 0.025])
 
