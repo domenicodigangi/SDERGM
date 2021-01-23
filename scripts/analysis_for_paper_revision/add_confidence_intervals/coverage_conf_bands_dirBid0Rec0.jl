@@ -30,10 +30,10 @@ indTvPar = trues(2)
 
 #region quick checks 
 begin
-T=500
+T=00
 N=50
 quantilesVals = [0.975, 0.95, 0.05, 0.025]
-parDgpT = DynNets.dgp_misspecified(model_mle, "sin", N, T;  minValAlpha = 0.1, maxValAlpha = 0.2, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false)
+parDgpT = DynNets.dgp_misspecified(model_mle, "AR", N, T;  minValAlpha = 0.2, maxValAlpha = 0.3, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=true, B =0.99, sigma = 0.005)
 # quick visual checks
 # DynNets.sample_est_mle_pmle(model_mle, parDgpT, N, 1; plotFlag = true)
 A_T_dgp = sample_dgp(model_mle, parDgpT,N)

@@ -583,7 +583,7 @@ function beta_min_max_from_alpha_min(minValAlpha, N; minPairsNumberDiffSupBound 
 end
 
 
-function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValAlpha = 0.25, maxValAlpha = 0.3, nCycles = 2, phaseshift = 0.1, plotFlag=false, phaseAlpha = 0)
+function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValAlpha = 0.25, maxValAlpha = 0.3, nCycles = 2, phaseshift = 0.1, plotFlag=false, phaseAlpha = 0, sigma = 0.01, B = 0.95)
 
     minValBeta, maxValBeta =  beta_min_max_from_alpha_min(minValAlpha, N)
     @show minValBeta, maxValBeta
@@ -602,23 +602,26 @@ function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValA
         α_β_parDgpT[1,:] = dgpSin(minValAlpha, maxValAlpha, nCycles, T; phase = phaseAlpha)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
         α_β_parDgpT[2,:] .= dgpSin(minValBetaSin, maxValBetaSin, nCycles, T;phase= phaseBeta )# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
     elseif dgpType=="steps"
-        α_β_parDgpT[1,:] = randSteps(θ_0_minMax[1], θ_0_minMax[2], Nsteps1,T)
+        α_β_parDgpT[1,:] = randSteps(α_β_minMax[1], α_β_minMax[2], Nsteps1,T)
         α_β_parDgpT[2,:] = randSteps(η_0_minMax[1], η_0_minMax[2], Nsteps1,T)
     elseif dgpType=="AR"
-        B = 0.95
-        sigma = 0.1
-        α_β_parDgpT[1,:] = dgpAR(mean(θ_0_minMax),B,sigma,T; minMax=θ_0_minMax )
-        α_β_parDgpT[2,:] = dgpAR(mean(η_0_minMax),B,sigma,T; minMax = η_0_minMax )
+        α_β_minMax = zeros(2)
+        meanValAlpha = (minValAlpha+maxValAlpha)/2
+        meanValBeta = (minValBeta+maxValBeta)/2
+        α_β_parDgpT[1,:] = dgpAR(meanValAlpha,B,sigma,T; minMax = α_β_minMax )
+        α_β_parDgpT[2,:] = dgpAR(meanValBeta,B,sigma,T; minMax = α_β_minMax )
     end
-
-    θ_η_parDgpT = get_theta_eta_seq_from_alpha_beta(α_β_parDgpT, N)
 
     if plotFlag
         fig, ax = subplots(2,2)
-        ax[1].plot(α_β_parDgpT[1,:], "k")
-        ax[2].plot(α_β_parDgpT[2,:], "k")
-        ax[3].plot(θ_η_parDgpT[1,:], "k")
-        ax[4].plot(θ_η_parDgpT[2,:], "k")
+        ax[1,1].plot(α_β_parDgpT[1,:], "k")
+        ax[2,1].plot(α_β_parDgpT[2,:], "k")
+    end
+    θ_η_parDgpT = get_theta_eta_seq_from_alpha_beta(α_β_parDgpT, N)
+
+    if plotFlag
+        ax[1,2].plot(θ_η_parDgpT[1,:], "k")
+        ax[2,2].plot(θ_η_parDgpT[2,:], "k")
     end
     return θ_η_parDgpT
 end
@@ -764,7 +767,7 @@ end
 function white_estimate_cov_mat_static_sd_par(model, obsT, indTvPar, ftot_0, vEstSdResPar)
     T = length(obsT)
     nErgmPar = number_ergm_par(model)
-    
+    errorFlag = false
     # sample parameters in unrestricted space
     vecUnParAll = unrestrict_all_par(model, indTvPar, vEstSdResPar)
 
@@ -774,8 +777,19 @@ function white_estimate_cov_mat_static_sd_par(model, obsT, indTvPar, ftot_0, vEs
     
     parCovHatPosDef, minEigenVal = make_pos_def(parCovHat)
    
+    if minEigenVal < 0 
+        minEiegOPGrad = minimum(eigen(OPGradSum).values)
+        minEiegHess = minimum(eigen(HessSum).values)
+        Logging.@info("Outer Prod minimum eigenvalue $(minEiegOPGrad) , hessian minimum eigenvalue $(minEiegHess)")
+
+        # if the negative eigenvalue of the cov mat is due to a negative eigenvalue of the hessian, do not use that estimate
+        if minEiegHess < 0 
+            errorFlag = true
+        end
+    end
+
     mvNormalCov = Symmetric(parCovHatPosDef)
-    return mvNormalCov, minEigenVal 
+    return mvNormalCov, errorFlag 
 end
 
 
@@ -803,48 +817,6 @@ function divide_in_B_A_mats_as_if_all_TV(model::GasNetModelDirBin0Rec0, indTvPar
 end
 
 
-function conf_bands_par_uncertainty_naive(model, obsT, vecUnParAll, indTvPar, ftot_0, vEstSdResPar; nSample = 500, quantilesVals = [0.975, 0.025])
- 
-    T = length(obsT)
-    nErgmPar = number_ergm_par(model)
-    
-    
-    mvNormalCov, minEigenVal = white_estimate_cov_mat_static_sd_par(model, obsT, indTvPar, ftot_0, vEstSdResPar)
-    
-    confBand = zeros(length(quantilesVals), nErgmPar,T)
-
-    if minEigenVal < -10
-        errFlag =true
-    else
-        errFlag =false
-        sampleUnParAll = rand(MvNormal(zeros(6),mvNormalCov), nSample )
-
-        sampleResParAll = reduce(hcat,[restrict_all_par(model, indTvPar,vecUnParAll.+ sampleUnParAll[:,i]) for i in 1:size(sampleUnParAll)[2]])
-
-        nErgmPar = number_ergm_par(model)
-        distribFilteredSD = zeros( nSample, nErgmPar,T)
-
-        for n=1:nSample
-             vResPar = sampleResParAll[:,n]
-
-            vecSDParRe, vConstPar = divide_SD_par_from_const(model, indTvPar, vResPar)
-
-            distribFilteredSD[n, :, :] , ~, ~ = DynNets.score_driven_filter( model,  vecSDParRe, indTvPar; obsT = obsT, ftot_0=ftot_0, vConstPar=vConstPar)
-        end
-
-        # Compute confidence bands as sequence of quantiles for each tine
-        for n=1:nSample
-            for t=1:T
-                for k=1:nErgmPar
-                    filt_t = distribFilteredSD[:,k,t]
-                    confBand[:,k,t] = Statistics.quantile(filt_t[.!isnan.(filt_t)],quantilesVals)
-                end
-            end
-        end
-    end
-    return confBand, errFlag
-end
-
 
 function var_filtered_par_from_filt_and_par_unc(model, obsT, indTvPar, ftot_0, vEstSdResPar, fVecT_filt; nSample = 1000)
 
@@ -852,16 +824,15 @@ function var_filtered_par_from_filt_and_par_unc(model, obsT, indTvPar, ftot_0, v
     nErgmPar = number_ergm_par(model)
     
     
-    mvNormalCov, minEigenVal = white_estimate_cov_mat_static_sd_par(model, obsT, indTvPar, ftot_0, vEstSdResPar)
+    mvNormalCov, errFlag = white_estimate_cov_mat_static_sd_par(model, obsT, indTvPar, ftot_0, vEstSdResPar)
 
     # sample parameters in unrestricted space
     vecUnParAll = unrestrict_all_par(model, indTvPar, vEstSdResPar)
 
      parUncVarianceT = zeros(nErgmPar,T)
     filtUncVarianceT = zeros(nErgmPar,T)
-    if minEigenVal < -10
-        errFlag =true
-    else
+ 
+    if !errFlag
         sampleUnParAll = rand(MvNormal(zeros(6), mvNormalCov), nSample )
 
         sampleResParAll = reduce(hcat,[restrict_all_par(model, indTvPar,vecUnParAll.+ sampleUnParAll[:,i]) for i in 1:size(sampleUnParAll)[2]])
@@ -1015,9 +986,9 @@ function conf_bands_coverage(model, parDgpT, N; nSampleCoverage=100, quantilesVa
         
     end
 
-    fractErr = mean(allErrFlags)
+    Logging.@info("The fraction of estimates that resulted in errors is $(mean(allErrFlags)) ")
 
-    return allCover, allvEstSdResPar, allfVecT_filt, allConfBandsParFilt, fractErr
+    return allCover, allvEstSdResPar, allfVecT_filt, allConfBandsParFilt, allErrFlags
 end
 
 

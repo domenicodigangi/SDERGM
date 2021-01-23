@@ -17,6 +17,7 @@ using ForwardDiff
 using NLSolversBase
 using RCall
 using PyPlot
+using Logging
 
 
 using ..AReg

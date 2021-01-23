@@ -38,13 +38,13 @@ parDgpT = DynNets.dgp_misspecified(model_mle, "sin", N, T;  minValAlpha = 0.1, m
 allCover, allvEstSdResPar, allfVecT_filt, allConfBands, fractErr = conf_bands_coverage(model, parDgpT, N; nSampleCoverage=4)
 
 
-nVals = [ 50, 100, 200, 300]
+nVals = [ 100, 200, 300]
 tVals = [100, 200, 300]
 models = [model_mle, model_pmle]
 nNVals = length(nVals)
 nTVals = length(tVals)
 nModels = length(models)
-nSampleCoverage=50
+nSampleCoverage=2
 
 allCoverVarN = Array{typeof(allCover),3}(undef, nNVals, nTVals, nModels)
 allvEstSdResParVarN = Array{typeof(allvEstSdResPar),3}(undef, nNVals, nTVals, nModels)
@@ -77,7 +77,7 @@ for (indT, T) in Iterators.enumerate(tVals)
 end
 nErgmPar=2
 
-@save("./data/confBands$(nVals)_$(tVals).jld", allCoverVarN, allfVecT_filtVarN,allConfBandsVarN, fractErrVarN, parDgpTvarN)
+@save("./data/confBands_nest_$(nSampleCoverage)_NVals$(nVals)_TVals$(tVals).jld", allCoverVarN, allfVecT_filtVarN,allConfBandsVarN, fractErrVarN, parDgpTvarN)
 
 
 cover90 =zeros(2,nNVals, nTVals,2)
@@ -108,3 +108,8 @@ legend(reduce(vcat,["$(mod)  $par" for par in ["θ" "η" "θ and η"], mod in ["
 end
 
 #endregion
+
+
+@save("./data/confBands_nest_$(nSampleCoverage)_NVals$(nVals)_TVals$(tVals).jld")
+
+
