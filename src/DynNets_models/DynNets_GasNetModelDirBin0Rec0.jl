@@ -6,9 +6,9 @@ end
 export GasNetModelDirBin0Rec0_mle
 
 
-
 name(x::GasNetModelDirBin0Rec0_mle) = "GasNetModelDirBin0Rec0_mle"
 export name
+
 
 statsFromMat(Model::GasNetModelDirBin0Rec0_mle, A ::Matrix{<:Real}) = StaticNets.statsFromMat(StaticNets.fooNetModelDirBin0Rec0, A ::Matrix{<:Real}) 
 
@@ -21,6 +21,7 @@ array2VecGasPar(model::T where T<: GasNetModelDirBin0Rec0, ArrayGasPar, indTvPar
 
 
 number_ergm_par(model::T where T <:GasNetModelDirBin0Rec0) = 2
+
 
 """
 Given the flag of constant parameters, a starting value for their unconditional means (their constant value, for those constant), return a starting point for the optimization
@@ -54,151 +55,6 @@ function starting_point_optim(model::T where T <:GasNetModelDirBin0Rec0, indTvPa
         end
     end
     return vParOptim_0, ARe_min
-end
-
-
-"""
-Given vecAllPar divide it into a vector of Score Driven parameters and one of costant parameters
-"""
-function divide_SD_par_from_const(model::T where T <:GasNetModel, indTvPar,  vecAllPar::Array{<:Real,1})
-
-    nTvPar = sum(indTvPar)
-    nErgmPar = length(indTvPar)
-
-    vecSDParAll = zeros(Real,3nTvPar )
-    vConstPar = zeros(Real,nErgmPar-nTvPar)
-
-    lastInputInd = 0
-    lastIndSD = 0
-    lastConstInd = 0
-    #extract the vector of gas parameters, addimng w from targeting when needed
-    for i=1:nErgmPar
-        if indTvPar[i] 
-            vecSDParAll[lastIndSD+1] = vecAllPar[lastInputInd + 1]
-            vecSDParAll[lastIndSD+2] = vecAllPar[lastInputInd + 2]
-            vecSDParAll[lastIndSD+3] = vecAllPar[lastInputInd + 3]
-            lastInputInd +=3
-            lastIndSD +=3
-        else
-            vConstPar[lastConstInd+1] = vecAllPar[lastInputInd  + 1]
-            lastInputInd +=1
-            lastConstInd +=1
-        end
-    end
-    return vecSDParAll, vConstPar
-end
-
-
-function merge_SD_par_and_const(model::T where T <:GasNetModel, indTvPar,  vecSDPar::Array{<:Real,1}, vConstPar)
-
-    nTvPar = sum(indTvPar)
-    nConstPar = sum(.!indTvPar)
-    nConstPar == length(vConstPar) ? () : error()
-
-    nErgmPar = length(indTvPar)
-    nAllPar = 3*nTvPar + nConstPar
-
-    vecAllPar = zeros(Real, nAllPar)
-
-    lastIndAll = 0
-    lastIndSD = 0
-    lastIndConst = 0
-    for i=1:nErgmPar
-        if indTvPar[i] 
-            
-            vecAllPar[lastIndAll+1] = vecSDPar[lastIndSD + 1]
-            vecAllPar[lastIndAll+2] = vecSDPar[lastIndSD + 2]
-            vecAllPar[lastIndAll+3] = vecSDPar[lastIndSD + 3]
-
-            lastIndAll +=3
-            lastIndSD +=3
-        else
-            vecAllPar[lastIndAll+1] = vConstPar[lastIndConst + 1]
-                        
-            lastInputInd +=1
-            lastConstInd +=1
-        end
-    end
-    return vecAllPar
-end
-
-
-"""
-Restrict the  Score Driven parameters  to appropriate link functions to ensure that they remain in the region where the SD dynamics is well specified (basically 0<=B<1  A>=0)
-"""
-function restrict_SD_static_par(model::T where T <:GasNetModel, vecUnSDPar::Array{<:Real,1})
-
-    nSDPar = length(vecUnSDPar)
-    nTvPar, rem = divrem(nSDPar,3)
-
-    rem == 0 ? () : error()
-
-    arrayOfVecsReSd = [ [vecUnSDPar[i], link_R_in_0_1(vecUnSDPar[i+1]), link_R_in_R_pos(vecUnSDPar[i+2]) ] for i in 1:3:nSDPar]
-
-    vecReSDPar = reduce(vcat, arrayOfVecsReSd)
-
-    return vecReSDPar
-end
-
-
-"""
-Restrict the  Score Driven parameters  to appropriate link functions to ensure that they remain in the region where the SD dynamics is well specified (basically 0<=B<1  A>=0)
-"""
-function unrestrict_SD_static_par(model::T where T <:GasNetModel, vecReSDPar::Array{<:Real,1})
-
-    nSDPar = length(vecReSDPar)
-    nTvPar, rem = divrem(nSDPar,3)
-
-    rem == 0 ? () : error()
-
-    arrayOfVecsUnSd = [ [vecReSDPar[i], inv_link_R_in_0_1(vecReSDPar[i+1]), inv_link_R_in_R_pos(vecReSDPar[i+2]) ] for i in 1:3:nSDPar]
-
-    vecUnSDPar = reduce(vcat, arrayOfVecsUnSd)
-
-    return vecUnSDPar
-end
-
-
-
-function unrestrict_all_par(model, indTvPar, vAllPar)
-    vSDRe, vConst = divide_SD_par_from_const(model, indTvPar, vAllPar)
-
-    vSDUn = unrestrict_SD_static_par(model, vSDRe)
-
-    merge_SD_par_and_const(model, indTvPar, vSDUn, vConst)
-end
-
-
-function restrict_all_par(model, indTvPar, vAllPar)
-    vSDUn, vConst = divide_SD_par_from_const(model, indTvPar, vAllPar)
-
-    vSDRe = restrict_SD_static_par(model, vSDUn)
-
-    merge_SD_par_and_const(model, indTvPar, vSDRe, vConst)
-end
-
-"""
-To be filled in in case we want to explore conf bands in targeted models
-"""
-function target_unc_mean(UM, indTargPar)
-
-end
-
-
-function identify(model::T where T<: GasNetModelDirBin0Rec0,parIO::Array{<:Real,1})
-    # "Given a vector of parameters, return the transformed vector that verifies
-    # an identification condition. Do not do anything if the model is identified."
-    # #set the first of the in parameters equal to one (Restricted version)
-    # N,parI,parO = splitVec(parIO)
-    # idType = "equalIOsums"#"firstZero"#
-    # if idType == "equalIOsums"
-    #     Δ = sum(parI[isfinite.(parI)]) - sum(parO[isfinite.(parO)])
-    #     shift = Δ/(2N)
-    # elseif idType == "firstZero"
-    #     shift = parI[1]
-    # end
-    # parIO = [ parI - shift ;  parO + shift ]
-    return parIO
 end
 
 
@@ -523,6 +379,7 @@ Base.@kwdef struct  GasNetModelDirBin0Rec0_pmle <: GasNetModelDirBin0Rec0
 end
 export GasNetModelDirBin0Rec0_pmle
 
+
 name(x::GasNetModelDirBin0Rec0_pmle) = "GasNetModelDirBin0Rec0_pmle"
 
 
@@ -583,9 +440,11 @@ function beta_min_max_from_alpha_min(minValAlpha, N; minPairsNumberDiffSupBound 
 end
 
 
-function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValAlpha = 0.25, maxValAlpha = 0.3, nCycles = 2, phaseshift = 0.1, plotFlag=false, phaseAlpha = 0, sigma = 0.01, B = 0.95)
+function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValAlpha = 0.25, maxValAlpha = 0.3, nCycles = 2, phaseshift = 0.1, plotFlag=false, phaseAlpha = 0, sigma = 0.01, B = 0.95, maxAttempts = 500)
 
     minValBeta, maxValBeta =  beta_min_max_from_alpha_min(minValAlpha, N)
+
+
     @show minValBeta, maxValBeta
     @show minValAlpha, maxValAlpha
     
@@ -594,22 +453,31 @@ function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValA
     #phaseAlpha = rand()  * 2π
     phaseBeta = phaseAlpha + phaseshift * 2π
 
-
     α_β_parDgpT = zeros(2,T)
-    Nsteps1= 2
+    
+    for n=1:maxAttempts
+        Nsteps1= 2
+        if dgpType=="SIN"
+            α_β_parDgpT[1,:] = dgpSin(minValAlpha, maxValAlpha, nCycles, T; phase = phaseAlpha)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+            α_β_parDgpT[2,:] .= dgpSin(minValBetaSin, maxValBetaSin, nCycles, T;phase= phaseBeta )# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
+        elseif dgpType=="steps"
+            α_β_parDgpT[1,:] = randSteps(α_β_minMax[1], α_β_minMax[2], Nsteps1,T)
+            α_β_parDgpT[2,:] = randSteps(η_0_minMax[1], η_0_minMax[2], Nsteps1,T)
+        elseif dgpType=="AR"
+            α_β_minMax = zeros(2)
+            meanValAlpha = (minValAlpha+maxValAlpha)/2
+            meanValBeta = (minValBeta+maxValBeta)/2
+            α_β_parDgpT[1,:] = dgpAR(meanValAlpha,B,sigma,T; minMax = α_β_minMax )
+            α_β_parDgpT[2,:] = dgpAR(meanValBeta,B,sigma,T; minMax = α_β_minMax )
+        end
 
-    if dgpType=="sin"
-        α_β_parDgpT[1,:] = dgpSin(minValAlpha, maxValAlpha, nCycles, T; phase = phaseAlpha)# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-        α_β_parDgpT[2,:] .= dgpSin(minValBetaSin, maxValBetaSin, nCycles, T;phase= phaseBeta )# -3# randSteps(0.05,0.5,2,T) #1.5#.00000000000000001
-    elseif dgpType=="steps"
-        α_β_parDgpT[1,:] = randSteps(α_β_minMax[1], α_β_minMax[2], Nsteps1,T)
-        α_β_parDgpT[2,:] = randSteps(η_0_minMax[1], η_0_minMax[2], Nsteps1,T)
-    elseif dgpType=="AR"
-        α_β_minMax = zeros(2)
-        meanValAlpha = (minValAlpha+maxValAlpha)/2
-        meanValBeta = (minValBeta+maxValBeta)/2
-        α_β_parDgpT[1,:] = dgpAR(meanValAlpha,B,sigma,T; minMax = α_β_minMax )
-        α_β_parDgpT[2,:] = dgpAR(meanValBeta,B,sigma,T; minMax = α_β_minMax )
+
+        try 
+            global θ_η_parDgpT = get_theta_eta_seq_from_alpha_beta(α_β_parDgpT, N)
+            break
+        catch
+            Logging.@warn("Dgp attempt failed")
+        end
     end
 
     if plotFlag
@@ -617,8 +485,6 @@ function dgp_misspecified(model::GasNetModelDirBin0Rec0, dgpType, N, T;  minValA
         ax[1,1].plot(α_β_parDgpT[1,:], "k")
         ax[2,1].plot(α_β_parDgpT[2,:], "k")
     end
-    θ_η_parDgpT = get_theta_eta_seq_from_alpha_beta(α_β_parDgpT, N)
-
     if plotFlag
         ax[1,2].plot(θ_η_parDgpT[1,:], "k")
         ax[2,2].plot(θ_η_parDgpT[2,:], "k")
@@ -714,7 +580,7 @@ end
 #region Uncertainties filtered parameters
 
 
-function A0_B0_est_for_white_cov_mat_obj_SD_filter_time_seq(model, obsT, vecUnParAll, indTvPar, ftot_0)
+function A0_B0_est_for_white_cov_mat_obj_SD_filter_time_seq(model::GasNetModelDirBin0Rec0, obsT, vecUnParAll, indTvPar, ftot_0)
 
     T = length(obsT)
     nPar = length(vecUnParAll)
@@ -764,7 +630,7 @@ function A0_B0_est_for_white_cov_mat_obj_SD_filter_time_seq(model, obsT, vecUnPa
 end
 
 
-function white_estimate_cov_mat_static_sd_par(model, obsT, indTvPar, ftot_0, vEstSdResPar)
+function white_estimate_cov_mat_static_sd_par(model::GasNetModelDirBin0Rec0, obsT, indTvPar, ftot_0, vEstSdResPar)
     T = length(obsT)
     nErgmPar = number_ergm_par(model)
     errorFlag = false
@@ -818,28 +684,24 @@ end
 
 
 
-function var_filtered_par_from_filt_and_par_unc(model, obsT, indTvPar, ftot_0, vEstSdResPar, fVecT_filt; nSample = 1000)
+function mle_distrib_filtered_par(model::GasNetModelDirBin0Rec0, obsT, indTvPar, ftot_0, vEstSdResPar; nSample = 1000)
 
     T = length(obsT)
     nErgmPar = number_ergm_par(model)
-    
-    
+        
     mvNormalCov, errFlag = white_estimate_cov_mat_static_sd_par(model, obsT, indTvPar, ftot_0, vEstSdResPar)
 
     # sample parameters in unrestricted space
     vecUnParAll = unrestrict_all_par(model, indTvPar, vEstSdResPar)
 
-     parUncVarianceT = zeros(nErgmPar,T)
-    filtUncVarianceT = zeros(nErgmPar,T)
+    nErgmPar = number_ergm_par(model)
+    distribFilteredSD = zeros(nSample, nErgmPar,T)
+    filtCovHatSample = zeros(nErgmPar, nSample)
  
     if !errFlag
         sampleUnParAll = rand(MvNormal(zeros(6), mvNormalCov), nSample )
 
         sampleResParAll = reduce(hcat,[restrict_all_par(model, indTvPar,vecUnParAll.+ sampleUnParAll[:,i]) for i in 1:size(sampleUnParAll)[2]])
-
-        nErgmPar = number_ergm_par(model)
-        distribFilteredSD = zeros(nSample, nErgmPar,T)
-        filtCovHatSample = zeros(nErgmPar, nSample)
 
         for n=1:nSample
             vResPar = sampleResParAll[:,n]
@@ -855,94 +717,135 @@ function var_filtered_par_from_filt_and_par_unc(model, obsT, indTvPar, ftot_0, v
             filtCovHatSample[:,n] = filtCovHat
             
         end
-
-        if mean(.!isfinite.(distribFilteredSD)) > 1e-3 
-            errFlag = true
-        else
-            errFlag =false
-            distribFilteredSD[isnan.(distribFilteredSD)] .= 0
-            fVecT_filt[isnan.(fVecT_filt)] .= 0
-
-            filtCovDiagHatMean = mean(filtCovHatSample, dims=2)
-
-            #for each time compute the variance of the filtered par under the normal distrib of static par
-        
-            for k=1:nErgmPar
-                if indTvPar[k]
-                    indAmongTv = sum(indTvPar[1:k-1]) +1 
-                    for t=1:T
-                        a_t_vec = distribFilteredSD[:,indAmongTv,t]
-                        aHat_t = fVecT_filt[k,t] 
-                
-                        # add filtering and parameter unc
-                        parUncVarianceT[k, t] = var(a_t_vec[isfinite.(a_t_vec)] .- aHat_t) 
-                        isnan(parUncVarianceT[k, t]) ? (@show a_t_vec; @show aHat_t; error()) : ()
-
-                        filtUncVarianceT[k, t] = filtCovDiagHatMean[indAmongTv]
-                    end
-                else         
-                    indAmongAll = sum(indTvPar[1:k-1])*3 +  sum(.!indTvPar[1:k-1]) + 1                        
-                    parUncVarianceT[k, :] .= mvNormalCov[indAmongAll,indAmongAll]
-                    filtUncVarianceT[k, t] = 0
-                end
-            end
-        end
     end
-    return parUncVarianceT, filtUncVarianceT, errFlag
+
+    if mean(.!isfinite.(distribFilteredSD)) > 1e-3 
+        errFlag = true
+     end
+
+    return distribFilteredSD, filtCovHatSample, errFlag
 end
 
-function conf_bands_par_uncertainty(model, obsT, indTvPar, ftot_0, vEstSdResPar; nSample = 500, quantilesVals = [0.975, 0.025])
+
+
+function conf_bands_buccheri(model::GasNetModelDirBin0Rec0, obsT, indTvPar, fVecT_filt, distribFilteredSD, filtCovHatSample; nSample = 500, quantilesVals = [0.975, 0.025])
+
 
     T = length(obsT)
     nErgmPar = number_ergm_par(model)
-    
-    # sample parameters in unrestricted space
-    vecUnParAll = unrestrict_all_par(model, indTvPar, vEstSdResPar)
 
-    A0hat, B0hat = white_estimators_of_A0_B0_obj_SD_filter_time_seq(model, obsT, vecUnParAll, indTvPar, ftot_0)
+    parUncVarianceT = zeros(nErgmPar,T)
+    filtUncVarianceT = zeros(nErgmPar,T)
+ 
+    distribFilteredSD[isnan.(distribFilteredSD)] .= 0
+    fVecT_filt[isnan.(fVecT_filt)] .= 0
 
-    parCovHat = pinv(A0hat) * B0hat * pinv(A0hat)
-    
-    parCovHatPosDef, minEigenVal = make_pos_def(Symmetric(parCovHat))
-    
+    filtCovDiagHatMean = mean(filtCovHatSample, dims=2)
 
-    parCovHatPosDef
-    filtCovHat 
+    #for each time compute the variance of the filtered par under the normal distrib of static par
 
-    confBand = zeros(length(quantilesVals), nErgmPar,T)
-
-    if minEigenVal < -10
-        errFlag =true
-    else
-        errFlag =false
-        sampleUnParAll = rand(MvNormal(zeros(6), Symmetric(covHatPos)), nSample )
-
-        sampleResParAll = reduce(hcat,[restrict_all_par(model, indTvPar,vecUnParAll.+ sampleUnParAll[:,i]) for i in 1:size(sampleUnParAll)[2]])
-
-        nErgmPar = number_ergm_par(model)
-        confFilteredSD = zeros( nSample, nErgmPar,T)
-
-        for n=1:nSample
-            vResPar = sampleResParAll[:,n]
-            
-            confFilteredSD[n, :, :] , ~, ~ = DynNets.score_driven_filter( model,  vResPar, indTvPar; obsT = obsT, ftot_0=ftot_0)
-        end
-
-        # Compute confidence bands as sequence of quantiles for each tine
-        for n=1:nSample
+    for k=1:nErgmPar
+        if indTvPar[k]
+            indAmongTv = sum(indTvPar[1:k-1]) +1 
             for t=1:T
-                for k=1:nErgmPar
-                    filt_t = confFilteredSD[:,k,t]
-                    confBand[:,k,t] = Statistics.quantile(filt_t[.!isnan.(filt_t)],quantilesVals)
-                end
+                a_t_vec = distribFilteredSD[:,indAmongTv,t]
+                aHat_t = fVecT_filt[k,t] 
+        
+                # add filtering and parameter unc
+                parUncVarianceT[k, t] = var(a_t_vec[isfinite.(a_t_vec)] .- aHat_t) 
+                isnan(parUncVarianceT[k, t]) ? (@show a_t_vec; @show aHat_t; error()) : ()
+
+                filtUncVarianceT[k, t] = filtCovDiagHatMean[indAmongTv]
             end
+        else         
+            indAmongAll = sum(indTvPar[1:k-1])*3 +  sum(.!indTvPar[1:k-1]) + 1                        
+            parUncVarianceT[k, :] .= mvNormalCov[indAmongAll,indAmongAll]
+            filtUncVarianceT[k, t] = 0
         end
     end
-    return confBand, errFlag
+
+
+    nQuant = length(quantilesVals)
+    nBands, r = divrem(nQuant,2)
+    r>0 ? error() : ()
+
+    confQuantPar = repeat(fVecT_filt, outer=(1,1,nQuant))
+    confQuantParFilt = repeat(fVecT_filt, outer=(1,1,nQuant))
+
+    for p =1:number_ergm_par(model)
+        for t=1:T
+            confQuantPar[p, t, :] = quantile.(Normal(fVecT_filt[p, t], sqrt(parUncVarianceT[p,t])), quantilesVals)
+            confQuantParFilt[p, t, :] = quantile.(Normal(fVecT_filt[p, t], sqrt(parUncVarianceT[p,t] + filtUncVarianceT[p,t])), quantilesVals)
+        end
+    end
+    return confQuantParFilt, confQuantPar
 end
 
 
-function filter_and_conf_bands(model, A_T_dgp, quantilesVals; indTvPar = model.indTvPar,  plotFlag = false, parDgpT=zeros(2,2))
+function conf_bands_par_uncertainty_blasques(model::GasNetModelDirBin0Rec0, obsT, fVecT_filt, distribFilteredSD; nSample = 500, quantilesVals = [0.975, 0.025])
+    
+    T = length(obsT)
+    nErgmPar = number_ergm_par(model)
+    nQuant = length(quantilesVals)
+
+    parUncVarianceT = zeros(nErgmPar,T)
+   
+    confQuantPar = repeat(fVecT_filt, outer=(1,1,nQuant))
+    
+    distribFilteredSD[isnan.(distribFilteredSD)] .= 0
+    fVecT_filt[isnan.(fVecT_filt)] .= 0
+
+    #for each time compute the variance of the filtered par under the normal distrib of static par
+    
+    for k=1:nErgmPar
+        for t=1:T
+            a_t_vec = distribFilteredSD[:,k,t]
+            
+            # add filtering and parameter unc
+            confQuantPar[k, t, :] = Statistics.quantile(a_t_vec[.! isnan.(a_t_vec)], quantilesVals)
+        end
+    end
+   
+    return confQuantPar
+end
+
+
+function plot_filtered_and_conf_bands(model::GasNetModelDirBin0Rec0, N, fVecT_filt, confQuant1;confQuant2 =zeros(2,2), parDgpT=zeros(2,2))
+
+    T = size(fVecT_filt)[2]
+
+    nBands = div(size(confQuant1)[3],2)
+
+    fig1, ax = subplots(2,1)
+    for p in 1:2
+        x = 1:T
+        bottom = minimum(fVecT_filt[p,:])
+        top = maximum(fVecT_filt[p,:])
+        if parDgpT != zeros(2,2)
+            ax[p].plot(x, parDgpT[p,:], "k", alpha =0.5)
+            bottom = minimum(parDgpT[p,:])
+            top = maximum(parDgpT[p,:])
+        end
+        delta = top-bottom
+        margin = 0.5*delta
+        ax[p].plot(x, fVecT_filt[p,:], "b", alpha =0.5)
+        ax[p].set_ylim([bottom - margin, top + margin])
+        for b in 1:nBands
+            ax[p].fill_between(x, confQuant1[p, :, b], y2 =confQuant1[p,:, end-b+1],color =(0.9, 0.2 , 0.2, 0.1), alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
+            if confQuant2 != zeros(2,2)
+                ax[p].plot(x, confQuant2[p, :, b], "-g", alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
+                ax[p].plot(x, confQuant2[p,:, end-b+1], "-g", alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
+            end
+        end
+        ax[p].grid()
+        
+    end
+    ax[1].set_title("$(name(model)), N = $N, T=$T")
+        
+end
+
+
+function filter_and_conf_bands(model::GasNetModelDirBin0Rec0, A_T_dgp, quantilesVals; indTvPar = model.indTvPar, parDgpT=zeros(2,2))
     
     N = size(A_T_dgp)[1]
     T = size(A_T_dgp)[3]
@@ -957,53 +860,19 @@ function filter_and_conf_bands(model, A_T_dgp, quantilesVals; indTvPar = model.i
     
     vecUnParAll = unrestrict_all_par(model, indTvPar, vEstSdResPar)
 
-    parUncVarianceT, filtUncVarianceT, errFlag = var_filtered_par_from_filt_and_par_unc(model, obsT, indTvPar, ftot_0, vEstSdResPar, fVecT_filt)
-    
-    nQuant = length(quantilesVals)
-    nBands, r = divrem(nQuant,2)
-    r>0 ? error() : ()
+    distribFilteredSD, filtCovHatSample, errFlag = mle_distrib_filtered_par(model, obsT, indTvPar, ftot_0, vEstSdResPar)
 
-    confQuantPar = repeat(fVecT_filt, outer=(1,1,nQuant))
-    confQuantParFilt = repeat(fVecT_filt, outer=(1,1,nQuant))
+    confQuantBuccheri,  ~ = conf_bands_buccheri(model, obsT, indTvPar, fVecT_filt, distribFilteredSD, filtCovHatSample; quantilesVals = quantilesVals)
 
-    for p =1:number_ergm_par(model)
-        for t=1:T
-            confQuantPar[p, t, :] = quantile.(Normal(fVecT_filt[p, t], sqrt(parUncVarianceT[p,t])), quantilesVals)
-            confQuantParFilt[p, t, :] = quantile.(Normal(fVecT_filt[p, t], sqrt(parUncVarianceT[p,t] + filtUncVarianceT[p,t])), quantilesVals)
-        end
-    end
+    confQuantBlasques = conf_bands_par_uncertainty_blasques(model, obsT, fVecT_filt, distribFilteredSD; quantilesVals = quantilesVals)
 
-    if plotFlag 
-        fig1, ax = subplots(2,1)
-        for p in 1:2
-            x = 1:T
-            bottom = minimum(fVecT_filt[p,:])
-            top = maximum(fVecT_filt[p,:])
-            if parDgpT != zeros(2,2)
-                ax[p].plot(x, parDgpT[p,:], "k", alpha =0.5)
-                bottom = minimum(parDgpT[p,:])
-                top = maximum(parDgpT[p,:])
-            end
-            delta = top-bottom
-            margin = 0.5*delta
-            ax[p].plot(x, fVecT_filt[p,:], "b", alpha =0.5)
-            ax[p].set_ylim([bottom - margin, top + margin])
-            for b in 1:nBands
-                ax[p].fill_between(x, confQuantParFilt[p, :, b], y2 =confQuantParFilt[p,:, end-b+1],color =(0.9, 0.2 , 0.2, 0.1), alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
-                ax[p].plot(x, confQuantPar[p, :, b], "-g", alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
-                ax[p].plot(x, confQuantPar[p,:, end-b+1], "-g", alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
-            end
-            ax[p].grid()
-            
-        end
-        ax[1].set_title("$(name(model)), N = $N, T=$T")
-        
-    end
-    return obsT, vEstSdResPar, fVecT_filt, confQuantPar, confQuantParFilt, errFlag
+
+ 
+    return obsT, vEstSdResPar, fVecT_filt, confQuantBuccheri, confQuantBlasques, errFlag
 end
 
 
-function conf_bands_coverage(model, parDgpT, N; nSampleCoverage=100, quantilesVals = [0.975, 0.95, 0.05, 0.025])
+function conf_bands_coverage(model::GasNetModelDirBin0Rec0, parDgpT, N; nSampleCoverage=100, quantilesVals = [0.975, 0.025])
 
     T = size(parDgpT)[2]
     nQuant = length(quantilesVals)
