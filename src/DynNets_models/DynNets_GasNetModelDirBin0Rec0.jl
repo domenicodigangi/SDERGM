@@ -124,7 +124,6 @@ function updatedGasPar( model::T where T<: GasNetModelDirBin0Rec0, obs_t, ftot_t
     #= likelihood and gradients depend on all the parameters (ftot_t), but
     only the time vaying ones (f_t) are to be updated=#
     
-
     target_fun_val_t = target_function_t(model, obs_t, ftot_t)
     
     grad_tot_t = target_function_t_grad(model, obs_t, ftot_t)
@@ -170,10 +169,11 @@ function score_driven_filter( model::T where T<: GasNetModelDirBin0Rec0, vResGas
 
     fVecT = ones(Real,NergmPar,T)
     sVecT = ones(Real,NergmPar,T)
+    logLikeVecT = ones(Real,T)
 
     sum(ftot_0)==0 ? ftot_0 = UMallPar : ()# identify(model,UMallNodesIO)
-    ftot_t = copy(ftot_0)
-
+    
+    
     if NTvPar==0
         I_tm1 = ones(1,1)
     else
@@ -186,12 +186,12 @@ function score_driven_filter( model::T where T<: GasNetModelDirBin0Rec0, vResGas
         A_T = zeros(Int8, N, N, T)
     end
 
-    fVecT[:,1] = ftot_t
+    fVecT[:,1] = ftot_0
 
-    for t=1:T-1
+    for t=1:T
     #    println(t)
         if dgp
-            diadProb = StaticNets.diadProbFromPars(StaticNets.fooNetModelDirBin0Rec0, ftot_t )
+            diadProb = StaticNets.diadProbFromPars(StaticNets.fooNetModelDirBin0Rec0, fVecT[:, t] )
 
             A_t = StaticNets.samplSingMatCan(StaticNets.fooNetModelDirBin0Rec0, diadProb, N)
             
@@ -203,15 +203,24 @@ function score_driven_filter( model::T where T<: GasNetModelDirBin0Rec0, vResGas
             obs_t = obsT[t]
         end
 
-        ftot_t,loglike_t,I_tm1,grad_t = updatedGasPar(model,obs_t, ftot_t,I_tm1,indTvPar,Wvec,Bvec,Avec)
-        fVecT[:,t+1] = ftot_t #store the filtered parameters from previous iteration
-        sVecT[:,t+1] = grad_t #store the filtered parameters from previous iteration
-        loglike += loglike_t
+        #obj fun at time t is objFun(obs_t, f_t)
+
+        # predictive step
+        ftot_tp1, logLikeVecT[t], I_tm1, sVecT[:,t] = updatedGasPar(model,obs_t, fVecT[:, t], I_tm1, indTvPar, Wvec, Bvec, Avec)
+
+        # would the following be the update step instead ??
+        #fVecT[:,t], loglike_t, I_tm1, grad_t = updatedGasPar(model,obs_t, fVecT[:,t-1], I_tm1, indTvPar, Wvec, Bvec, Avec)
+
+        if t!=T
+            fVecT[:,t+1] = ftot_tp1
+        end
     end
+    
+
     if dgp
         return fVecT, A_T, sVecT
     else
-        return fVecT, loglike, sVecT
+        return fVecT, logLikeVecT, sVecT
     end
 end
 
@@ -328,10 +337,9 @@ function estimate(model::T where T<: GasNetModelDirBin0Rec0, obsT; indTvPar::Bit
 
         oneInADterms  = (StaticNets.maxLargeVal + vecUnPar[1])/StaticNets.maxLargeVal
 
-        foo, target_fun_val_T, foo1 = score_driven_filter( model,  vecReGasParAll, indTvPar; obsT = obsT, vConstPar =  vecConstPar, ftot_0 = ftot_0 .* oneInADterms)
+        foo, logLikeVecT, foo1 = score_driven_filter( model,  vecReGasParAll, indTvPar; obsT = obsT, vConstPar =  vecConstPar, ftot_0 = ftot_0 .* oneInADterms)
 
-        #println(vecReGasPar)
-         return - target_fun_val_T
+         return - sum(logLikeVecT)
     end
     #Run the optimization
     if uppercase(model.scoreScalingType) == "FISHER-EWMA"
@@ -534,12 +542,12 @@ function sample_est_mle_pmle(model::GasNetModelDirBin0Rec0, parDgpT, N, Nsample;
         ## estimate SD
         estPar_pmle, conv_flag,UM_mple , ftot_0_mple = estimate(model_pmle, change_stats_T_dgp; indTvPar=indTvPar,indTargPar=indTvPar)
         vResEstPar_pmle = DynNets.array2VecGasPar(model_pmle, estPar_pmle, indTvPar)
-        fVecT_filt_p , target_fun_val_T_p, sVecT_filt_p = score_driven_filter( model_pmle,  vResEstPar_pmle, indTvPar; obsT = change_stats_T_dgp, ftot_0 = ftot_0_mple)
+        fVecT_filt_p , logLikeVecT, sVecT_filt_p = score_driven_filter( model_pmle,  vResEstPar_pmle, indTvPar; obsT = change_stats_T_dgp, ftot_0 = ftot_0_mple)
         vEstSd_pmle[:,n] = vcat(vResEstPar_pmle, ftot_0_mple)
 
         estPar_mle, conv_flag,UM_mle , ftot_0_mle = estimate(model_mle, stats_T_dgp; indTvPar=indTvPar, indTargPar=indTvPar)
         vResEstPar_mle = DynNets.array2VecGasPar(model_mle, estPar_mle, indTvPar)
-        fVecT_filt , target_fun_val_T, sVecT_filt = score_driven_filter( model_mle,  vResEstPar_mle, indTvPar; obsT = stats_T_dgp, ftot_0=ftot_0_mle)
+        fVecT_filt , logLikeVecT, sVecT_filt = score_driven_filter( model_mle,  vResEstPar_mle, indTvPar; obsT = stats_T_dgp, ftot_0=ftot_0_mle)
         vEstSd_mle[:,n] = vcat(vResEstPar_mle, ftot_0_mle)
 
         if plotFlag
@@ -587,7 +595,7 @@ function A0_B0_est_for_white_cov_mat_obj_SD_filter_time_seq(model::GasNetModelDi
     gradT = zeros(nPar, T)
     hessT = zeros(nPar, nPar, T)
     
-    for t = 2:T
+    for t = 1:T
         function obj_fun_t(xUn)
 
             vecSDParUn, vConstPar = divide_SD_par_from_const(model, indTvPar, xUn)
@@ -596,9 +604,9 @@ function A0_B0_est_for_white_cov_mat_obj_SD_filter_time_seq(model::GasNetModelDi
 
             oneInADterms  = (StaticNets.maxLargeVal + vecSDParRe[1])/StaticNets.maxLargeVal
 
-            fVecT_filt, target_fun_val_T, ~ = DynNets.score_driven_filter( model,  vecSDParRe, indTvPar; obsT = obsT[1:t-1], vConstPar =  vConstPar, ftot_0 = ftot_0 .* oneInADterms)
+            fVecT_filt, logLikeVecT, ~ = DynNets.score_driven_filter( model,  vecSDParRe, indTvPar; obsT = obsT[1:t], vConstPar =  vConstPar, ftot_0 = ftot_0 .* oneInADterms)
         
-            return - DynNets.target_function_t(model, obsT[t-1], fVecT_filt[:,end])
+            return - logLikeVecT[end]
         end
 
 
@@ -723,12 +731,12 @@ function mle_distrib_filtered_par(model::GasNetModelDirBin0Rec0, obsT, indTvPar,
         errFlag = true
      end
 
-    return distribFilteredSD, filtCovHatSample, errFlag
+    return distribFilteredSD, filtCovHatSample, errFlag, mvNormalCov
 end
 
 
 
-function conf_bands_buccheri(model::GasNetModelDirBin0Rec0, obsT, indTvPar, fVecT_filt, distribFilteredSD, filtCovHatSample; nSample = 500, quantilesVals = [0.975, 0.025])
+function conf_bands_buccheri(model::GasNetModelDirBin0Rec0, obsT, indTvPar, fVecT_filt, distribFilteredSD, filtCovHatSample, quantilesVals::Vector{Vector{Float64}}; nSample = 500, )
 
 
     T = length(obsT)
@@ -765,33 +773,36 @@ function conf_bands_buccheri(model::GasNetModelDirBin0Rec0, obsT, indTvPar, fVec
     end
 
 
-    nQuant = length(quantilesVals)
-    nBands, r = divrem(nQuant,2)
-    r>0 ? error() : ()
-
-    confQuantPar = repeat(fVecT_filt, outer=(1,1,nQuant))
-    confQuantParFilt = repeat(fVecT_filt, outer=(1,1,nQuant))
+    nBands = length(quantilesVals)
+    nQuant = 2*nBands
+  
+    confBandsPar = repeat(fVecT_filt, outer=(1,1,nBands, 2))
+    confBandsParFilt = repeat(fVecT_filt, outer=(1,1,nBands, 2))
 
     for p =1:number_ergm_par(model)
         for t=1:T
-            confQuantPar[p, t, :] = quantile.(Normal(fVecT_filt[p, t], sqrt(parUncVarianceT[p,t])), quantilesVals)
-            confQuantParFilt[p, t, :] = quantile.(Normal(fVecT_filt[p, t], sqrt(parUncVarianceT[p,t] + filtUncVarianceT[p,t])), quantilesVals)
+            for b=1:nBands
+                length(quantilesVals[b]) ==2 ? () : error()
+                confBandsPar[p, t, b,  :] = quantile.(Normal(fVecT_filt[p, t], sqrt(parUncVarianceT[p,t])), quantilesVals[b])
+                confBandsParFilt[p, t, b,  :] = quantile.(Normal(fVecT_filt[p, t], sqrt(parUncVarianceT[p,t] + filtUncVarianceT[p,t])), quantilesVals[b])
+            end
         end
     end
-    return confQuantParFilt, confQuantPar
+    return confBandsParFilt, confBandsPar
 end
 
 
-function conf_bands_par_uncertainty_blasques(model::GasNetModelDirBin0Rec0, obsT, fVecT_filt, distribFilteredSD; nSample = 500, quantilesVals = [0.975, 0.025])
+function conf_bands_par_uncertainty_blasques(model::GasNetModelDirBin0Rec0, obsT, fVecT_filt, distribFilteredSD, quantilesVals::Vector{Vector{Float64}}; nSample = 500)
     
     T = length(obsT)
     nErgmPar = number_ergm_par(model)
-    nQuant = length(quantilesVals)
 
     parUncVarianceT = zeros(nErgmPar,T)
-   
-    confQuantPar = repeat(fVecT_filt, outer=(1,1,nQuant))
-    
+
+    nBands = length(quantilesVals)
+    nQuant = 2*nBands   
+    confBandsPar = repeat(fVecT_filt, outer=(1,1,nBands, 2))
+
     distribFilteredSD[isnan.(distribFilteredSD)] .= 0
     fVecT_filt[isnan.(fVecT_filt)] .= 0
 
@@ -799,22 +810,49 @@ function conf_bands_par_uncertainty_blasques(model::GasNetModelDirBin0Rec0, obsT
     
     for k=1:nErgmPar
         for t=1:T
-            a_t_vec = distribFilteredSD[:,k,t]
-            
-            # add filtering and parameter unc
-            confQuantPar[k, t, :] = Statistics.quantile(a_t_vec[.! isnan.(a_t_vec)], quantilesVals)
+            for b=1:nBands
+                length(quantilesVals[b]) ==2 ? () : error()
+             
+                a_t_vec = distribFilteredSD[:,k,t]
+                
+                # add filtering and parameter unc
+                confBandsPar[k, t, b, :] = Statistics.quantile(a_t_vec[.! isnan.(a_t_vec)], quantilesVals[b])
+            end
         end
     end
    
-    return confQuantPar
+    return confBandsPar
 end
 
 
-function plot_filtered_and_conf_bands(model::GasNetModelDirBin0Rec0, N, fVecT_filt, confQuant1;confQuant2 =zeros(2,2), parDgpT=zeros(2,2))
+function conf_bands_coverage(parDgpT, confBands )
+
+    nErgmPar, T, nBands, nQuant  = size(confBands)
+    nQuant ==2 ? () : error()
+    nParDgp, TDgp = size(parDgpT)
+    nParDgp == nErgmPar ? () : error()
+    T == TDgp ? () : error()
+
+    isCovered = falses(nErgmPar, T, nBands)
+    for b in 1:nBands
+        for p in 1:nErgmPar 
+            for t in 1:T
+                ub = confBands[p, t, b, 1] 
+                lb = confBands[p, t, b, 2]
+                ub<lb ? error("wrong bands ordering") : ()
+                isCov = lb <= parDgpT[p, t] <= ub 
+                isCovered[p, t, b] = isCov
+            end
+        end
+    end
+    return isCovered
+end
+
+function plot_filtered_and_conf_bands(model::GasNetModelDirBin0Rec0, N, fVecT_filt, confBands1; confBands2 =zeros(2,2), parDgpT=zeros(2,2), nameConfBand1="1", nameConfBand2="2")
 
     T = size(fVecT_filt)[2]
 
-    nBands = div(size(confQuant1)[3],2)
+    nBands = size(confBands1)[3]
 
     fig1, ax = subplots(2,1)
     for p in 1:2
@@ -831,21 +869,29 @@ function plot_filtered_and_conf_bands(model::GasNetModelDirBin0Rec0, N, fVecT_fi
         ax[p].plot(x, fVecT_filt[p,:], "b", alpha =0.5)
         ax[p].set_ylim([bottom - margin, top + margin])
         for b in 1:nBands
-            ax[p].fill_between(x, confQuant1[p, :, b], y2 =confQuant1[p,:, end-b+1],color =(0.9, 0.2 , 0.2, 0.1), alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
-            if confQuant2 != zeros(2,2)
-                ax[p].plot(x, confQuant2[p, :, b], "-g", alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
-                ax[p].plot(x, confQuant2[p,:, end-b+1], "-g", alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
+            ax[p].fill_between(x, confBands1[p, :, b,1], y2 =confBands1[p,:,b, 2],color =(0.9, 0.2 , 0.2, 0.1), alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
+            if confBands2 != zeros(2,2)
+                ax[p].plot(x, confBands2[p, :, b, 1], "-g", alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
+                ax[p].plot(x, confBands2[p,:, b, 2], "-g", alpha = 0.2*b/nBands  )#, color='b', alpha=.1)
             end
         end
         ax[p].grid()
         
     end
-    ax[1].set_title("$(name(model)), N = $N, T=$T")
-        
+
+    cov1 = round(mean(conf_bands_coverage(parDgpT, confBands1)), digits=2)
+    titleString = "$(name(model)), N = $N, T=$T, \n cov $nameConfBand1 = $cov1"
+
+    if confBands2 != zeros(2,2)
+        cov2 = round(mean(conf_bands_coverage(parDgpT, confBands2)), digits=2)
+        titleString = titleString * " cov nameConfBand2 = $cov2"
+    end
+
+    ax[1].set_title(titleString)
 end
 
 
-function filter_and_conf_bands(model::GasNetModelDirBin0Rec0, A_T_dgp, quantilesVals; indTvPar = model.indTvPar, parDgpT=zeros(2,2))
+function filter_and_conf_bands(model::GasNetModelDirBin0Rec0, A_T_dgp, quantilesVals::Vector{Vector{Float64}}; indTvPar = model.indTvPar, parDgpT=zeros(2,2), plotFlag=false)
     
     N = size(A_T_dgp)[1]
     T = size(A_T_dgp)[3]
@@ -860,55 +906,51 @@ function filter_and_conf_bands(model::GasNetModelDirBin0Rec0, A_T_dgp, quantiles
     
     vecUnParAll = unrestrict_all_par(model, indTvPar, vEstSdResPar)
 
-    distribFilteredSD, filtCovHatSample, errFlag = mle_distrib_filtered_par(model, obsT, indTvPar, ftot_0, vEstSdResPar)
+    distribFilteredSD, filtCovHatSample, errFlag, mvNormalCov = mle_distrib_filtered_par(model, obsT, indTvPar, ftot_0, vEstSdResPar)
 
-    confQuantBuccheri,  ~ = conf_bands_buccheri(model, obsT, indTvPar, fVecT_filt, distribFilteredSD, filtCovHatSample; quantilesVals = quantilesVals)
+    confBandsBuccheri,  ~ = conf_bands_buccheri(model, obsT, indTvPar, fVecT_filt, distribFilteredSD, filtCovHatSample, quantilesVals)
 
-    confQuantBlasques = conf_bands_par_uncertainty_blasques(model, obsT, fVecT_filt, distribFilteredSD; quantilesVals = quantilesVals)
+    confBandsBlasques = conf_bands_par_uncertainty_blasques(model, obsT, fVecT_filt, distribFilteredSD, quantilesVals)
 
+    if plotFlag
+        plot_filtered_and_conf_bands(model, N, fVecT_filt, confBandsBuccheri ;confBands2 =confBandsBlasques, parDgpT=parDgpT, nameConfBand1= "Buccheri", nameConfBand2 ="Blasques")
 
- 
-    return obsT, vEstSdResPar, fVecT_filt, confQuantBuccheri, confQuantBlasques, errFlag
+    end
+
+    return obsT, vEstSdResPar, fVecT_filt, confBandsBuccheri, confBandsBlasques, errFlag, vecUnParAll, mvNormalCov
 end
 
 
-function conf_bands_coverage(model::GasNetModelDirBin0Rec0, parDgpT, N; nSampleCoverage=100, quantilesVals = [0.975, 0.025])
+function conf_bands_coverage(model::GasNetModelDirBin0Rec0, parDgpT, N, nSampleCoverage, quantilesVals::Vector{Vector{Float64}})
 
     T = size(parDgpT)[2]
-    nQuant = length(quantilesVals)
-    nBands, check = divrem(nQuant,2)
-    check!=0 ? error("quantiles should be eaven to define bands") : ()
+    nBands = length(quantilesVals)
     nErgmPar = number_ergm_par(model)
     # obs have different types for different models. storing them might require some additional steps
     #allObsT = Array{Array{Array{Float64,2},1},1}(undef, nSampleCoverage)
     allvEstSdResPar = zeros(3*nErgmPar, nSampleCoverage)
     allfVecT_filt = zeros(nErgmPar, T, nSampleCoverage)
-    allConfBandsParFilt = zeros(nErgmPar, T, nQuant, nSampleCoverage)
+    allConfBandsBuccheri = zeros(nErgmPar, T, nBands, 2, nSampleCoverage)
+    allConfBandsBlasques = zeros(nErgmPar, T, nBands, 2, nSampleCoverage)
     allErrFlags = falses(nSampleCoverage)
-    allCover = zeros(nErgmPar, T, nBands, nSampleCoverage)
+    allCoverBuccheri = zeros(nErgmPar, T, nBands, nSampleCoverage)
+    allCoverBlasques = zeros(nErgmPar, T, nBands, nSampleCoverage)
 
     for k=1:nSampleCoverage
         
         A_T_dgp = sample_dgp(model, parDgpT,N)
-        allObsT, allvEstSdResPar[:,k], allfVecT_filt[:,:,k], ~, allConfBandsParFilt[:,:,:,k], allErrFlags[k] = filter_and_conf_bands(model, A_T_dgp, quantilesVals)
+        
+        ~, allvEstSdResPar[:,k], allfVecT_filt[:,:,k], allConfBandsBuccheri[:,:,:,:,k], allConfBandsBlasques[:,:,:,:,k], allErrFlags[k] = filter_and_conf_bands(model, A_T_dgp, quantilesVals)
 
-        for b in 1:nBands
-            for p in 1:nErgmPar 
-                for t in 1:T
-                    ub = allConfBandsParFilt[p, t, b, k] 
-                    lb = allConfBandsParFilt[p, t, end-b+1, k]
-                    ub<lb ? error("wrong bands ordering") : ()
-                    isCovered = lb <= parDgpT[p, t] <= ub 
-                    allCover[p, t, b, k] = isCovered
-                end
-            end
-        end
+        allCoverBuccheri[:, :, :, k] = conf_bands_coverage(parDgpT,  allConfBandsBuccheri[:,:,:,:,k])
+
+        allCoverBlasques[:, :, :, k] = conf_bands_coverage(parDgpT,  allConfBandsBlasques[:,:,:,:,k])
         
     end
 
     Logging.@info("The fraction of estimates that resulted in errors is $(mean(allErrFlags)) ")
 
-    return allCover, allvEstSdResPar, allfVecT_filt, allConfBandsParFilt, allErrFlags
+    return allCoverBuccheri, allCoverBlasques, allvEstSdResPar, allfVecT_filt, allConfBandsBuccheri,allConfBandsBlasques, allErrFlags
 end
 
 
