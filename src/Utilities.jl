@@ -27,7 +27,7 @@ export link_R_in_R_pos
 inv_link_R_in_R_pos(x) = log(x) 
 export inv_link_R_in_R_pos
 
-function make_pos_def( M; negOrSmallTh = 10*eps(), smallVal = 10*eps(), warnTh = 0.01) 
+function make_pos_def( M; negOrSmallTh = 100*eps(), smallVal = 100*eps(), warnTh = 0.01) 
     eig = eigen(M)
     minEigenVal = minimum(eig.values)
 

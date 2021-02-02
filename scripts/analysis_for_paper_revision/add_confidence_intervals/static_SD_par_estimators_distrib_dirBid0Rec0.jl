@@ -3,10 +3,10 @@ What is the distribution of static parameters of the SD filter,  when used as DG
 """
 
 #region import and models
+begin
+
 using ScoreDrivenExponentialRandomGraphs
-
 import ScoreDrivenExponentialRandomGraphs:StaticNets, DynNets
-
 import ScoreDrivenExponentialRandomGraphs.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
 using ScoreDrivenExponentialRandomGraphs.Utilities
 
@@ -19,102 +19,138 @@ using StatsBase
 using LinearAlgebra
 using Distributions
 using Statistics
-
 using JLD
 
 model_mle = DynNets.GasNetModelDirBin0Rec0_mle()
 model_pmle = DynNets.GasNetModelDirBin0Rec0_pmle()
 indTvPar = trues(2)
 
-#endregion
-
-# work in progress, arrivato qui------------------------------------
-DynNets.starting_point_optim(model_mle)
-
-
-using Statistics
-using Distributions
-
-X = rand(MvNormal(zeros(3),Diagonal([1.0,3.0,5.0])), 1000)
-
-cov(X')
-var(X[2,:])
-
-
-#region filter checks 
-begin
-T=300
-N=100
-quantilesVals = [[0.975, 0.025]]
-parDgpT = DynNets.dgp_misspecified(model_mle, "AR", N, T;  minValAlpha = 0.2, maxValAlpha = 0.3, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false, B =0.95, sigma = 0.001)
-
-# quick visual checks
-# DynNets.sample_est_mle_pmle(model_mle, parDgpT, N, 1; plotFlag = true)
-A_T_dgp = sample_dgp(model_mle, parDgpT,N)
-
-
-res_mle = filter_and_conf_bands(model_mle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = parDgpT)
-
-res_pmle = filter_and_conf_bands(model_pmle, A_T_dgp, quantilesVals; parDgpT = parDgpT, plotFlag=true)
-
-
 end
 #endregion
 
-res_mle[8]
-res_pmle[8]
+NON CATTURO LA PARAMETER UNCERTAINTY!!
 
-
-res_mle[8]
-res_pmle[8]
-
-#region distribution of filtered parameters checks 
+#region  
 begin
-T=100
+T=200
 N=50
-model = model_pmle
+nSample = 3
+model = model_mle
+alpha = 0.2
+beta = mean(DynNets.beta_min_max_from_alpha_min(0.1, N))
+UM = [alpha, beta]
+vUnPar, ~ = DynNets.starting_point_optim(model, indTvPar, UM)
+vResParDgp = DynNets.restrict_all_par(model, indTvPar, vUnPar)
+
+BDgp = 0.96
+ADgp = 0.005
+vResParDgp[2:3:end] .= BDgp
+vResParDgp[3:3:end] .= ADgp
+
+#start optimization on the correct values
+vParOptim_0, ARe_min = DynNets.starting_point_optim(model, indTvPar, UM; indTargPar = falses(number_ergm_par(model)))
+
+vResPar_0 = deepcopy(vResParDgp) 
+vResPar_0[3:3:end] .=vResPar_0[3:3:end]./10 
+vParOptim_0 = Real.(DynNets.unrestrict_all_par(model, indTvPar, vResPar_0))
+
+
+nStaticSdPar = length(vResParDgp)
+vResParEstDistrib = zeros(length(vResParDgp), nSample)
+vUnParEstDistrib = zeros(length(vResParDgp), nSample)
+HessSum = zeros(nStaticSdPar, nStaticSdPar, nSample)
+OpGradSum = zeros(nStaticSdPar, nStaticSdPar, nSample)
+
 quantilesVals = [[0.975, 0.025] ]
 
-#parDgpT = DynNets.dgp_misspecified(model_mle, "SIN", N, T;  minValAlpha = 0.2, maxValAlpha = 0.3, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false, B =0.990, sigma = 0.005)
-# quick visual checks
-# DynNets.sample_est_mle_pmle(model_mle, parDgpT, N, 1; plotFlag = true)
-#A_T_dgp = sample_dgp(model_mle, parDgpT,N)
-obsT = [statsFromMat(model, A_T_dgp[:,:,t]) for t in 1:T ]
-
-estSdResPar, conv_flag, UM_mple, ftot_0 = estimate(model, obsT;indTvPar=indTvPar, indTargPar=falses(2))
-
-vEstSdResPar = array2VecGasPar(model, estSdResPar, indTvPar)
-
-fVecT_filt , target_fun_val_T, sVecT_filt = DynNets.score_driven_filter(model,  vEstSdResPar, indTvPar; obsT = obsT, ftot_0 = ftot_0)
+for n=1:2
+    # sample SD dgp
+    fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model, vResParDgp, indTvPar; dgpNT = (N,T))
 
 
-distribFilteredSD, filtCovHatSample, errFlag = mle_distrib_filtered_par(model, obsT, indTvPar, ftot_0, vEstSdResPar)
+    res_mle = DynNets.filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp)
+
+end
+end
+for n=1:nSample
+    # sample SD dgp
+    fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model, vResParDgp, indTvPar; dgpNT = (N,T))
+
+    
+    obsT = [statsFromMat(model, A_T_dgp[:,:,t]) for t in 1:T ]
+
+    arrayAllParHat, conv_flag,UM, ftot_0 = estimate(model, obsT; indTvPar=indTvPar, indTargPar=falses(2), vParOptim_0=vParOptim_0)
+
+    
+    vResParEstDistrib[:,n] = DynNets.array2VecGasPar(model, arrayAllParHat, indTvPar)
+
+    vecUnParAll = DynNets.unrestrict_all_par(model, indTvPar, vResParEstDistrib[:,n])
+
+    vUnParEstDistrib[:,n] = vecUnParAll
+    
+    OpGradSum[:,:,n], HessSum[:,:,n] = DynNets.A0_B0_est_for_white_cov_mat_obj_SD_filter_time_seq(model, obsT, vecUnParAll, indTvPar, ftot_0)
+
+    # estCovWhite[:,:,n], errorFlag, OpGradSum[:,:,n], HessSum[:,:,n] = DynNets.white_estimate_cov_mat_static_sd_par(model, obsT, indTvPar, ftot_0, vResParEstDistrib[:,n]; returnAllMats=true)
+
+end
+
+# end
+#endregion
 
 
+begin
+indPar = 3
+fig, ax = subplots()
+ax.hist(vResParEstDistrib[indPar,:])
+ylim = ax.get_ylim()
+ax.vlines(vResParDgp[indPar], ylim[1], ylim[2], color = "r" )
+ax.vlines(vResPar_0[indPar], ylim[1], ylim[2], color = "r" )
+#region distribution of filtered parameters checks 
+end
 
-confBandsParFilt, confBandsParGauss = DynNets.conf_bands_buccheri(model, obsT, indTvPar, fVecT_filt, distribFilteredSD, filtCovHatSample, quantilesVals)
 
-confBandsParSimul = DynNets.conf_bands_par_uncertainty_blasques(model, obsT, fVecT_filt, distribFilteredSD, quantilesVals)
+#region distribution of white estimators
+# 1. C'é un bias di campione finito. Lo stimatore, MLE o White, della covarianza degli stimatori dei parametri é ok? 
+begin
+estCovWhite = zeros(nStaticSdPar, nStaticSdPar, nSample)
+estCovWhitePos = zeros(nStaticSdPar, nStaticSdPar, nSample)
 
+for n=1:nSample
+    opGrad = OpGradSum[:,:,n]
+    hess = HessSum[:,:,n]
 
+    parCovHat = pinv(hess) * opGrad * pinv(hess)
+    
+    parCovHatPosDef, minEigenVal = make_pos_def(parCovHat)
 
-
-plot_filtered_and_conf_bands(model, N, fVecT_filt, confBandsParFilt;  parDgpT=parDgpT, confBands2=confBandsParSimul)
-
-
-
-deltas = distribFilteredSD[:,1,end-10,] 
-
-fig1, ax = subplots(2,1)
-for p in 1:2
-    x = 1:T
-  
-    ax[p].hist(deltas)
-  
-    ax[p].grid()  
+    estCovWhite[:,:,n] = parCovHat
+    estCovWhitePos[:,:,n] = parCovHatPosDef
 end
 
 end
+
+parBootCov = cov(vResParEstDistrib')
+
+begin
+
+for i =1:6
+    j=i
+    figure()
+    hist(estCovWhite[i,j,:])
+    hist(estCovWhitePos[i,j,:])
+    ax = gca()
+    ylim = ax.get_ylim()
+    vlines(parBootCov[i,j], ylim[1], ylim[2], color = "r" )
+    title("$i")
+end
+
+end
+#endregion
+
+# Domande
+# 1. C'é un bias di campione finito. Lo stimatore, MLE o White, della covarianza degli stimatori dei parametri é ok? 
+# 2. Visto che posso costruire la distribuzione dei parametri con parametric bootstrap, perché non usare quella?
+# 3. Che relazione c'é tra la distribuzione da parametric bootstrap e la mia idea di usare non parametric bootstrap campionando le osservazioni (che portano in dote la storia fino a quel punto, ma considerando la likelihood della sola osservazione)? 
 
 
 #endregion

@@ -39,22 +39,6 @@ StaModType(Model::GasNetModelDirBinGlobalPseudo ) = StaticNets.fooNetModelDirBin
 # options and conversions of parameters for optimization
 setOptionsOptim(Model::GasNetModelDirBinGlobalPseudo) = setOptionsOptim(fooGasNetModelDirBin1)
 
-function array2VecGasPar(model::GasNetModelDirBinGlobalPseudo, ArrayGasPar, indTvPar :: BitArray{1})
-    # optimizations routines need the parameters to be optimized to be in a vector
-
-        NTvPar = sum(indTvPar)
-        Npar = length(indTvPar)
-        NgasPar = 2*NTvPar + Npar
-
-        VecGasPar = zeros(NgasPar)
-        last = 1
-        for i=1:Npar
-            VecGasPar[last:last+length(ArrayGasPar[i])-1] = ArrayGasPar[i]
-            last = last + length(ArrayGasPar[i])
-        end
-        return VecGasPar
-end
-
 
 function vec2ArrayGasPar(Model::GasNetModelDirBinGlobalPseudo,
                             VecGasPar::Array{<:Real,1},
