@@ -40,7 +40,7 @@ N2,T = size(degsIO_T);N = round(Int,N2/2)
 t=1
 
 ftotIO_t_Start = identify!(modGasDirBin1_eMid,gasPar[1].*(1-gasPar[2]))
-tvPartp1 = updatedGasPar( modGasDirBin1_eMid,N,degsIO_T[:,t],
+tvPartp1 = predict_score_driven_par( modGasDirBin1_eMid,N,degsIO_T[:,t],
                          copy(ftotIO_t_Start),zeros(N2,N2),trues(N2),
                          identify!(modGasDirBin1_eMid,gasPar[1]),gasPar[2],gasPar[3])[1]
 

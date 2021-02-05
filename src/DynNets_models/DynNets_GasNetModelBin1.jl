@@ -132,7 +132,7 @@ function scalingMatGas(Model::GasNetModelBin1,expMat::Array{<:Real,2},I_tm1::Arr
     end
     return scalingMat
  end
-function updatedGasPar( Model::GasNetModelBin1,N::Int,degs_t::Array{<:Real,1},
+function predict_score_driven_par( Model::GasNetModelBin1,N::Int,degs_t::Array{<:Real,1},
                         ftot_t::Array{<:Real,1},I_tm1::Array{<:Real,2},indTvNodes::BitArray{1},
                         Wgas::Array{<:Real,1},Bgas::Array{<:Real,1},Agas::Array{<:Real,1})
     "Return the GAS updated parameters, with the scaling matrix and the
@@ -211,7 +211,7 @@ function score_driven_filter( Model::GasNetModelBin1,
         else
             degs_t = obsT[t,:] # vector of in and out degrees
         end
-        ftot_t,I_tm1,loglike_t = updatedGasPar(Model,N,degs_t,ftot_t,I_tm1,indTvNodes,Wgas,Bgas,Agas)
+        ftot_t,I_tm1,loglike_t = predict_score_driven_par(Model,N,degs_t,ftot_t,I_tm1,indTvNodes,Wgas,Bgas,Agas)
         fVecT[t,:] = ftot_t #store the filtered parameters from previous iteration
         loglike += loglike_t
     end

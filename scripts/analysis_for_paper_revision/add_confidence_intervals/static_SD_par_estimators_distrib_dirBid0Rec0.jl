@@ -28,13 +28,11 @@ indTvPar = trues(2)
 end
 #endregion
 
-NON CATTURO LA PARAMETER UNCERTAINTY!!
-
 #region  
 begin
-T=200
+T=100
 N=50
-nSample = 3
+nSample = 100
 model = model_mle
 alpha = 0.2
 beta = mean(DynNets.beta_min_max_from_alpha_min(0.1, N))
@@ -43,16 +41,15 @@ vUnPar, ~ = DynNets.starting_point_optim(model, indTvPar, UM)
 vResParDgp = DynNets.restrict_all_par(model, indTvPar, vUnPar)
 
 BDgp = 0.96
-ADgp = 0.005
+ADgp = 0.2
 vResParDgp[2:3:end] .= BDgp
 vResParDgp[3:3:end] .= ADgp
 
 #start optimization on the correct values
-vParOptim_0, ARe_min = DynNets.starting_point_optim(model, indTvPar, UM; indTargPar = falses(number_ergm_par(model)))
+vParUnOptim_0, ARe_min = DynNets.starting_point_optim(model, indTvPar, UM; indTargPar = falses(number_ergm_par(model)))
 
-vResPar_0 = deepcopy(vResParDgp) 
-vResPar_0[3:3:end] .=vResPar_0[3:3:end]./10 
-vParOptim_0 = Real.(DynNets.unrestrict_all_par(model, indTvPar, vResPar_0))
+vParOptim_0 = Real.(DynNets.restrict_all_par(model, indTvPar, vParUnOptim_0))
+
 
 
 nStaticSdPar = length(vResParDgp)
@@ -65,30 +62,36 @@ quantilesVals = [[0.975, 0.025] ]
 
 for n=1:2
     # sample SD dgp
-    fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model, vResParDgp, indTvPar; dgpNT = (N,T))
+    global fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model_mle,N,  vResParDgp, indTvPar; dgpNT = (N,T))
 
 
-    res_mle = DynNets.filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp)
+    global res_mle_mle = DynNets.filter_and_conf_bands(model_mle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
+    
+    global res_mle_pmle = DynNets.filter_and_conf_bands(model_pmle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
+
+   # global res_mle_boot = DynNets.filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "PAR-BOOTSTRAP-SAMPLE")
+
+    # global res_mle_boot = DynNets.filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "PAR-BOOTSTRAP-COVMAT")
 
 end
 end
+
+
+
 for n=1:nSample
     # sample SD dgp
-    fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model, vResParDgp, indTvPar; dgpNT = (N,T))
+    fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model, N, vResParDgp, indTvPar; dgpNT = (N,T))
 
     
     obsT = [statsFromMat(model, A_T_dgp[:,:,t]) for t in 1:T ]
 
-    arrayAllParHat, conv_flag,UM, ftot_0 = estimate(model, obsT; indTvPar=indTvPar, indTargPar=falses(2), vParOptim_0=vParOptim_0)
+
+    arrayAllParHat, conv_flag,UM, ftot_0 = estimate(model, N, obsT; indTvPar=indTvPar, indTargPar=falses(2), vParOptim_0=vParOptim_0)
 
     
     vResParEstDistrib[:,n] = DynNets.array2VecGasPar(model, arrayAllParHat, indTvPar)
 
-    vecUnParAll = DynNets.unrestrict_all_par(model, indTvPar, vResParEstDistrib[:,n])
-
-    vUnParEstDistrib[:,n] = vecUnParAll
-    
-    OpGradSum[:,:,n], HessSum[:,:,n] = DynNets.A0_B0_est_for_white_cov_mat_obj_SD_filter_time_seq(model, obsT, vecUnParAll, indTvPar, ftot_0)
+    OpGradSum[:,:,n], HessSum[:,:,n] = DynNets.A0_B0_est_for_white_cov_mat_obj_SD_filter_time_seq(model, N, obsT, vResParEstDistrib[:,n], indTvPar, ftot_0)
 
     # estCovWhite[:,:,n], errorFlag, OpGradSum[:,:,n], HessSum[:,:,n] = DynNets.white_estimate_cov_mat_static_sd_par(model, obsT, indTvPar, ftot_0, vResParEstDistrib[:,n]; returnAllMats=true)
 
@@ -96,12 +99,29 @@ end
 
 # end
 #endregion
+n=1
+begin
+figure()
+fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model, vResParDgp, indTvPar; dgpNT = (N,T))
+
+obsT = [statsFromMat(model, A_T_dgp[:,:,t]) for t in 1:T ]
+
+arrayAllParHat, conv_flag,UM, ftot_0 = estimate(model, obsT; indTvPar=indTvPar, indTargPar=falses(2), vParOptim_0=vParOptim_0)
+
+
+vResParEstDistrib[:,n] = DynNets.array2VecGasPar(model, arrayAllParHat, indTvPar)
+
+fVecTFilt, A_T_dgp, ~ = DynNets.score_driven_filter( model, vResParEstDistrib[:,n], indTvPar, obsT=obsT, ftot_0=ftot_0)
+
+plot(fVecTFilt[2,:])
+plot(fVecTDgp[2,:])
+end
 
 
 begin
 indPar = 3
 fig, ax = subplots()
-ax.hist(vResParEstDistrib[indPar,:])
+ax.hist(vResParEstDistrib[indPar,:], 30)
 ylim = ax.get_ylim()
 ax.vlines(vResParDgp[indPar], ylim[1], ylim[2], color = "r" )
 ax.vlines(vResPar_0[indPar], ylim[1], ylim[2], color = "r" )
@@ -114,36 +134,33 @@ end
 begin
 estCovWhite = zeros(nStaticSdPar, nStaticSdPar, nSample)
 estCovWhitePos = zeros(nStaticSdPar, nStaticSdPar, nSample)
-
+errFlag = falses(nSample)
 for n=1:nSample
     opGrad = OpGradSum[:,:,n]
     hess = HessSum[:,:,n]
 
-    parCovHat = pinv(hess) * opGrad * pinv(hess)
-    
-    parCovHatPosDef, minEigenVal = make_pos_def(parCovHat)
+        parCovHat = pinv(hess) * opGrad * pinv(hess)
+        
+        parCovHatPosDef, minEigenVal = make_pos_def(parCovHat)
 
-    estCovWhite[:,:,n] = parCovHat
-    estCovWhitePos[:,:,n] = parCovHatPosDef
-end
-
+        estCovWhite[:,:,n] = parCovHat
+        estCovWhitePos[:,:,n] = parCovHatPosDef
 end
 
 parBootCov = cov(vResParEstDistrib')
+parNames = ["w_theta", "B_theta", "A_theta", "w_eta", "B_eta", "A_eta"]
 
-begin
-
-for i =1:6
+fig, ax = subplots(3,2)
+for i = 1:6
     j=i
-    figure()
-    hist(estCovWhite[i,j,:])
-    hist(estCovWhitePos[i,j,:])
-    ax = gca()
-    ylim = ax.get_ylim()
-    vlines(parBootCov[i,j], ylim[1], ylim[2], color = "r" )
-    title("$i")
+    ax[i].hist(estCovWhite[i,j,:], range=quantile(estCovWhite[i,j,:], [0.01, 0.99]))
+    ylim = ax[i].get_ylim()
+    ax[i].vlines(parBootCov[i,j], ylim[1], ylim[2], color = "r" )
+    ax[i].set_title(parNames[i])
 end
+suptitle("White Estimators of Diagonal Elements of Covariance Matrix \n Par Bootstrap Estimate in Red. nSample = $nSample ")
 
+tight_layout()
 end
 #endregion
 

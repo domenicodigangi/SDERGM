@@ -91,7 +91,7 @@ function target_function_t_hess(model::T where T<: GasNetModelDirBinErgmPml, obs
 end
 
 
-function updatedGasPar( model::T where T<: GasNetModelDirBinErgmPml, obs_t, ftot_t::Array{<:Real,1}, I_tm1::Array{<:Real,2}, indTvPar::BitArray{1}, Wgas::Array{<:Real,1}, Bgas::Array{<:Real,1}, Agas::Array{<:Real,1};matrixScaling=false)
+function predict_score_driven_par( model::T where T<: GasNetModelDirBinErgmPml, obs_t, ftot_t::Array{<:Real,1}, I_tm1::Array{<:Real,2}, indTvPar::BitArray{1}, Wgas::Array{<:Real,1}, Bgas::Array{<:Real,1}, Agas::Array{<:Real,1};matrixScaling=false)
     
     
     #= likelihood and gradients depend on all the parameters (ftot_t), but

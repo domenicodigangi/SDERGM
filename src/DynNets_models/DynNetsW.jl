@@ -257,7 +257,7 @@ function scaleScoreGas(Model::GasNetModelDirW1,  ftotIO_t::Array{<:Real,1},fBndT
 
     return s_t, I_tm1
  end
-function updatedGasPar( Model::GasNetModelDirW1,strIO_t::Array{<:Real,1},
+function predict_score_driven_par( Model::GasNetModelDirW1,strIO_t::Array{<:Real,1},
                          ftotIO_t::Array{<:Real,1},I_tm1::Array{<:Real,2},indTvNodesIO::BitArray{1},
                          WgasIO::Array{<:Real,1},BgasIO::Array{<:Real,1},AgasIO::Array{<:Real,1},t::Int ;
                          fBndTot_t::Array{<:Real,1} =  StaticNets.uBndPar2bndPar(StaModType(Model),ftotIO_t) )
@@ -397,7 +397,7 @@ function score_driven_filter( Model::GasNetModelDirW1,
         # println("str_t")
         #  display([strIO_t[1:N] strIO_t[N+1:2N] ] )
         #140<=t<=150? display(fBndTot_t'):()
-        ftotIO_t,loglike_t,I_tm1 = updatedGasPar(Model,strIO_t,ftotIO_t,I_tm1,indTvNodesIO,WgasIO,BgasIO,AgasIO,t ; fBndTot_t = fBndTot_t)
+        ftotIO_t,loglike_t,I_tm1 = predict_score_driven_par(Model,strIO_t,ftotIO_t,I_tm1,indTvNodesIO,WgasIO,BgasIO,AgasIO,t ; fBndTot_t = fBndTot_t)
         fIOVecT[t,:] = ftotIO_t #store the filtered parameters from previous iteration
         loglike += loglike_t
 

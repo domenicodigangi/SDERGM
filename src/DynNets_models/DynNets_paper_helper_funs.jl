@@ -92,7 +92,7 @@ function sdergmDGPpaper_Rcall( Model::DynNets.GasNetModelDirBinGlobalPseudo, ind
         obsT[t] = obs_t
         statsT[:,t] = stats_t
         #print((t,I_tm1))
-        ftot_t,loglike_t,I_tm1,~ = DynNets.updatedGasPar(Model,obs_t,ftot_t,I_tm1,indTvPar,Wvec,Bvec,Avec)
+        ftot_t,loglike_t,I_tm1,~ = DynNets.predict_score_driven_par(Model,obs_t,ftot_t,I_tm1,indTvPar,Wvec,Bvec,Avec)
         fVecT[:,t] = ftot_t #store the filtered parameters from previous iteration
     end
 

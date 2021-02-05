@@ -177,7 +177,7 @@ function scalingMatGas(Model::GasNetModelDirBin1,expMat::Array{<:Real,2};
     end
     return scalingMat
  end
-function updatedGasPar( Model::GasNetModelDirBin1,N::Int,degsIO_t::Array{<:Real,1},
+function predict_score_driven_par( Model::GasNetModelDirBin1,N::Int,degsIO_t::Array{<:Real,1},
                          ftotIO_t::Array{<:Real,1},I_tm1:: Union{UniformScaling, Matrix},
                          indTvNodesIO::Union{BitArray{1},Array{Bool}},
                          WgasIO::Array{<:Real,1},BgasIO::Array{<:Real,1},AgasIO::Array{<:Real,1})
@@ -265,7 +265,7 @@ function score_driven_filter( Model::GasNetModelDirBin1,
             degsIO_t = obsT[:,t] # vector of in and out degrees
         end
         #t==150  ?     println(WgasIO) : ()
-        ftotIO_tp1,loglike_t = updatedGasPar(Model,N,degsIO_t,ftotIO_t,I_tm1,
+        ftotIO_tp1,loglike_t = predict_score_driven_par(Model,N,degsIO_t,ftotIO_t,I_tm1,
                                             indTvNodesIO,WgasIO,BgasIO,AgasIO)
         #fIOVecT[:,t+1] = ftotIO_tp1 #store the filtered parameters from previous iteration
         fIOVecT = hcat(fIOVecT, ftotIO_tp1 )
@@ -629,7 +629,7 @@ function forecastEvalGasNetDirBin1(obsMat_allT::BitArray{3}, Ttrain::Int;thVarCo
     return tp,fp,AUC,foreEval
  end
 
-function multiSteps_updatedGasPar( Model::GasNetModelDirBin1,N::Int,degsIO_t_in::Array{<:Real,1},
+function multiSteps_predict_score_driven_par( Model::GasNetModelDirBin1,N::Int,degsIO_t_in::Array{<:Real,1},
                          ftotIO_t0_input::Array{<:Real,1},
                          WgasIO_in::Array{<:Real,1},BgasIO_in::Array{<:Real,1},AgasIO_in::Array{<:Real,1},Nsample::Int,Nsteps::Int )
      #Simula Nsteps nel futuro per Nsample volte
@@ -643,7 +643,7 @@ function multiSteps_updatedGasPar( Model::GasNetModelDirBin1,N::Int,degsIO_t_in:
      indTvNodesIO = Model.groupsInds[2].!=0
      expMat_T_means = zeros(N,N,Nsteps)
      expMat_T_Y = zeros(N,N,Nsteps)
-     ftotIO_t1  ,~ = updatedGasPar(Model,N,degsIO_t0,ftotIO_t0,eye(N,N),
+     ftotIO_t1  ,~ = predict_score_driven_par(Model,N,degsIO_t0,ftotIO_t0,eye(N,N),
             indTvNodesIO,WgasIO,BgasIO,AgasIO)
      ftotIO_T[:,1] = copy(ftotIO_t1)
      for i=1:Nsample
@@ -655,7 +655,7 @@ function multiSteps_updatedGasPar( Model::GasNetModelDirBin1,N::Int,degsIO_t_in:
          #matrice media dell matrici campionate
          expMat_T_Y[:,:,1] = expMat_T_Y[:,:,1]  .+  Y_t ./ Nsample
          #il primo step viene fatto usando l'osservzione reale
-         ftotIO_tp1  ,~ = updatedGasPar(Model,N,degsIO_t,ftotIO_t1_tmp,eye(N,N),
+         ftotIO_tp1  ,~ = predict_score_driven_par(Model,N,degsIO_t,ftotIO_t1_tmp,eye(N,N),
                             indTvNodesIO,WgasIO,BgasIO,AgasIO)
          ftotIO_t = copy(ftotIO_tp1)
          ftotIO_T[:,1] = copy(ftotIO_t)
@@ -664,7 +664,7 @@ function multiSteps_updatedGasPar( Model::GasNetModelDirBin1,N::Int,degsIO_t_in:
 
          for t=2:Nsteps
             # fai update dei parametri
-             ftotIO_tp1  ,~ = updatedGasPar(Model,N,degsIO_t,ftotIO_t,eye(expMat_t),
+             ftotIO_tp1  ,~ = predict_score_driven_par(Model,N,degsIO_t,ftotIO_t,eye(expMat_t),
                                                  indTvNodesIO,WgasIO,BgasIO,AgasIO)
              ftotIO_t = copy(ftotIO_tp1)
              # da ora stai usando i parametri  t
@@ -703,7 +703,7 @@ function multiStepsForecastExpMat( Model::GasNetModelDirBin1,obsNet_T::BitArray{
       expMat_T_meanPar = zeros(N,N,T)
       for t=Ttrain +1:T
           tFit = t-Nsteps
-          tmpAllMat_means,tmpFit,tmpAllMat_Y = multiSteps_updatedGasPar(Model,N,degsIO_T[:,tFit],foreFitGas1[:,tFit],
+          tmpAllMat_means,tmpFit,tmpAllMat_Y = multiSteps_predict_score_driven_par(Model,N,degsIO_T[:,tFit],foreFitGas1[:,tFit],
                                 gasParEstOnTrain[1],gasParEstOnTrain[2],gasParEstOnTrain[3],Nsample,Nsteps)
           expMat_T_means[:,:,tFit+Nsteps] = tmpAllMat_means[:,:,Nsteps]
           expMat_T_Y[:,:,tFit+Nsteps] = tmpAllMat_Y[:,:,Nsteps]
@@ -735,7 +735,7 @@ function multiStepsForecastExpMat_roll( Model::GasNetModelDirBin1,obsNet_T::BitA
           tObs = t-Nsteps-1
 
 
-          tmpAllMat_means,tmpFit,tmpAllMat_Y = multiSteps_updatedGasPar(Model,N,degsIO_T[:,tObs],gasFiltAndForeFitFromRollEst[:,tObs+1],
+          tmpAllMat_means,tmpFit,tmpAllMat_Y = multiSteps_predict_score_driven_par(Model,N,degsIO_T[:,tObs],gasFiltAndForeFitFromRollEst[:,tObs+1],
                                 gasEst_rolling[tEst][1],gasEst_rolling[tEst][2],gasEst_rolling[tEst][3],Nsample,Nsteps)
           expMat_T_means[:,:,tObs+Nsteps] = tmpAllMat_means[:,:,Nsteps]
           expMat_T_Y[:,:,tObs+Nsteps] = tmpAllMat_Y[:,:,Nsteps]
@@ -766,7 +766,7 @@ function logLike_t(Model::GasNetModelDirBin1, obsT, vReGasPar)
       loglike_t = zero(Real)
       for t=1:T-1
             degsIO_t = obsT[:,t] # vector of in and out degrees
-            ftotIO_tp1,loglike_t = updatedGasPar(Model,N,degsIO_t,ftotIO_t,I_tm1,
+            ftotIO_tp1,loglike_t = predict_score_driven_par(Model,N,degsIO_t,ftotIO_t,I_tm1,
                                                   indTvNodesIO,WgasIO,BgasIO,AgasIO)
             ftotIO_t = ftotIO_tp1
       end
@@ -795,7 +795,7 @@ function logLike_T(Model::GasNetModelDirBin1, obsT, vReGasPar)
       loglike_T = zero(Real)
       for t=1:T-1
             degsIO_t = obsT[:,t] # vector of in and out degrees
-            ftotIO_tp1,loglike_t = updatedGasPar(Model,N,degsIO_t,ftotIO_t,I_tm1,
+            ftotIO_tp1,loglike_t = predict_score_driven_par(Model,N,degsIO_t,ftotIO_t,I_tm1,
                                                   indTvNodesIO,WgasIO,BgasIO,AgasIO)
             ftotIO_t = ftotIO_tp1
             loglike_T += loglike_t

@@ -37,24 +37,25 @@ end
 
 #region coverage simulations
 begin 
-model = model_pmle
+model = model_mle
 N=50
 T=200
 dgpType =  "SD"
-dgpOptions = (minValAlpha = 0.2, maxValAlpha = 0.3, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false, B =0.98, sigma = 0.001, A = 0.005)
+dgpOptions = (minValAlpha = 0.2, maxValAlpha = 0.3, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false, B =0.98, sigma = 0.001, A = 0.3)
 quantilesVals = [[0.975, 0.025]]
 
 parDgpT = DynNets.dgp_misspecified(model_mle, dgpType, N, T;  dgpOptions...)
 
 allCoverBuccheri, allCoverBlasques, allvEstSdResPar, allfVecT_filt, allConfBandsBuccheri,allConfBandsBlasques, allErrFlags = conf_bands_coverage(model, dgpType, dgpOptions, T, N, 2, quantilesVals)
 
-nVals = [ 50, 300]
-tVals = [100,  500]
-models = [model_mle, model_pmle]
+nVals = [ 50, 100, 300]
+tVals = [100, 300]
+models = [model_mle]
+nSampleCoverage=50
+
 nNVals = length(nVals)
 nTVals = length(tVals)
 nModels = length(models)
-nSampleCoverage=20
 
 allCoverBuccheriVarN = Array{typeof(allCoverBuccheri),3}(undef, nNVals, nTVals, nModels)
 allCoverBlasquesVarN = Array{typeof(allCoverBlasques),3}(undef, nNVals, nTVals, nModels)
@@ -92,18 +93,19 @@ for (indT, T) in Iterators.enumerate(tVals)
 end
 nErgmPar=2
 
-@save("./data/confBands_$(dgpType)_B_$(dgpOptions.B)_A_$(dgpOptions.A)_sig_$(dgpOptions.sigma)_(nVals)_$(tVals)_nSample_$nSampleCoverage.jld", allCoverBuccheriVarN, allCoverBlasquesVarN, allfVecT_filtVarN, allConfBandsBuccheriVarN, allConfBandsBlasquesVarN, fractErrVarN, parDgpTvarN)
+@save("./data/confBands_$(dgpType)_B_$(dgpOptions.B)_A_$(dgpOptions.A)_sig_$(dgpOptions.sigma)_(nVals)_$(tVals)_nSample_$(nSampleCoverage)_mle.jld", allCoverBuccheriVarN, allCoverBlasquesVarN, allfVecT_filtVarN, allConfBandsBuccheriVarN, allConfBandsBlasquesVarN, fractErrVarN, parDgpTvarN)
 end
 
 figure()
 plot(allfVecT_filtVarN[4,2,1][1,:,:])
 
 
+
 begin 
 using JLD
 nSampleCoverage=50
 dgpType = "AR"
-models = [model_mle, model_pmle]
+models = [model_mle]
 
 
 

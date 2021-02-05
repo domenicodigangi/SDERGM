@@ -115,7 +115,7 @@ function logLike_t(Model, obsT, vReGasPar)
       loglike_t = zero(Real)
       for t=1:T-1
             degsIO_t = obsT[:,t] # vector of in and out degrees
-            ftotIO_tp1,loglike_t = updatedGasPar(Model,N,degsIO_t,ftotIO_t,I_tm1,
+            ftotIO_tp1,loglike_t = predict_score_driven_par(Model,N,degsIO_t,ftotIO_t,I_tm1,
                                                   indTvNodesIO,WgasIO,BgasIO,AgasIO)
             ftotIO_t = ftotIO_tp1
       end
@@ -143,7 +143,7 @@ function logLike_T(Model, obsT, vReGasPar)
       loglike_T = zero(Real)
       for t=1:T-1
             degsIO_t = obsT[:,t] # vector of in and out degrees
-            ftotIO_tp1,loglike_t = updatedGasPar(Model,N,degsIO_t,ftotIO_t,I_tm1,
+            ftotIO_tp1,loglike_t = predict_score_driven_par(Model,N,degsIO_t,ftotIO_t,I_tm1,
                                                   indTvNodesIO,WgasIO,BgasIO,AgasIO)
             ftotIO_t = ftotIO_tp1
             loglike_T += loglike_t

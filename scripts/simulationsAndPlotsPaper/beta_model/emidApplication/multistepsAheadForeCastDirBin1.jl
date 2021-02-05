@@ -225,7 +225,7 @@ end
 #
 #         expMat = StaticNets.expMatrix(StaticNets.fooNetModelDirBin1,foreFit[:,Ttrain+1:end][:,t])
 #
-#          tmpAllMat,~ = multiSteps_updatedGasPar(modGasDirBin1_eMidTrain,N,foreFit[:,Ttrain+1:end][:,t-Nsteps],
+#          tmpAllMat,~ = multiSteps_predict_score_driven_par(modGasDirBin1_eMidTrain,N,foreFit[:,Ttrain+1:end][:,t-Nsteps],
 #             gasParEstOnTrain[1],gasParEstOnTrain[2],gasParEstOnTrain[3],Nsample,Nsteps)
 #
 #          expMat=tmpAllMat[:,:,Nsteps+1]

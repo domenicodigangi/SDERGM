@@ -159,7 +159,7 @@ function scalingMatGas(Model::GasNetModelDirBinGlobalPseudo,expMat::Array{<:Real
 end
 
 
-function updatedGasPar( Model::GasNetModelDirBinGlobalPseudo, obs_t::Array{<:Real,2},
+function predict_score_driven_par( Model::GasNetModelDirBinGlobalPseudo, obs_t::Array{<:Real,2},
                          ftot_t::Array{<:Real,1}, I_tm1::Array{<:Real,2},
                          indTvPar::BitArray{1}, Wgas::Array{<:Real,1},
                          Bgas::Array{<:Real,1}, Agas::Array{<:Real,1};
@@ -290,7 +290,7 @@ function score_driven_filter( Model::GasNetModelDirBinGlobalPseudo,
     #    println(t)
         obs_t = obsT[t] # vector of in and out degrees
         #print((t,I_tm1))
-        ftot_t,loglike_t,I_tm1,~ = updatedGasPar(Model,obs_t,ftot_t,I_tm1,indTvPar,Wvec,Bvec,Avec)
+        ftot_t,loglike_t,I_tm1,~ = predict_score_driven_par(Model,obs_t,ftot_t,I_tm1,indTvPar,Wvec,Bvec,Avec)
         fVecT[:,t] = ftot_t #store the filtered parameters from previous iteration
         loglike += loglike_t
     end
@@ -318,7 +318,7 @@ function gasScoreSeries(Model::GasNetModelDirBinGlobalPseudo,
      for t=1:T
          #    println(t)
          obs_t = obsT[t] #
-         ~,~,I_tm1,grad_t = updatedGasPar(Model,obs_t,vTvPar[:,t],I_tm1,indTvPar,
+         ~,~,I_tm1,grad_t = predict_score_driven_par(Model,obs_t,vTvPar[:,t],I_tm1,indTvPar,
                                              Wvec,Bvec,Avec;matrixScaling = matScal)
          scoreVec_T[:,t] = grad_t #store the filtered parameters from previous iteration
          #I_Store_T[:,t] = I_tm1
@@ -664,7 +664,7 @@ function logLike_t(Model::GasNetModelDirBinGlobalPseudo, obsT,
       loglike_t = 0
       for t=1:T
             obs_t = obsT[t] # vector of in and out degrees
-            ftot_t, loglike_t, I_tm1, ~ = updatedGasPar(Model, obs_t, ftot_t,
+            ftot_t, loglike_t, I_tm1, ~ = predict_score_driven_par(Model, obs_t, ftot_t,
                                                         I_tm1, indTvPar, Wvec,
                                                         Bvec, Avec)
             fVecT[:,t] = ftot_t #store the filtered parameters from previous iteration
@@ -717,7 +717,7 @@ function logLike_T(Model::GasNetModelDirBinGlobalPseudo, obsT,
       loglike_T = zero(Real)
       for t=1:T
             obs_t = obsT[t] # vector of in and out degrees
-            ftot_t,loglike_t,I_tm1,~ = updatedGasPar(Model,obs_t,ftot_t,I_tm1,indTvPar,Wvec,Bvec,Avec)
+            ftot_t,loglike_t,I_tm1,~ = predict_score_driven_par(Model,obs_t,ftot_t,I_tm1,indTvPar,Wvec,Bvec,Avec)
             fVecT[:,t] = ftot_t #store the filtered parameters from previous iteration
             loglike_T += loglike_t
       end
