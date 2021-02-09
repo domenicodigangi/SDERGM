@@ -1,36 +1,6 @@
 name = "ScoreDrivenExponentialRandomGraphs"
-uuid = "6ee3d76e-adae-4ed7-a671-0c83eafad244"
-authors = ["Domenico Di Gangi <digangidomenico@gmail.com>"]
-version = "0.1.0"
-
-[deps]
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
-GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
-JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
-LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
-LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-MLBase = "f0e99cf1-93fa-52ec-9ecc-5026115318e0"
-NLSolversBase = "d41bc354-129a-5804-8e4c-c37616107c6c"
-Optim = "429524aa-4258-5aef-a3af-852621145aeb"
-PolynomialRoots = "3a141323-8675-5d76-9d11-e1df1406c778"
-PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
-PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
-RCall = "6f49c342-dc21-5d91-9882-a32aef131414"
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
-Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-StatsFuns = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
-Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
-
+authors = ["Domenico Di Gangi"]
 [compat]
-DataFrames = "0.21"
-julia = "1.5"
-
-[extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test"]
+julia = "1.5.3"
+[deps]
+DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
