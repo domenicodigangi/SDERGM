@@ -228,6 +228,7 @@ function score_driven_filter( model::T where T<: GasNetModelDirBin0Rec0, N, vRes
         end
     end
 
+    #fVecT = hcat(fVecT[:, 2:end], ftot_tp1)
 
     if dgp
         return fVecT, A_T, sVecT, scalMatT
@@ -269,7 +270,6 @@ function static_estimate(model::GasNetModelDirBin0Rec0_mle, statsT)
     R_mean  = mean([stat[2] for stat in statsT ])
     N_mean  = mean([stat[3] for stat in statsT ])
     
-    println(N_mean)
     staticPars = StaticNets.estimate(StaticNets.fooNetModelDirBin0Rec0, L_mean, R_mean, N_mean )
     return staticPars
 end
@@ -282,6 +282,7 @@ function estimate(model::T where T<: GasNetModelDirBin0Rec0, N, obsT; indTvPar::
     nErgmPar = 2 #
     NTvPar = sum(indTvPar)
     NTargPar = sum(indTargPar)
+    @show (N, T)
 
     # UM is a vector with target values for dynamical ones. Parameters
     # if not given as input use the static estimates
@@ -364,7 +365,8 @@ function estimate(model::T where T<: GasNetModelDirBin0Rec0, N, obsT; indTvPar::
         ADobjfunGas = TwiceDifferentiable(objfunGas, vParOptim_0; autodiff = :forward);
     end
 
-    @show objfunGas(vParOptim_0)
+    @show objfunGas(restrict_all_par(model, indTvPar, vParOptim_0))
+    @show vParOptim_0
     optim_out2  = optimize(ADobjfunGas,vParOptim_0 ,algo,optims_opt)
     outParAllUn = Optim.minimizer(optim_out2)
     vecAllParGasHat, vecAllParConstHat = divideCompleteRestrictPar(outParAllUn)
@@ -757,8 +759,6 @@ function distrib_filtered_par_from_mv_normal(model::GasNetModelDirBin0Rec0, N, o
     zeroMeanSample =  rand(MvNormal(mvSDUnParEstCov), nSample ) 
     sampleUnParAll = zeroMeanSample .+ vEstSdUnPar
 
-
-
     for n=1:nSample
         vResPar = restrict_all_par(model, indTvPar, sampleUnParAll[:,n])
 
@@ -777,13 +777,20 @@ function distrib_filtered_par_from_mv_normal(model::GasNetModelDirBin0Rec0, N, o
     end
 
     # remove samples that resulted in inconsistent P_t
-    indBadSamples = [any(filtCovHatSample[:,:,n].<0) | any(.!isfinite.(filtCovHatSample[:,:,n].<0)) for n in 1:nSample]
+    indBadSamples = [any(filtCovHatSample[:,:,n].<0) | any(.!isfinite.(filtCovHatSample[:,:,n])) for n in 1:nSample]
 
-    mean(indBadSamples) >0.5 ? error() : ()
+    @show mean(indBadSamples)
 
-    filtCovHatSample = filtCovHatSample[:,:,.!indBadSamples]
+    if mean(indBadSamples) > 0.5 
+        Logging.@error("Sampling from mvNormal resulted in $(mean(indBadSamples)*100) % of bad samples. Rejected") 
+        errFlag = true
+    else
+        errFlag = false
+    end
 
-    return distribFilteredSD, filtCovHatSample, mvSDUnParEstCov
+    filtCovHatSampleGood = filtCovHatSample[:,:,.!indBadSamples]
+
+    return distribFilteredSD, filtCovHatSampleGood, mvSDUnParEstCov, errFlag
 end
 
 
@@ -854,6 +861,8 @@ function conf_bands_buccheri(model::GasNetModelDirBin0Rec0, obsT, indTvPar, fVec
     distribFilteredSD[isnan.(distribFilteredSD)] .= 0
     fVecT_filt[isnan.(fVecT_filt)] .= 0
 
+    any(isnan.(filtCovHatSample)) ? error() : ()
+
     filtCovDiagHatMean = mean(filtCovHatSample, dims=3)
 
     #for each time compute the variance of the filtered par under the normal distrib of static par
@@ -866,8 +875,15 @@ function conf_bands_buccheri(model::GasNetModelDirBin0Rec0, obsT, indTvPar, fVec
                 aHat_t = fVecT_filt[k,t] 
         
                 # add filtering and parameter unc
-                parUncVarianceT[k, t] = var(a_t_vec[isfinite.(a_t_vec)] .- aHat_t) 
-                isnan(parUncVarianceT[k, t]) ? (@show a_t_vec; @show aHat_t; error()) : ()
+                diff = a_t_vec[isfinite.(a_t_vec)] .- aHat_t
+                extr = quantile(diff, [0.01, 0.99])
+                if extr[1] != extr[2]
+                    diffNoOutl = filter(x->extr[1] < x < extr[2], diff)
+                    parUncVarianceT[k, t] = var(diffNoOutl)
+                else    
+                    parUncVarianceT[k, t] = var(diff)
+                end                
+                isnan(parUncVarianceT[k, t]) ? (@show a_t_vec; @show aHat_t; @show diff; @show extr; @show t; @show k; error()) : ()
 
                 filtUncVarianceT[k, t] = filtCovDiagHatMean[indAmongTv,t]
             end
@@ -1028,21 +1044,21 @@ function filter_and_conf_bands(model::GasNetModelDirBin0Rec0, A_T_dgp, quantiles
 
         distribFilteredSD, filtCovHatSample, errFlagVec, mvSDUnParEstCov = par_bootstrap_distrib_filtered_par(model, N, obsT, indTvPar, ftot_0, vEstSdResPar)
         
-        mean(errFlagVec) > 0.5 ? errFlag=true : errFlag = false
+        mean(errFlagVec) > 0.5 ? errFlagEstCov=true : errFlagEstCov = false
 
         if parUncMethod[14:end] == "SAMPLE"
             
         elseif parUncMethod[14:end] == "COV-MAT"
 
-            distribFilteredSD, filtCovHatSample, mvSDUnParEstCov = distrib_filtered_par_from_mv_normal(model, obsT, indTvPar, ftot_0, vEstSdResPar, mvSDUnParEstCov; nSample = nSample)
+            distribFilteredSD, filtCovHatSample, mvSDUnParEstCov, errFlagMvNormSample = distrib_filtered_par_from_mv_normal(model, N, obsT, indTvPar, ftot_0, vEstSdResPar, mvSDUnParEstCov)
 
         end
 
     elseif parUncMethod == "WHITE-MLE"
 
-         mvSDUnParEstCov, errFlag = white_estimate_cov_mat_static_sd_par(model, N, obsT, indTvPar, ftot_0, vEstSdResPar)
+         mvSDUnParEstCov, errFlagEstCov = white_estimate_cov_mat_static_sd_par(model, N, obsT, indTvPar, ftot_0, vEstSdResPar)
          
-        distribFilteredSD, filtCovHatSample, mvSDUnParEstCov = distrib_filtered_par_from_mv_normal(model, N, obsT, indTvPar, ftot_0, vEstSdResPar, mvSDUnParEstCov)
+        distribFilteredSD, filtCovHatSample, mvSDUnParEstCov, errFlagMvNormSample = distrib_filtered_par_from_mv_normal(model, N, obsT, indTvPar, ftot_0, vEstSdResPar, mvSDUnParEstCov)
     end
 
     confBandsFiltPar,  confBandsFiltParPar = conf_bands_buccheri(model, obsT, indTvPar, fVecT_filt, distribFilteredSD, filtCovHatSample, quantilesVals)
@@ -1054,11 +1070,13 @@ function filter_and_conf_bands(model::GasNetModelDirBin0Rec0, A_T_dgp, quantiles
 
     end
 
+    errFlag = errFlagEstCov & errFlagMvNormSample
+
     return obsT, vEstSdResPar, fVecT_filt, confBandsFiltPar, confBandsPar, errFlag, vEstSdResPar, mvSDUnParEstCov, distribFilteredSD
 end
 
 
-function conf_bands_coverage(model::GasNetModelDirBin0Rec0, dgpType, dgpOptions, T, N, nSampleCoverage, quantilesVals::Vector{Vector{Float64}})
+function conf_bands_coverage(model::GasNetModelDirBin0Rec0, dgpType, dgpOptions, T, N, nSampleCoverage, quantilesVals::Vector{Vector{Float64}}; plotFlag=false)
 
     nBands = length(quantilesVals)
     nErgmPar = number_ergm_par(model)
@@ -1081,7 +1099,7 @@ function conf_bands_coverage(model::GasNetModelDirBin0Rec0, dgpType, dgpOptions,
         A_T_dgp = sample_dgp(model, parDgpT,N)
         
 
-        ~, allvEstSdResPar[:,k], allfVecT_filt[:,:,k], allConfBandsFiltPar[:,:,:,:,k], allConfBandsPar[:,:,:,:,k], allErrFlags[k], ~, ~, ~ = filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =false, parDgpT = parDgpT, parUncMethod = "WHITE-MLE")
+        ~, allvEstSdResPar[:,k], allfVecT_filt[:,:,k], allConfBandsFiltPar[:,:,:,:,k], allConfBandsPar[:,:,:,:,k], allErrFlags[k], ~, ~, ~ = filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =plotFlag, parDgpT = parDgpT, parUncMethod = "WHITE-MLE")
 
         
         allCoverFiltPar[:, :, :, k] = conf_bands_coverage(parDgpT,  allConfBandsFiltPar[:,:,:,:,k])

@@ -31,9 +31,49 @@ end
 #region  
 begin
 T=100
-N=50
+N=100
 nSample = 100
-model = model_mle
+model = model_pmle
+alpha = 0.2
+beta = mean(DynNets.beta_min_max_from_alpha_min(0.1, N))
+UM = [alpha, beta]
+vUnPar, ~ = DynNets.starting_point_optim(model, indTvPar, UM)
+vResParDgp = DynNets.restrict_all_par(model, indTvPar, vUnPar)
+
+BDgp = 0.96
+ADgp = 0.2
+vResParDgp[2:3:end] .= BDgp
+vResParDgp[3:3:end] .= ADgp
+
+#start optimization on the correct values
+vParUnOptim_0, ARe_min = DynNets.starting_point_optim(model, indTvPar, UM; indTargPar = falses(number_ergm_par(model)))
+
+vParOptim_0 = Real.(DynNets.restrict_all_par(model, indTvPar, vParUnOptim_0))
+
+
+
+nStaticSdPar = length(vResParDgp)
+vResParEstDistrib = zeros(length(vResParDgp), nSample)
+vUnParEstDistrib = zeros(length(vResParDgp), nSample)
+HessSum = zeros(nStaticSdPar, nStaticSdPar, nSample)
+OpGradSum = zeros(nStaticSdPar, nStaticSdPar, nSample)
+
+quantilesVals = [[0.975, 0.025] ]
+end
+
+using Profile
+# sample SD dgp
+fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model_mle,N,  vResParDgp, indTvPar; dgpNT = (N,T))
+    
+res_mle_pmle = DynNets.filter_and_conf_bands(model_pmle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
+
+
+
+begin
+T=300
+N=300
+nSample = 100
+model = model_pmle
 alpha = 0.2
 beta = mean(DynNets.beta_min_max_from_alpha_min(0.1, N))
 UM = [alpha, beta]
@@ -65,7 +105,7 @@ for n=1:2
     global fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model_mle,N,  vResParDgp, indTvPar; dgpNT = (N,T))
 
 
-    global res_mle_mle = DynNets.filter_and_conf_bands(model_mle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
+    #global res_mle_mle = DynNets.filter_and_conf_bands(model_mle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
     
     global res_mle_pmle = DynNets.filter_and_conf_bands(model_pmle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
 

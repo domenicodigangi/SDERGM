@@ -81,10 +81,6 @@ function setOptionsOptim(Model::GasNetModelDirW1)
       return opt, algo
  end
 
-function array2VecGasPar(Model::GasNetModelDirBin1,ArrayGasPar::Array{Array{<:Real,1},1})
-         VecGasPar = [ArrayGasPar[1];ArrayGasPar[2];ArrayGasPar[3]]
-         return VecGasPar
-     end
 
 function NumberOfGroups(Model::GasNetModelDirW1,groupsInds::Array{Array{Int,1},1})
      NGW = length(unique(groupsInds[1]))

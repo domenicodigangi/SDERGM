@@ -19,6 +19,7 @@ function array2VecGasPar(model::GasNetModel, ArrayGasPar, indTvPar :: BitArray{1
 end
 
 
+
 function vec2ArrayGasPar(model::GasNetModel, VecGasPar::Array{<:Real,1}, indTvPar :: BitArray{1})
     
     Npar = length(indTvPar)

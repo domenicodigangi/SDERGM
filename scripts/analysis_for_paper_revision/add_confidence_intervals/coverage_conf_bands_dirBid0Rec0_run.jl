@@ -41,17 +41,19 @@ model = model_mle
 N=50
 T=200
 dgpType =  "SD"
-dgpOptions = (minValAlpha = 0.2, maxValAlpha = 0.3, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false, B =0.98, sigma = 0.001, A = 0.3)
-quantilesVals = [[0.975, 0.025]]
-
-parDgpT = DynNets.dgp_misspecified(model_mle, dgpType, N, T;  dgpOptions...)
-
-allCoverBuccheri, allCoverBlasques, allvEstSdResPar, allfVecT_filt, allConfBandsBuccheri,allConfBandsBlasques, allErrFlags = conf_bands_coverage(model, dgpType, dgpOptions, T, N, 2, quantilesVals)
 
 nVals = [ 50, 100, 300]
 tVals = [100, 300]
 models = [model_mle]
 nSampleCoverage=50
+
+
+dgpOptions = (minValAlpha = 0.2, maxValAlpha = 0.3, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false, B =0.98, sigma = 0.0005, A = 0.3)
+quantilesVals = [[0.975, 0.025]]
+
+parDgpT = DynNets.dgp_misspecified(model_mle, dgpType, N, T;  dgpOptions...)
+
+@elapsed allCoverBuccheri, allCoverBlasques, allvEstSdResPar, allfVecT_filt, allConfBandsBuccheri,allConfBandsBlasques, allErrFlags = conf_bands_coverage(model, dgpType, dgpOptions, T, N, 2, quantilesVals)
 
 nNVals = length(nVals)
 nTVals = length(tVals)
@@ -74,9 +76,12 @@ for (indT, T) in Iterators.enumerate(tVals)
         parDgpTvarN[indN, indT] = parDgpT
         for (indM, model) in Iterators.enumerate(models)
 
+            @show dgpType
+            @show model
+
             parDgpT = DynNets.dgp_misspecified(model_mle, dgpType, N, T;  dgpOptions...)
 
-            filter_and_conf_bands(model, sample_dgp(model, parDgpT,N), quantilesVals; plotFlag =true, parDgpT = parDgpT)
+            filter_and_conf_bands(model, sample_dgp(model, parDgpT,N), quantilesVals; plotFlag =false, parDgpT = parDgpT)
             
             @elapsed allCoverBuccheri, allCoverBlasques, allvEstSdResPar, allfVecT_filt, allConfBandsBuccheri, allConfBandsBlasques, allErrFlags = conf_bands_coverage(model, dgpType, dgpOptions, T, N,  nSampleCoverage, quantilesVals)
 
@@ -108,12 +113,11 @@ dgpType = "AR"
 models = [model_mle]
 
 
-
 nNVals = length(nVals)
 nTVals = length(tVals)
 nModels = length(models)
 
-#@load("./data/confBands_$(dgpType)_B_$(dgpOptions.B)_sig_$(dgpOptions.sigma)_(nVals)_$(tVals)_nSample_$nSampleCoverage.jld", allCoverBuccheriVarN, allCoverBlasquesVarN, allfVecT_filtVarN, allConfBandsBuccheriVarN, allConfBandsBlasquesVarN, fractErrVarN, parDgpTvarN)
+@load("./data/confBands_$(dgpType)_B_$(dgpOptions.B)_A_$(dgpOptions.A)_sig_$(dgpOptions.sigma)_(nVals)_$(tVals)_nSample_$(nSampleCoverage)_mle.jld", allCoverBuccheriVarN, allCoverBlasquesVarN, allfVecT_filtVarN, allConfBandsBuccheriVarN, allConfBandsBlasquesVarN, fractErrVarN, parDgpTvarN)
 
 avgCover =zeros(2,nNVals, nTVals,nModels, 2, nSampleCoverage)
 for (indT, T) in Iterators.enumerate(tVals) 
@@ -130,35 +134,18 @@ for (indT, T) in Iterators.enumerate(tVals)
 end
 
 
-end
 
-begin
-figure()
-indT = 1
-plot(nVals, (mean(avgCover[1,:,indT,1,1,:], dims=2)), "--*b")
-plot(nVals, (mean(avgCover[2,:,indT,1,1,:], dims=2)),"-*b")
-plot(nVals, (mean(avgCover[1,:,indT,2,1,:], dims=2)), "--*r")
-plot(nVals, (mean(avgCover[2,:,indT,2,1,:], dims=2)),"-*r")
-title("Coverage Conf Bands 95% Dgp $dgpType, T=$(tVals[indT])")
-legend(reduce(vcat,["$(mod)  $par" for par in ["θ" "η" ], mod in ["MLE", "PMLE"]]  ))
-
-end
-
-#endregion
-avgCover
-begin 
 indM =1
 indB =1
-indT = 1
-indPar = 1
 
 nominalLevel = 0.95
 parNames = ["θ", "η"]
 BandNames = ["Parameters + Filtering Uncertainty", "Parameters Uncertainty"]
 
-fig, ax1 = plt.subplots(2, length(tVals),figsize=(30, 16), sharey =true)
-fig.canvas.set_window_title("Confidence Bands' Coverages")
+fig, ax1 = plt.subplots(2, length(tVals),figsize=(12, 6), sharey =true)
+fig.canvas.set_window_title("Confidence Bands' Coverages $(BandNames[indB])")
 fig.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
+fig.suptitle("Confidence Bands' Coverages $(BandNames[indB]) DGP = $(dgpType)")
 
 for (indT, T) in Iterators.enumerate(tVals) 
     for indPar in 1:2

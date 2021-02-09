@@ -40,23 +40,6 @@ StaModType(Model::GasNetModelDirBinGlobalPseudo ) = StaticNets.fooNetModelDirBin
 setOptionsOptim(Model::GasNetModelDirBinGlobalPseudo) = setOptionsOptim(fooGasNetModelDirBin1)
 
 
-function vec2ArrayGasPar(Model::GasNetModelDirBinGlobalPseudo,
-                            VecGasPar::Array{<:Real,1},
-                            indTvPar :: BitArray{1})
-    Npar = length(indTvPar)
-    ArrayGasPar = [zeros(Real, 1 + tv*2) for tv in indTvPar]#Array{Array{<:Real,1},1}(undef, Npar)
-    last_i = 1
-
-    for i=1:Npar
-        nStatPerDyn = 1 + 2*indTvPar[i]
-        ArrayGasPar[i][:] = VecGasPar[last_i: last_i+nStatPerDyn-1]
-            last_i = last_i + nStatPerDyn
-
-    end
-    return ArrayGasPar
-end
-
-
 function restrictGasPar(Model::GasNetModelDirBinGlobalPseudo,
                         vecUnGasPar::Array{<:Real,1},
                         indTvPar :: BitArray{1})

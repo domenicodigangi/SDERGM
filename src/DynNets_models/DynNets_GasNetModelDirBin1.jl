@@ -76,6 +76,7 @@ function setOptionsOptim(Model::GasNetModelDirBin1)
                     rho_upper = 0.75)# Newton(;alphaguess = Optim.LineSearches.InitialStatic(),
        return opt, algo
  end
+
 function array2VecGasPar(Model::GasNetModelDirBin1,ArrayGasPar::Array{<:Array{Float64,1},1})
          VecGasPar = [ArrayGasPar[1];ArrayGasPar[2];ArrayGasPar[3]]
          return VecGasPar
