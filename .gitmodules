@@ -1,0 +1,3 @@
+[submodule "src/ScoreDrivenERGM.jl"]
+	path = src/ScoreDrivenERGM.jl
+	url = https://github.com/domenicodigangi/ScoreDrivenERGM.jl.git
