@@ -1,7 +1,4 @@
-SDERGM
-
-julia code used to obtain the results in Score-Driven Exponential RanUtilities Graphs: A New Class of Time-Varying Parameter Models for Dynamical Networks https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3394593
-
+Project that collects all code used to obtain the results in Score-Driven Exponential RanUtilities Graphs: A New Class of Time-Varying Parameter Models for Dynamical Networks https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3394593
 
 This repository is still a work in progress and can contain bugs.
 

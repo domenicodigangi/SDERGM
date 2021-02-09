@@ -4,10 +4,10 @@ Test script for dirBin0Rec0 model: one parameter for total number of links and o
 Investigate the existence of regions of the θ η plane where the latters cannot be estimated for finite N  
 """
 
-using ScoreDrivenExponentialRandomGraphs
-using ScoreDrivenExponentialRandomGraphs.Utilities
+using ScoreDrivenERGM
+using ScoreDrivenERGM.Utilities
 
-import ScoreDrivenExponentialRandomGraphs.StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats, sample_ergm, estimate
+import ScoreDrivenERGM.StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats, sample_ergm, estimate
 
 using PyPlot
 pygui(true)

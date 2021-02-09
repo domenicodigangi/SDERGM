@@ -5,12 +5,12 @@ Simulations to estimate coverage of confidence bands with Blasques methods and B
 #region import and models
 
 begin 
-using ScoreDrivenExponentialRandomGraphs
+using ScoreDrivenERGM
 
-import ScoreDrivenExponentialRandomGraphs:StaticNets, DynNets
+import ScoreDrivenERGM:StaticNets, DynNets
 
-import ScoreDrivenExponentialRandomGraphs.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
-using ScoreDrivenExponentialRandomGraphs.Utilities
+import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
+using ScoreDrivenERGM.Utilities
 
 using PyPlot
 pygui(true)

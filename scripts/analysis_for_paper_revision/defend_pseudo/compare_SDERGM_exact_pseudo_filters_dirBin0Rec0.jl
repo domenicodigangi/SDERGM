@@ -12,9 +12,9 @@ using Statistics
 using PyPlot
 pygui(true)
 
-using ScoreDrivenExponentialRandomGraphs
-using ScoreDrivenExponentialRandomGraphs.Utilities
-using ScoreDrivenExponentialRandomGraphs.Scalings
+using ScoreDrivenERGM
+using ScoreDrivenERGM.Utilities
+using ScoreDrivenERGM.Scalings
 
 using StaticNets:ergm_par_from_mean_vals
 using DynNets:fooGasNetModelDirBin0Rec0_mle, sample_est_mle_pmle, dgp_missp, GasNetModelDirBin0Rec0_mle

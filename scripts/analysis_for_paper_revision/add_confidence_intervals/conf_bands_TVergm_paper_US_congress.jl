@@ -3,12 +3,12 @@ Estimate a SDERGM on US concress covoting network, filter TV parameters and add 
 """
 
 #region import and models
-using ScoreDrivenExponentialRandomGraphs
+using ScoreDrivenERGM
 
-import ScoreDrivenExponentialRandomGraphs:StaticNets, DynNets
+import ScoreDrivenERGM:StaticNets, DynNets
 
-import ScoreDrivenExponentialRandomGraphs.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, filter_and_conf_bands, conf_bands_coverage, estimate
-using ScoreDrivenExponentialRandomGraphs.Utilities
+import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, filter_and_conf_bands, conf_bands_coverage, estimate
+using ScoreDrivenERGM.Utilities
 
 using PyPlot
 pygui(true)
