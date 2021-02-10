@@ -98,7 +98,7 @@ for (indT, T) in Iterators.enumerate(tVals)
 end
 nErgmPar=2
 
-@save("./data/confBands_$(dgpType)_B_$(dgpOptions.B)_A_$(dgpOptions.A)_sig_$(dgpOptions.sigma)_(nVals)_$(tVals)_nSample_$(nSampleCoverage)_mle.jld", allCoverBuccheriVarN, allCoverBlasquesVarN, allfVecT_filtVarN, allConfBandsBuccheriVarN, allConfBandsBlasquesVarN, fractErrVarN, parDgpTvarN)
+# @save("./data/confBands_$(dgpType)_B_$(dgpOptions.B)_A_$(dgpOptions.A)_sig_$(dgpOptions.sigma)_(nVals)_$(tVals)_nSample_$(nSampleCoverage)_mle.jld", allCoverBuccheriVarN, allCoverBlasquesVarN, allfVecT_filtVarN, allConfBandsBuccheriVarN, allConfBandsBlasquesVarN, fractErrVarN, parDgpTvarN)
 end
 
 figure()
@@ -109,7 +109,7 @@ plot(allfVecT_filtVarN[4,2,1][1,:,:])
 begin 
 using JLD
 nSampleCoverage=50
-dgpType = "AR"
+dgpType = "SD"
 models = [model_mle]
 
 
@@ -117,7 +117,7 @@ nNVals = length(nVals)
 nTVals = length(tVals)
 nModels = length(models)
 
-@load("./data/confBands_$(dgpType)_B_$(dgpOptions.B)_A_$(dgpOptions.A)_sig_$(dgpOptions.sigma)_(nVals)_$(tVals)_nSample_$(nSampleCoverage)_mle.jld", allCoverBuccheriVarN, allCoverBlasquesVarN, allfVecT_filtVarN, allConfBandsBuccheriVarN, allConfBandsBlasquesVarN, fractErrVarN, parDgpTvarN)
+@load("$(datadir())\\old_pre_drWatson_git_ignored\\confBands_$(dgpType)_B_$(dgpOptions.B)_A_$(dgpOptions.A)_sig_$(dgpOptions.sigma)_(nVals)_$(tVals)_nSample_$(nSampleCoverage)_mle.jld", allCoverBuccheriVarN, allCoverBlasquesVarN, allfVecT_filtVarN, allConfBandsBuccheriVarN, allConfBandsBlasquesVarN, fractErrVarN, parDgpTvarN)
 
 avgCover =zeros(2,nNVals, nTVals,nModels, 2, nSampleCoverage)
 for (indT, T) in Iterators.enumerate(tVals) 
@@ -136,7 +136,7 @@ end
 
 
 indM =1
-indB =1
+indB =2
 
 nominalLevel = 0.95
 parNames = ["θ", "η"]
