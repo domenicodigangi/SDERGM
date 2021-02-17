@@ -7,7 +7,7 @@ begin
 
 using ScoreDrivenERGM
 import ScoreDrivenERGM:StaticNets, DynNets
-import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
+import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
 using ScoreDrivenERGM.Utilities
 
 using PyPlot
@@ -30,44 +30,29 @@ end
 
 #region  
 begin
-T=100
+T=300
 N=100
 nSample = 100
 model = model_pmle
-alpha = 0.2
-beta = mean(DynNets.beta_min_max_from_alpha_min(0.1, N))
-UM = [alpha, beta]
-vUnPar, ~ = DynNets.starting_point_optim(model, indTvPar, UM)
-vResParDgp = DynNets.restrict_all_par(model, indTvPar, vUnPar)
-
-BDgp = 0.96
-ADgp = 0.2
-vResParDgp[2:3:end] .= BDgp
-vResParDgp[3:3:end] .= ADgp
-
-#start optimization on the correct values
-vParUnOptim_0, ARe_min = DynNets.starting_point_optim(model, indTvPar, UM; indTargPar = falses(number_ergm_par(model)))
-
-vParOptim_0 = Real.(DynNets.restrict_all_par(model, indTvPar, vParUnOptim_0))
-
-
-
-nStaticSdPar = length(vResParDgp)
-vResParEstDistrib = zeros(length(vResParDgp), nSample)
-vUnParEstDistrib = zeros(length(vResParDgp), nSample)
-HessSum = zeros(nStaticSdPar, nStaticSdPar, nSample)
-OpGradSum = zeros(nStaticSdPar, nStaticSdPar, nSample)
 
 quantilesVals = [[0.975, 0.025] ]
+
+# sample dgp
+dgpSetAR, ~, dgpSetSD = ScoreDrivenERGM.DynNets.list_example_dgp_settings_for_paper(model_mle)
+
+dgpSettings = dgpSetAR
+parDgpT = DynNets.dgp_misspecified(model, dgpSettings.type, N, T;  dgpSettings.opt...)
+
+A_T_dgp = sample_dgp(model, parDgpT,N)
+
+@show std(parDgpT, dims=2)
+
+res_mle_pmle = DynNets.estimate_filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = parDgpT, parUncMethod = "WHITE-MLE")
+
+
 end
 
-using Profile
-# sample SD dgp
-fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model_mle,N,  vResParDgp, indTvPar; dgpNT = (N,T))
-    
-res_mle_pmle = DynNets.filter_and_conf_bands(model_pmle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
-
-
+res_mle_pmle[1]
 
 begin
 T=300
@@ -105,13 +90,13 @@ for n=1:2
     global fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model_mle,N,  vResParDgp, indTvPar; dgpNT = (N,T))
 
 
-    #global res_mle_mle = DynNets.filter_and_conf_bands(model_mle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
+    #global res_mle_mle = DynNets.estimate_filter_and_conf_bands(model_mle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
     
-    global res_mle_pmle = DynNets.filter_and_conf_bands(model_pmle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
+    global res_mle_pmle = DynNets.estimate_filter_and_conf_bands(model_pmle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
 
-   # global res_mle_boot = DynNets.filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "PAR-BOOTSTRAP-SAMPLE")
+   # global res_mle_boot = DynNets.estimate_filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "PAR-BOOTSTRAP-SAMPLE")
 
-    # global res_mle_boot = DynNets.filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "PAR-BOOTSTRAP-COVMAT")
+    # global res_mle_boot = DynNets.estimate_filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "PAR-BOOTSTRAP-COVMAT")
 
 end
 end

@@ -7,7 +7,7 @@ using ScoreDrivenERGM
 
 import ScoreDrivenERGM:StaticNets, DynNets
 
-import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, filter_and_conf_bands, conf_bands_coverage, estimate
+import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate
 using ScoreDrivenERGM.Utilities
 
 using PyPlot
@@ -33,13 +33,13 @@ begin
 T=200
 N=300
 quantilesVals = [0.975, 0.95, 0.05, 0.025]
-parDgpT = DynNets.dgp_misspecified(model_mle, "sin", N, T;  minValAlpha = 0.1, maxValAlpha = 0.2, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false)
+parDgpT = DynNets.dgp_misspecified(model_mle, "sin", N, T;  minAlpha = 0.1, maxAlpha = 0.2, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false)
 # quick visual checks
 # DynNets.sample_est_mle_pmle(model_mle, parDgpT, N, 1; plotFlag = true)
 A_T_dgp = sample_dgp(model_mle, parDgpT,N)
-res_mle = filter_and_conf_bands(model_mle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = parDgpT)
+res_mle = estimate_filter_and_conf_bands(model_mle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = parDgpT)
 
-res_pmle = filter_and_conf_bands(model_pmle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = parDgpT)
+res_pmle = estimate_filter_and_conf_bands(model_pmle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = parDgpT)
 
 end
 

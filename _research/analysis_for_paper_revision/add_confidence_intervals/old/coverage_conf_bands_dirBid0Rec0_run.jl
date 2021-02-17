@@ -9,7 +9,7 @@ using ScoreDrivenERGM
 
 import ScoreDrivenERGM:StaticNets, DynNets
 
-import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
+import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
 using ScoreDrivenERGM.Utilities
 
 using PyPlot
@@ -48,7 +48,7 @@ models = [model_mle]
 nSampleCoverage=50
 
 
-dgpOptions = (minValAlpha = 0.2, maxValAlpha = 0.3, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false, B =0.98, sigma = 0.0005, A = 0.3)
+dgpOptions = (minAlpha = 0.2, maxAlpha = 0.3, nCycles=1.5, phaseAlpha = 0.1π, phaseshift = 0.1, plotFlag=false, B =0.98, sigma = 0.0005, A = 0.3)
 quantilesVals = [[0.975, 0.025]]
 
 parDgpT = DynNets.dgp_misspecified(model_mle, dgpType, N, T;  dgpOptions...)
@@ -81,7 +81,7 @@ for (indT, T) in Iterators.enumerate(tVals)
 
             parDgpT = DynNets.dgp_misspecified(model_mle, dgpType, N, T;  dgpOptions...)
 
-            filter_and_conf_bands(model, sample_dgp(model, parDgpT,N), quantilesVals; plotFlag =false, parDgpT = parDgpT)
+            estimate_filter_and_conf_bands(model, sample_dgp(model, parDgpT,N), quantilesVals; plotFlag =false, parDgpT = parDgpT)
             
             @elapsed allCoverBuccheri, allCoverBlasques, allvEstSdResPar, allfVecT_filt, allConfBandsBuccheri, allConfBandsBlasques, allErrFlags = conf_bands_coverage(model, dgpType, dgpOptions, T, N,  nSampleCoverage, quantilesVals)
 
