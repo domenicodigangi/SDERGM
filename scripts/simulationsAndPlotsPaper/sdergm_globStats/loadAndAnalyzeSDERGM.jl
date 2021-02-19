@@ -5,7 +5,7 @@ using Utilities,AReg,StaticNets,JLD,MLBase,StatsBase,CSV, RCall
 using PyCall; pygui(); using PyPlot
 
 
-using JLD,Utilities, GLM
+using JLD2,Utilities, GLM
 ## load R MCMC simulation and estimates and estimate sdergmTest
 
 Nsample = 100

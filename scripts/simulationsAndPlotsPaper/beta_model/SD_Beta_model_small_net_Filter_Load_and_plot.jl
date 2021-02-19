@@ -1,6 +1,6 @@
 
 
-using JLD, StaticNets,  Utilities
+using JLD2, StaticNets,  Utilities
 using PyCall; pygui(:qt); using PyPlot; pygui(true)
 
  N = 10#

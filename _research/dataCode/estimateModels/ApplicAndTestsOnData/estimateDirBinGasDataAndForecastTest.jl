@@ -53,7 +53,7 @@ foreEval = forecastEvalGasNetDirBin1(gasParEstOnTrain,testObsNet_T)
 rocCurve(foreEval[1],foreEval[2])
 
 #check that forecasted fitnesses and degrees are reasonable
-foreFit,~ = score_driven_filter( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+foreFit,~ = score_driven_filter_or_dgp( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
 plot(foreFit')
 expDegsIO_Ttest = zeros(N2,Ttest)
 for t=1:Ttest

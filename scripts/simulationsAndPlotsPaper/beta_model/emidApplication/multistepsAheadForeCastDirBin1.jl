@@ -6,7 +6,7 @@ using PyCall; pygui(:qt); using PyPlot
 
 
 ## Load dataj
-using JLD
+using JLD2
  halfPeriod = false
  fold_Path =  "/home/Domenico/Dropbox/Dynamic_Networks/data/emid_data/juliaFiles/"
  loadFilePartialName = "Weekly_eMid_Data_from_"
@@ -206,7 +206,7 @@ end
 #
 #     @show Nlinksnnc =sum(noDiagIndnnc)
 #     # forecast fitnesses using Gas parameters and observations
-#     foreFit,~ = score_driven_filter( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+#     foreFit,~ = score_driven_filter_or_dgp( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
 #
 #     TRoc = Ttest-1
 #     #storage variables

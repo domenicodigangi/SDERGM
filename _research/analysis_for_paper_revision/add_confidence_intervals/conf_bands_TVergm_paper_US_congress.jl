@@ -20,7 +20,7 @@ using LinearAlgebra
 using Distributions
 using Statistics
 
-using JLD
+using JLD2
 
 model_mle = DynNets.GasNetModelDirBin0Rec0_mle()
 model_pmle = DynNets.GasNetModelDirBin0Rec0_pmle()
@@ -50,7 +50,7 @@ end
 using StaticNets, DynNets
 using PyPlot
 pygui(true)
-using JLD
+using JLD2
 
 import Utilities:meanSq, maxLargeVal
 
@@ -138,7 +138,7 @@ gasParSampled[n] = sampled_gas_par
     startPointEst[n] = startPoint
     gasParVec = zeros(sum(indTvPar)*3); for i=0:(sum(indTvPar)-1) gasParVec[1+3i : 3(i+1)] = estPar[indTvPar][i+1]; end
     constParVec = zeros(sum(.!indTvPar)); for i=1:sum(.!indTvPar) constParVec[i] = estPar[.!indTvPar][i][1]; end
-    gasFiltPar , pseudolike = DynNets.score_driven_filter(model,gasParVec,indTvPar;
+    gasFiltPar , pseudolike = DynNets.score_driven_filter_or_dgp(model,gasParVec,indTvPar;
                               vConstPar = constParVec)#,ftot_0= startPoint )
 
 
@@ -151,7 +151,7 @@ plot(gasFiltPar)
  # of static pars  and plot
 using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  using PyCall; pygui(); using PyPlot
- using JLD, GLM
+ using JLD2, GLM
  Nsample = 1
  dgpType = "sin"
  T = 50
@@ -180,7 +180,7 @@ gasFiltPar_conf_all = fill(zeros(N_samp_par,Nterms,T),Nsample)
         @show(i)
         samPar = gasParSampled[n][:,i]
         gasParVec = samPar
-        tmp, ~ = DynNets.score_driven_filter(model,gasParVec,indTvPar )
+        tmp, ~ = DynNets.score_driven_filter_or_dgp(model,gasParVec,indTvPar )
             gasFiltPar_conf[i,:,:] = tmp
     end
     gasFiltPar_conf_all[n] = gasFiltPar_conf

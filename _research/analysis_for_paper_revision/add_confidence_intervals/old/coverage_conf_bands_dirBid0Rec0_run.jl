@@ -22,7 +22,7 @@ using LinearAlgebra
 using Distributions
 using Statistics
 
-using JLD
+using JLD2
 
 model_mle = DynNets.GasNetModelDirBin0Rec0_mle()
 model_pmle = DynNets.GasNetModelDirBin0Rec0_pmle()
@@ -107,7 +107,7 @@ plot(allfVecT_filtVarN[4,2,1][1,:,:])
 
 
 begin 
-using JLD
+using JLD2
 nSampleCoverage=50
 dgpType = "SD"
 models = [model_mle]

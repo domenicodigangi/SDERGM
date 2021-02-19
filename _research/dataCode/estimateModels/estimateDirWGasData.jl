@@ -45,7 +45,7 @@ uBndPar = StaticNets.bndPar2uBndPar(StaticNets.fooNetModelDirW1, meanSq( DynNets
 #StaticNets.bndPar2uBndPar(StaModType(eMidModW1),meanSq(estSSW1,1))
 W = uBndPar.*(1-B)
 dgpParArr = [W,B,A];dgpParVec = [W;B;A]
-filterParTestUbnd,testlike = DynNets.score_driven_filter(eMidModW1,dgpParVec)
+filterParTestUbnd,testlike = DynNets.score_driven_filter_or_dgp(eMidModW1,dgpParVec)
 
 
 filterParTest = DynNets.uBndPar2bndPar_T(eMidModW1,filterParTestUbnd)
@@ -61,7 +61,7 @@ targMean =meanSq( estSSW1[1:Tweeks,:],1)# StaticNets.bndPar2uBndPar(StaticNets.f
  estGasW1,estSSW1_1GW,estGasW1_1GW = 0,0,0
 
 estParVec = [estGasTargW1[1];estGasTargW1[2];estGasTargW1[3]]
- filterParTestUbndEst,testlike = DynNets.score_driven_filter(eMidModW1,estParVec)
+ filterParTestUbndEst,testlike = DynNets.score_driven_filter_or_dgp(eMidModW1,estParVec)
  filterParTest = filterParTestUbndEst#DynNets.uBndPar2bndPar_T(eMidModW1,filterParTestUbndEst)#
  pin = plot(filterParTest[:,1:N][:,meanSq(filterParTest[:,1:N],1).<1e5]);
  pout = plot(filterParTest[:,1+N:2N][:,meanSq(filterParTest[:,1+N:2N],1).<1e5]);

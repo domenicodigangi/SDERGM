@@ -51,7 +51,7 @@ end
 
 #%% Estimate SD beta model ---Can take a while (~30 min for N=10)
 @time parGas_3Npars, ~  =  DynNets.estimateTarg(modGasDirBin1_3Npars;SSest =estFitSS_T)
-gasFiltFit,~ = DynNets.score_driven_filter(modGasDirBin1_3Npars,[parGas_3Npars[1];parGas_3Npars[2];parGas_3Npars[3]])
+gasFiltFit,~ = DynNets.score_driven_filter_or_dgp(modGasDirBin1_3Npars,[parGas_3Npars[1];parGas_3Npars[2];parGas_3Npars[3]])
 rmseGas =sqrt.(meanSq((dynFitDgp - gasFiltFit).^2,2))
 
 # plot the resulting filtered path
@@ -73,7 +73,7 @@ Ttrain = T# round(Int, T/2) #70 106 #
 modGasDirBin1_N_p_2 = GasNetModelDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG", "ONE_PAR_ALL")
 gasParEstOnTrain,~ = estimateTarg(modGasDirBin1_N_p_2;SSest = estFitSS_T[:,1:Ttrain] )
 
-#f(x) = DynNets.score_driven_filter(modGasDirBin1_N_p_2, x;groupsInds = modGasDirBin1_N_p_2.groupsInds)[2]
+#f(x) = DynNets.score_driven_filter_or_dgp(modGasDirBin1_N_p_2, x;groupsInds = modGasDirBin1_N_p_2.groupsInds)[2]
 GBA = 1
 allpar0 = array2VecGasPar(modGasDirBin1_N_p_2, gasParEstOnTrain)
 BA_re_hat = allpar0[end-1:end]
@@ -187,8 +187,8 @@ allpar_sample = samp[:, indsToKeep][:, 1:N_samp_par]
 
 #%%
 ftotIO_0 = meanSq(estimateSnapSeq(modGasDirBin1_N_p_2; degsIO_T = obsT[:, 1:5]), 2)
-ftot_T_est, _ = score_driven_filter(modGasDirBin1_N_p_2, allpar0,ftotIO_0 = ftotIO_0)
-ftot_T, _ = score_driven_filter(modGasDirBin1_N_p_2, allpar_sample[:,3],  ftotIO_0 = ftotIO_0)
+ftot_T_est, _ = score_driven_filter_or_dgp(modGasDirBin1_N_p_2, allpar0,ftotIO_0 = ftotIO_0)
+ftot_T, _ = score_driven_filter_or_dgp(modGasDirBin1_N_p_2, allpar_sample[:,3],  ftotIO_0 = ftotIO_0)
 plot(ftot_T_est')
 #plot(ftot_T')
 
@@ -197,7 +197,7 @@ Nterms = 2*N
 global gasFiltPar_conf = zeros(N_samp_par, Nterms, T_train)
       for i= 1:N_samp_par
        # @show(i)
-       global gasFiltPar_conf[i,:,:], _ = score_driven_filter(modGasDirBin1_N_p_2, allpar_sample[:,i],  ftotIO_0 = ftotIO_0)
+       global gasFiltPar_conf[i,:,:], _ = score_driven_filter_or_dgp(modGasDirBin1_N_p_2, allpar_sample[:,i],  ftotIO_0 = ftotIO_0)
       end
 
 indsToRem = [any(isnan.(gasFiltPar_conf[i, : , :])) for i in 1:N_samp_par ]

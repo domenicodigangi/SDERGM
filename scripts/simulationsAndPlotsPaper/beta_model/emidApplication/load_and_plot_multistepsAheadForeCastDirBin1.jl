@@ -6,7 +6,7 @@ using PyCall; pygui(:qt); using PyPlot
 #estimate and save for half the datase (after LTRO) or whole data?
 
 ## Load dataj
-using JLD
+using JLD2
  halfPeriod = false
  fold_Path =  "/home/Domenico/Dropbox/Dynamic_Networks/data/emid_data/juliaFiles/"
  loadFilePartialName = "Weekly_eMid_Data_from_"
@@ -45,7 +45,7 @@ allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.NetModelDirBin1(meanSq(d
  estTargDirBin1_eMidTrain,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS )
  gasParEstOnTrain = estTargDirBin1_eMidTrain
  modAllObs =  DynNets.GasNetModelDirBin1(degsIO_T,"FISHER-DIAG")
- GasforeFit,~ = DynNets.score_driven_filter(modAllObs,[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+ GasforeFit,~ = DynNets.score_driven_filter_or_dgp(modAllObs,[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
  gasforeFit = Float64.(GasforeFit)
 
 load_fold = "./data/multiStepForecast/"
@@ -155,7 +155,7 @@ close()
 #
 #     @show Nlinksnnc =sum(noDiagIndnnc)
 #     # forecast fitnesses using Gas parameters and observations
-#     foreFit,~ = score_driven_filter( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+#     foreFit,~ = score_driven_filter_or_dgp( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
 #
 #     TRoc = Ttest-1
 #     #storage variables

@@ -9,14 +9,14 @@ using Pkg
 Pkg.activate(".") 
 Pkg.instantiate() 
 using DrWatson
-using JLD
+using JLD2
 using Distributed
 using SharedArrays
 using ScoreDrivenERGM
 using Logging
 
 begin
-nWorkers = 12
+nWorkers = 11
 addprocs(nWorkers - nprocs())
 @sync @everywhere begin 
     using Pkg
@@ -39,35 +39,34 @@ dgpSetAR, ~, dgpSetSD = ScoreDrivenERGM.DynNets.list_example_dgp_settings_for_pa
 
 
 c= Dict{String, Any}()
+c["model"] =[model_mle, model_pmle] 
 c["T"] = [100, 300, 600]
 c["N"] = [100, 200, 300]
 c["dgpSettings"] = [dgpSetSD, dgpSetAR]
-c["model"] =[model_pmle] 
-c["nSample"] = 180
+c["nSample"] = 100
 
-list = dict_list(c)
+list = sort(dict_list(c), by=x->(string(x["model"])))
 
+for d in list
 
-for d in dict_list(c)
-
-    timeSim = @elapsed allAT, allvEstSdResPar, allfVecT_filt, allParDgpT, allConvFlag =  ScoreDrivenERGM.DynNets.simulate_and_estimate_parallel(d["model"], d["dgpSettings"], d["T"], d["N"],  d["nSample"];)
+    timeSim = @elapsed allObsT, allvEstSdResPar, allfVecT_filt, allParDgpT, allConvFlag, allftot_0 =  ScoreDrivenERGM.DynNets.simulate_and_estimate_parallel(d["model"], d["dgpSettings"], d["T"], d["N"],  d["nSample"];)
                 
-    res1 =  (;allvEstSdResPar, allfVecT_filt, allParDgpT, allConvFlag ) |>DrWatson.ntuple2dict |> DrWatson.tostringdict
+    modelTag = string(d["model"])
+
+    res1 =  (;modelTag, allObsT, allvEstSdResPar, allfVecT_filt, allParDgpT, allConvFlag, allftot_0) |>DrWatson.ntuple2dict |> DrWatson.tostringdict
 
     estDict = merge(res1, d)
     
-    timeObs = @elapsed estDict["allObsT"] = pmap(AT -> seq_of_obs_from_seq_of_mats(model, AT), eachslice(allAT, dims=4))
 
-    saveName = replace.( savename(d, "jld";allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.GasNetModel) ), r"[\"]" => "")
+    saveName = replace.( savename(d, "jld2";allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.GasNetModel) ), r"[\"]" => "")
 
     timeSave = @elapsed @tagsave( datadir("sims", "sampleDgpFilterSD_est", saveName), estDict)
 
-    Logging.@info("Time sim = $timeSim , time obs = $timeObs ,  time save = $timeSave ")
+    Logging.@info("Time sim = $timeSim ,  time save = $timeSave ")
 
     # res2 =  (;allAT ) |>DrWatson.ntuple2dict |> DrWatson.tostringdict
     # matsDict = merge(res2, d)
     # @tagsave( datadir("sims", "sampleDgpFilterSD_sampled_mats", saveName), matsDict)
 
 end
-
 

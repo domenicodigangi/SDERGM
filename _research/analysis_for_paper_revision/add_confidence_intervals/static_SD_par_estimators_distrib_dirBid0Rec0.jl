@@ -19,7 +19,7 @@ using StatsBase
 using LinearAlgebra
 using Distributions
 using Statistics
-using JLD
+using JLD2
 
 model_mle = DynNets.GasNetModelDirBin0Rec0_mle()
 model_pmle = DynNets.GasNetModelDirBin0Rec0_pmle()
@@ -87,7 +87,7 @@ quantilesVals = [[0.975, 0.025] ]
 
 for n=1:2
     # sample SD dgp
-    global fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model_mle,N,  vResParDgp, indTvPar; dgpNT = (N,T))
+    global fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter_or_dgp( model_mle,N,  vResParDgp, indTvPar; dgpNT = (N,T))
 
 
     #global res_mle_mle = DynNets.estimate_filter_and_conf_bands(model_mle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
@@ -105,7 +105,7 @@ end
 
 for n=1:nSample
     # sample SD dgp
-    fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model, N, vResParDgp, indTvPar; dgpNT = (N,T))
+    fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter_or_dgp( model, N, vResParDgp, indTvPar; dgpNT = (N,T))
 
     
     obsT = [statsFromMat(model, A_T_dgp[:,:,t]) for t in 1:T ]
@@ -127,7 +127,7 @@ end
 n=1
 begin
 figure()
-fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter( model, vResParDgp, indTvPar; dgpNT = (N,T))
+fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter_or_dgp( model, vResParDgp, indTvPar; dgpNT = (N,T))
 
 obsT = [statsFromMat(model, A_T_dgp[:,:,t]) for t in 1:T ]
 
@@ -136,7 +136,7 @@ arrayAllParHat, conv_flag,UM, ftot_0 = estimate(model, obsT; indTvPar=indTvPar, 
 
 vResParEstDistrib[:,n] = DynNets.array2VecGasPar(model, arrayAllParHat, indTvPar)
 
-fVecTFilt, A_T_dgp, ~ = DynNets.score_driven_filter( model, vResParEstDistrib[:,n], indTvPar, obsT=obsT, ftot_0=ftot_0)
+fVecTFilt, A_T_dgp, ~ = DynNets.score_driven_filter_or_dgp( model, vResParEstDistrib[:,n], indTvPar, obsT=obsT, ftot_0=ftot_0)
 
 plot(fVecTFilt[2,:])
 plot(fVecTDgp[2,:])

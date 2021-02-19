@@ -81,7 +81,7 @@ using Statistics, ForwardDiff, LinearAlgebra
             ftot_0 = [tmpParStat[1][1], tmpParStat[2][1]]
             function likeFun(vecReGasParAll::Array{<:Real,1})
                   oneInADterms  = (maxLargeVal + vecReGasParAll[1])/maxLargeVal
-                  foo,loglikelValue = DynNets.score_driven_filter(model,vecReGasParAll,indTvPar;
+                  foo,loglikelValue = DynNets.score_driven_filter_or_dgp(model,vecReGasParAll,indTvPar;
                                                   obsT = obsT_all[n],ftot_0 = ftot_0 .* oneInADterms)
                   #println(vecReGasPar)
                   return - loglikelValue

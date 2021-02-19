@@ -87,12 +87,12 @@ end
 
 
         #estimate single snapshot sequence
-        #estimate score_driven_filter
+        #estimate score_driven_filter_or_dgp
         ## e ora stima il gasPar
         dynDegsSam[:,:,s] = degsIO_T
           storeGasPar[:,1,s] = parGas[1]; storeGasPar[:,2,s] = parGas[2]; storeGasPar[:,3,s] = parGas[3]
           display(parGas[2:3])
-          gasFiltFit,~ = DynNets.score_driven_filter(modGasDirBin1,[parGas[1];parGas[2];parGas[3]])
+          gasFiltFit,~ = DynNets.score_driven_filter_or_dgp(modGasDirBin1,[parGas[1];parGas[2];parGas[3]])
           rmseSSandGas[:,2,s] =sqrt.(meanSq((dynFitDgp - gasFiltFit).^2,2))
           filFitGas[:,:,s] = gasFiltFit
 

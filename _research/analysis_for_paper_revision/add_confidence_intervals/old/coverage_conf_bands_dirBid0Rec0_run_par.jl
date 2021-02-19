@@ -12,7 +12,7 @@ using Pkg
 Pkg.activate(".") 
 Pkg.instantiate() 
 using DrWatson
-using JLD
+using JLD2
 using Distributed
 using SharedArrays
 using ScoreDrivenERGM
