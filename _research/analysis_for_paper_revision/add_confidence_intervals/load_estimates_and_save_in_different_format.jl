@@ -18,7 +18,7 @@ using SharedArrays
 
 
 
-loadFolder = "sampleDgpFilterSD_est_confBands"
+loadFolder = "samDgpFiltSD_conf"
 
 @time loadedDf = collect_results( datadir("sims", loadFolder)) 
 a=1

@@ -8,9 +8,9 @@ Pkg.activate(".")
 Pkg.instantiate() 
 using DrWatson
 using DataFrames
+using ScoreDrivenERGM
 using PyPlot
 pygui(true)
-using ScoreDrivenERGM
 using Statistics
 using Logging
 using SharedArrays
@@ -19,23 +19,27 @@ using SharedArrays
 import ScoreDrivenERGM:DynNets
 
 
-@time df = collect_results( datadir("sims", "sampleDgpFilterSD_est"))
+@time df = collect_results( datadir("sims", "samDgpFiltSD_est_conf"))
 a = 1
+
+names(df)
 
 
 # select results for one set of parameters
 begin
-T = 100
+T = 300
 N = 300
-modelTag = string(DynNets.GasNetModelDirBin0Rec0_mle())
+modelTag = string(DynNets.GasNetModelDirBin0Rec0_pmle())
 dgpType = "SD"
 nSample = 100
 res = filter([:modelTag, :T, :N, :dgpSettings, :nSample] => (m,t,n, d, s) -> all((m==modelTag, t==T, n==N, d.type == dgpType, s == nSample)), df)[1,:]
 
 # visual inspection of filter, dgp and conf bands
-for nPlot = 1:100
-    if !any(res.errInds[:,nPlot])
-        DynNets.plot_filtered_and_conf_bands(res.model, N, res.allfVecT_filt[:,:,nPlot], res.allConfBandsFiltPar[:,:,:,:,nPlot] ; parDgpT=res.allParDgpT[:,:,nPlot], confBands2 = res.allConfBandsPar[:,:,:,:,nPlot] )
+if true
+    for nPlot = 1:20
+        if !any(res.errInds[:,nPlot])
+            DynNets.plot_filtered_and_conf_bands(res.model, N, res.allfVecT_filt[:,:,nPlot], res.allConfBandsFiltPar[:,:,:,:,nPlot] ; parDgpT=res.allParDgpT[:,:,nPlot], confBands2 = res.allConfBandsPar[:,:,:,:,nPlot] )
+        end
     end
 end
 end
@@ -54,7 +58,10 @@ ylim = ax[2,1].get_ylim()
 ax[2,1].vlines(res.dgpSettings.opt.B, ylim[1], ylim[2], color = "r" )
 ax[1,2].hist(res.allvEstSdResPar[3, :], 30)
 ylim = ax[1,2].get_ylim()
-ax[1,2].vlines(res.dgpSettings.opt.A, ylim[1], ylim[2], color = "r" )
+try 
+    ax[1,2].vlines(res.dgpSettings.opt.A, ylim[1], ylim[2], color = "r" )
+catch
+end
 ax[2,2].hist(res.allvEstSdResPar[6, :], 30)
 ylim = ax[2,2].get_ylim()
 ax[2,2].vlines(res.dgpSettings.opt.A, ylim[1], ylim[2], color = "r" )

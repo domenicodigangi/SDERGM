@@ -3,29 +3,29 @@ Load and plot simulations results on confidence bands' coverages
 """
 
 #region import and models
+using Pkg
+Pkg.activate(".") 
+Pkg.instantiate() 
 using DrWatson
 using DataFrames
-using TableView
 using PyPlot
 pygui(true)
 using JLD2
 using ScoreDrivenERGM
-using Statistics
-using Logging
-using SharedArrays
+
 #endregion
 
 
 # #region load and plot coverage simulations
 
-
-
-df = collect_results!( datadir("sims", "sampleDgpFilterSD_est_confBands")) 
+df = collect_results( datadir("sims", "samDgpFiltSD_est_conf")) 
+a=1
 
 begin
 tVals = [100, 300]
 nVals = [100, 200, 300]
-modelTags = ["GasNetModelDirBin0Rec0_mle(Bool[1, 1], scal = HESS)"]# unique(df["modelTag"])
+# modelTags = ["GasNetModelDirBin0Rec0_mle(Bool[1, 1], scal = HESS)"]# unique(df["modelTag"])
+modelTags =unique(df["modelTag"])
 nNVals = length(nVals)
 nTVals = length(tVals)
 nModels = length(modelTags)
@@ -58,7 +58,7 @@ end
 
 begin
 
-indM =1
+indM =2
 indB =1
 
 nominalLevel = 0.95
@@ -74,7 +74,8 @@ fig.suptitle("Confidence Bands' Coverages $(BandNames[indB]) DGP = $(dgpType), f
 for (indT, T) in Iterators.enumerate(tVals) 
     for indPar = 1:2
         
-        data = [c[.!ind] for (c, ind) in Iterators.zip(eachrow(allAvgCover[indPar,:,indT,indM,indB,:]), eachrow(allConstInds[indPar, :, indT, indM, :]))]
+        data = [c[.!ind] for (c, indC, indE) in Iterators.zip(eachrow(allAvgCover[indPar,:,indT,indM,indB,:]), eachrow(allConstInds[indPar, :, indT, indM, :]), eachrow(allConstInds[indPar, :, indT, indM, :]))]
+        # data = [c for (c, ind) in Iterators.zip(eachrow(allAvgCover[indPar,:,indT,indM,indB,:]), eachrow(allConstInds[indPar, :, indT, indM, :]))]
 
         bp = ax1[indPar, indT].boxplot(data, notch=0, sym="+", vert=1, whis=1.5, showfliers =true)
 
@@ -84,6 +85,7 @@ for (indT, T) in Iterators.enumerate(tVals)
         # Hide these grid behind plot objects
         xlims = ax1[indPar, indT].get_xlim()
         ax1[indPar, indT].hlines(nominalLevel, xlims[1], xlims[2], linestyle=":" , colors = "r")
+        ax1[indPar, indT].set_ylim([0.5, 1])
         ax1[indPar, indT].set_axisbelow(true)
         ax1[indPar, indT].set_title("T = $T")
         ax1[indPar, indT].set_xlabel("Network Size")

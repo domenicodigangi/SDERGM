@@ -31,19 +31,19 @@ end
 #region  
 begin
 T=300
-N=100
+N=300
 nSample = 100
-model = model_pmle
+model = model_mle
 
 quantilesVals = [[0.975, 0.025] ]
 
 # sample dgp
 dgpSetAR, ~, dgpSetSD = ScoreDrivenERGM.DynNets.list_example_dgp_settings_for_paper(model_mle)
 
-dgpSettings = dgpSetAR
+dgpSettings = dgpSetSD
 parDgpT = DynNets.dgp_misspecified(model, dgpSettings.type, N, T;  dgpSettings.opt...)
 
-A_T_dgp = sample_dgp(model, parDgpT,N)
+A_T_dgp = DynNets.sample_dgp(model, parDgpT,N)
 
 @show std(parDgpT, dims=2)
 

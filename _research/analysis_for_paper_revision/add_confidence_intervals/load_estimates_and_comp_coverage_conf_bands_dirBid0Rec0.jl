@@ -19,8 +19,9 @@ using SharedArrays
 
 
 
-df = collect_results!( datadir("sims", "sampleDgpFilterSD_est")) 
+df = collect_results( datadir("sims", "samDgpFiltSD_est")) 
 df["modelTag"] = string.(df["model"]) 
+
 
 
 function average_coverages(res; limitSample=nothing, quantilesVals = [[0.975, 0.025]])
@@ -52,7 +53,7 @@ function average_coverages(res; limitSample=nothing, quantilesVals = [[0.975, 0.
         Logging.@info("Estimating Conf Bands  N = $N , T=$T iter n $(count[1])")
         count[1] += 1
         try
-            ~, allConfBandsFiltPar[:,:,:,:,n], allConfBandsPar[:,:,:,:,n], errFlag, allmvSDUnParEstCovWhite[:,:,n], distribFilteredSD = DynNets.conf_bands_given_SD_estimates(res.model, res.allObsT[n], N, res.allvEstSdResPar[:,n], quantilesVals;  parUncMethod = "WHITE-MLE")
+            ~, allConfBandsFiltPar[:,:,:,:,n], allConfBandsPar[:,:,:,:,n], errFlag, allmvSDUnParEstCovWhite[:,:,n], distribFilteredSD = DynNets.conf_bands_given_SD_estimates(res.model, res.allObsT[n], N, res.allvEstSdResPar[:,n], res.allftot_0[:,n], quantilesVals;  parUncMethod = "WHITE-MLE")
 
             coverFiltParUnc = DynNets.conf_bands_coverage(res.allParDgpT[:,:,n],   allConfBandsFiltPar[:,:,:,:,n])
 
@@ -87,7 +88,7 @@ for estResRow in eachrow(df)
 
     saveName = loadPath[findlast("\\", loadPath)[end]+1:end]
 
-    timeSave = @elapsed @tagsave( datadir("sims", "sampleDgpFilterSD_est_confBands", saveName), coverDict)
+    timeSave = @elapsed @tagsave( datadir("sims", "samDgpFiltSD_conf", saveName), coverDict)
 
     Logging.@info("time save = $timeSave, errRatio = $(mean(errInds)) ")
 

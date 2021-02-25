@@ -41,8 +41,8 @@ dgpSetAR, ~, dgpSetSD = ScoreDrivenERGM.DynNets.list_example_dgp_settings_for_pa
 c= Dict{String, Any}()
 c["model"] =[model_mle, model_pmle] 
 c["T"] = [100, 300, 600]
-c["N"] = [100, 200, 300]
-c["dgpSettings"] = [dgpSetSD, dgpSetAR]
+c["N"] = [100, 300]
+c["dgpSettings"] = [dgpSetAR]
 c["nSample"] = 100
 
 list = sort(dict_list(c), by=x->(string(x["model"])))
@@ -60,7 +60,7 @@ for d in list
 
     saveName = replace.( savename(d, "jld2";allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.GasNetModel) ), r"[\"]" => "")
 
-    timeSave = @elapsed @tagsave( datadir("sims", "sampleDgpFilterSD_est", saveName), estDict)
+    timeSave = @elapsed @tagsave( datadir("sims", "samDgpFiltSD_est", saveName), estDict)
 
     Logging.@info("Time sim = $timeSim ,  time save = $timeSave ")
 
