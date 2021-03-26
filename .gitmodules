@@ -1,3 +1,6 @@
 [submodule "src/ScoreDrivenERGM.jl"]
 	path = src/ScoreDrivenERGM.jl
 	url = https://github.com/domenicodigangi/ScoreDrivenERGM.jl.git
+[submodule "papers/Paper_SDERGM"]
+	path = papers/Paper_SDERGM
+	url = https://github.com/domenicodigangi/Paper_SDERGM.git
