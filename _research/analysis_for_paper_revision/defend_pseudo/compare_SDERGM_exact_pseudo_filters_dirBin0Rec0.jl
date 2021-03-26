@@ -19,17 +19,17 @@ using ScoreDrivenERGM.Scalings
 using StaticNets:ergm_par_from_mean_vals
 using DynNets:fooGasNetModelDirBin0Rec0_mle, sample_est_mle_pmle, dgp_missp, GasNetModelDirBin0Rec0_mle
 
-import StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,exp_val_stats, diadProbFromPars, samplSingMatCan, statsFromMat
+import StaticNets: NetModelDirBin0Rec0(), ergm_par_from_mean_vals,exp_val_stats, diadProbFromPars, samplSingMatCan, statsFromMat
 
 
 
 model_mle = fooGasNetModelDirBin0Rec0_mle
-staModel = fooNetModelDirBin0Rec0
+staModel = NetModelDirBin0Rec0()
 
 
 ## Search an appropriate dgp, i.e. one that stays away form physical bounds
 
-#The following could be updated using dgp_misspecified()
+#The following could be updated using sample_time_var_par_from_dgp()
 function scaled_sin_sample_est_mle_pmle_var_N(alphaMeanVal::Function, N, T, nSample; regimeString ="", plotDgpOrigin=false, plotFlag=false)
     
     betaMeanVal(N) = alphaMeanVal(N)/5 
@@ -96,7 +96,7 @@ for a single misspecified dgp compare mle and mple rmse for varying network size
 """
 function scaling_comparison(model_mle::GasNetModelDirBin0Rec0_mle, Nvals, alphaScal, nSample, T; plotFlag = false, regimeString="")
     
-    staModel = fooNetModelDirBin0Rec0
+    staModel = NetModelDirBin0Rec0()
 
     rmse_mle = []
     rmse_pmle = []

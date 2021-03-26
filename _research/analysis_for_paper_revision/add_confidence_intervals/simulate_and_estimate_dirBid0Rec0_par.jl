@@ -16,7 +16,7 @@ using ScoreDrivenERGM
 using Logging
 
 begin
-nWorkers = 11
+nWorkers = 15
 addprocs(nWorkers - nprocs())
 @sync @everywhere begin 
     using Pkg
@@ -27,23 +27,25 @@ addprocs(nWorkers - nprocs())
     import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, simulate_and_estimate_parallel
     using ScoreDrivenERGM.Utilities
 
-    model_mle = DynNets.GasNetModelDirBin0Rec0_mle()
-    model_pmle = DynNets.GasNetModelDirBin0Rec0_pmle()
+    model_mle = DynNets.GasNetModelDirBin0Rec0_mle(scoreScalingType="FISH_D")
+
     indTvPar = trues(2)
     end
 end
 #endregion
 
 
-dgpSetAR, ~, dgpSetSD = ScoreDrivenERGM.DynNets.list_example_dgp_settings_for_paper(model_mle)
+
+dgpSetARlowlow, dgpSetARlow, dgpSetARmed, dgpSetARhigh, dgpSetSIN, dgpSetSDlow, dgpSetSD, dgpSetSDhigh = ScoreDrivenERGM.DynNets.list_example_dgp_settings(model_mle)
+
 
 
 c= Dict{String, Any}()
-c["model"] =[model_mle, model_pmle] 
+c["model"] =[DynNets.GasNetModelDirBin0Rec0_mle(scoreScalingType="FISH_D"), DynNets.GasNetModelDirBin0Rec0_pmle(scoreScalingType="FISH_D")] 
 c["T"] = [100, 300, 600]
-c["N"] = [100, 300]
-c["dgpSettings"] = [dgpSetAR]
-c["nSample"] = 100
+c["N"] = [50, 100, 500]
+c["dgpSettings"] = [dgpSetARlowlow]
+c["nSample"] = 50
 
 list = sort(dict_list(c), by=x->(string(x["model"])))
 
@@ -56,11 +58,10 @@ for d in list
     res1 =  (;modelTag, allObsT, allvEstSdResPar, allfVecT_filt, allParDgpT, allConvFlag, allftot_0) |>DrWatson.ntuple2dict |> DrWatson.tostringdict
 
     estDict = merge(res1, d)
-    
 
     saveName = replace.( savename(d, "jld2";allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.GasNetModel) ), r"[\"]" => "")
 
-    timeSave = @elapsed @tagsave( datadir("sims", "samDgpFiltSD_est", saveName), estDict)
+    timeSave = @elapsed save( datadir("sims", "samDgpFiltSD_est", saveName), estDict)
 
     Logging.@info("Time sim = $timeSim ,  time save = $timeSave ")
 

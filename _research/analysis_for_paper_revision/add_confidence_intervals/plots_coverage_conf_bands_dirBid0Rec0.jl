@@ -11,6 +11,8 @@ using DataFrames
 using PyPlot
 pygui(true)
 using JLD2
+using SharedArrays
+using Statistics
 using ScoreDrivenERGM
 
 #endregion
@@ -18,66 +20,107 @@ using ScoreDrivenERGM
 
 # #region load and plot coverage simulations
 
-df = collect_results( datadir("sims", "samDgpFiltSD_est_conf")) 
-a=1
+@elapsed df = collect_results( datadir("sims", "samDgpFiltSD_conf")) 
+df["modelTag"] = string.(df["model"]) 
+
+
 
 begin
-tVals = [100, 300]
-nVals = [100, 200, 300]
-# modelTags = ["GasNetModelDirBin0Rec0_mle(Bool[1, 1], scal = HESS)"]# unique(df["modelTag"])
-modelTags =unique(df["modelTag"])
+
+parUncMethod = "NPB-COV-MAT" #
+parUncMethod = "WHITE-MLE" 
+limitSample =50
+indB = 1
+tVals = [100 300 600 3000]
+nVals = [100  ]
+model = DynNets.GasNetModelDirBin0Rec0_mle(scoreScalingType="FISH_D")
+model = DynNets.GasNetModelDirBin0Rec0_pmle(scoreScalingType="FISH_D")
+dgpSetting = DynNets.list_example_dgp_settings(DynNets.GasNetModelDirBin0Rec0_mle()).dgpSetARlowlow
+
+
+modelTags = [DynNets.name(model)] # ["GasNetModelDirBin0Rec0_mle(Bool[1, 1], scal = HESS_D)"]# unique(df["modelTag"])
+# modelTags =unique(df["modelTag"])
 nNVals = length(nVals)
 nTVals = length(tVals)
 nModels = length(modelTags)
-nSample = 100 #length(unique(df["nSample"]))>1 ? missing : (unique(df["nSample"])[1] ) 
-limitSample =nSample
+nSample = 50 #length(unique(df["nSample"]))>1 ? missing : (unique(df["nSample"])[1] ) 
+nErgmPar = 2
 
-dgpType = "AR"
 
-allAvgCover =zeros(2,nNVals, nTVals, nModels, 2, nSample)
-allConstInds = falses(2,nNVals, nTVals, nModels, nSample)
-allErrInds = trues(2,nNVals, nTVals, nModels, nSample)
+
+indQuant = 1
+nBands = 2
+allMeanDgpStd =zeros(nNVals, nTVals, nModels)
+allMeanDgpStdConf =zeros(nNVals, nTVals, nModels)
+allAvgCover =zeros(nErgmPar ,nNVals, nTVals, nModels, nBands, limitSample)
+allConstInds = falses(nErgmPar, nNVals, nTVals, nModels, limitSample)
+allErrInds = trues(nErgmPar, nNVals, nTVals, nModels, limitSample)
+
+avgCover = SharedArray(zeros(nErgmPar, nBands, limitSample))
+avgCoverJoint = SharedArray(zeros(nErgmPar, nBands, limitSample))
+indM=1
+obsShift = 1
+
 
 
 for (indT, T) in Iterators.enumerate(tVals) 
     for (indN, N) in Iterators.enumerate(nVals) 
         for (indM, modelTag) in Iterators.enumerate(modelTags)
 
-            res = filter([:modelTag, :T, :N, :dgpSettings, :nSample] => (m,t,n, d, s) -> all((m==modelTag, t==T, n==N, d.type == dgpType, s == nSample)), df)[1,:]
+            res = filter([:modelTag, :T, :N, :dgp, :S, :m] => (mtag,t,n, d, s, m) -> all((mtag==modelTag, t==T, n==N, d == dgpSetting, s == nSample, m==parUncMethod)), df)
+
+            nrow(res) != 1 ? error("$N, $T,  $(size(res))") : res = res[1,:]
+         
+
+            # Threads.@threads 
+            for n = 1:limitSample
+                coverFiltParUnc = DynNets.conf_bands_coverage(res.allParDgpT[:,1:T-obsShift,n],   res.allConfBandsFiltPar[:,1+obsShift:end,:,:,n])
+
+                coverParUnc = DynNets.conf_bands_coverage(res.allParDgpT[:,1:T-obsShift,n],   res.allConfBandsPar[:,1+obsShift:end,:,:,n])
+
+                for indPar = 1:2
+                    avgCover[indPar, 1, n] =  mean(coverFiltParUnc[indPar,:,1]) 
+
+                    avgCover[indPar, 2, n] =  mean(coverParUnc[indPar,:,1]) 
+                end
+                
+            end
+            
+            variability = res.allfVecT_filt |>  x -> dropdims(std(x, dims=2), dims=2) |> x-> replace(e -> (isnan(e) ? 0 : e), x ) |> x ->((mean = mean(x) , conf =  1.96.*std(x) ))
 
 
-            allAvgCover[:, indN, indT, indM, :, 1:limitSample] = res.avgCover 
-            allErrInds[:, indN, indT, indM, 1:limitSample] = res.errInds 
-            allConstInds[:, indN, indT, indM, 1:limitSample] = res.constInds
+            allMeanDgpStd[indN, indT, indM] = round.(variability.mean, sigdigits=2)  
+            allMeanDgpStdConf[indN, indT, indM] = round.(variability.conf, sigdigits=2)  
+            allAvgCover[:, indN, indT, indM, :, 1:limitSample] = avgCover 
+            allErrInds[:, indN, indT, indM, 1:limitSample] = res.errInds[:, 1:limitSample]
+            allConstInds[:, indN, indT, indM, 1:limitSample] .= any(res.allvEstSdResPar[3:3:6, 1:limitSample] .< 0.00005, dims=1)
+
         end
     end
 end
 
-end
-
-
-begin
-
-indM =2
-indB =1
 
 nominalLevel = 0.95
-parNames = ["θ", "η"]
+parNames = ["θ", "η", "mean θ η"]
 BandNames = ["Parameters + Filtering Uncertainty", "Parameters Uncertainty"]
 
-fig, ax1 = plt.subplots(2, length(tVals),figsize=(12, 6), sharey =true)
+fig, ax1 = plt.subplots(3, length(tVals),figsize=(12, 6), sharey =true)
 fig.canvas.set_window_title("Confidence Bands' Coverages $(BandNames[indB])")
 fig.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
-fig.suptitle("Confidence Bands' Coverages $(BandNames[indB]) DGP = $(dgpType), filter = $(modelTags[indM])")
+fig.suptitle("Confidence Bands' Coverages $(BandNames[indB]) DGP = $(dgpSetting.type),\n filter = $(modelTags[indM]), Cov-Estimate : $(parUncMethod)")
 
 
 for (indT, T) in Iterators.enumerate(tVals) 
-    for indPar = 1:2
+    for indPar = 1:3
         
-        data = [c[.!ind] for (c, indC, indE) in Iterators.zip(eachrow(allAvgCover[indPar,:,indT,indM,indB,:]), eachrow(allConstInds[indPar, :, indT, indM, :]), eachrow(allConstInds[indPar, :, indT, indM, :]))]
+        if indPar == 3
+            data = [c[(.!indC).&(.!indE)] for (c, indC, indE) in Iterators.zip(eachrow(dropdims(mean(allAvgCover[:,:,indT,indM,indB,:], dims=1), dims=1)), eachrow(allConstInds[1, :, indT, indM, :]), eachrow(allErrInds[1, :, indT, indM, :]))]
+        else
+            data = [c[(.!indC).&(.!indE)] for (c, indC, indE) in Iterators.zip(eachrow(allAvgCover[indPar,:,indT,indM,indB,:]), eachrow(allConstInds[indPar, :, indT, indM, :]), eachrow(allErrInds[indPar, :, indT, indM, :]))]
+        end
         # data = [c for (c, ind) in Iterators.zip(eachrow(allAvgCover[indPar,:,indT,indM,indB,:]), eachrow(allConstInds[indPar, :, indT, indM, :]))]
 
-        bp = ax1[indPar, indT].boxplot(data, notch=0, sym="+", vert=1, whis=1.5, showfliers =true)
+        bp = ax1[indPar, indT].boxplot(data, notch=0, sym="+", vert=1, whis=1.5, showfliers =true, showmeans=true)
 
 
         ax1[indPar, indT].yaxis.grid(true, linestyle="-", which="major", color="lightgrey", alpha=0.5)
@@ -85,12 +128,15 @@ for (indT, T) in Iterators.enumerate(tVals)
         # Hide these grid behind plot objects
         xlims = ax1[indPar, indT].get_xlim()
         ax1[indPar, indT].hlines(nominalLevel, xlims[1], xlims[2], linestyle=":" , colors = "r")
-        ax1[indPar, indT].set_ylim([0.5, 1])
+        ax1[indPar, indT].set_ylim([0.70, 1])
         ax1[indPar, indT].set_axisbelow(true)
         ax1[indPar, indT].set_title("T = $T")
-        ax1[indPar, indT].set_xlabel("Network Size")
-        ax1[indPar, indT].set_ylabel("Coverages for $(parNames[indPar])")
-        ax1[indPar, indT].set_xticklabels(nVals, rotation=45, fontsize=8)
+        # ax1[indPar, indT].set_xlabel("Network Size")
+        ax1[indPar, indT].set_ylabel("$(parNames[indPar])")
+        if indPar ==3
+            xlab = ["N = $n \n <std($(parNames[indPar]) )> =  $(allMeanDgpStd[indN, indT, indM])  " for (indN,n) in Iterators.enumerate(nVals) ] #\n ($(allMeanDgpStdConf[indPar, indN, indT, indM])
+            # ax1[indPar, indT].set_xticklabels(xlab, rotation=0, fontsize=8)
+        end
     end
 end
 tight_layout()

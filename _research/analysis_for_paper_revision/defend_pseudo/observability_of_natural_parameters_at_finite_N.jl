@@ -7,7 +7,7 @@ Investigate the existence of regions of the θ η plane where the latters cannot
 using ScoreDrivenERGM
 using ScoreDrivenERGM.Utilities
 
-import ScoreDrivenERGM.StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats, sample_ergm, estimate
+import ScoreDrivenERGM.StaticNets: NetModelDirBin0Rec0(), ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats, sample_ergm, estimate
 
 using PyPlot
 pygui(true)
@@ -17,10 +17,10 @@ using Statistics
 
 ErgmRcall.clean_start_RCall()
 ergmTermsString = "edges +  mutual"
-model = fooNetModelDirBin0Rec0
+model = NetModelDirBin0Rec0()
     
 
-function sample_dgp_static_estimate_mle(model::NetModelDirBin0Rec0, N, parDgpSeq, nSample)
+function sample_mats_sequence_static_estimate_mle(model::NetModelDirBin0Rec0, N, parDgpSeq, nSample)
 
     T = size(parDgpSeq)[2]
     parMle = zeros(T, 2, nSample)
@@ -48,7 +48,7 @@ Nvals = [30, 50, 70, 90]
 θ_0 = -5
 for N in Nvals 
     parDgpSeq = reduce(hcat, [ [θ_0, η ] for η = 2:0.05:7])
-    parMle, obs = sample_dgp_static_estimate_mle(model, N, parDgpSeq, 150 )
+    parMle, obs = sample_mats_sequence_static_estimate_mle(model, N, parDgpSeq, 150 )
     fracZeroRec = mean(obs[:,2,:].==0;dims=2)
     fracUb = mean(obs[:,2,:].==obs[:,1,:]/2;dims=2)
     xplot = parDgpSeq[2,:]

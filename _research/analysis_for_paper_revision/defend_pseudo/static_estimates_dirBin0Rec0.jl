@@ -5,7 +5,7 @@ Test script for dirBin0Rec0 model: one parameter for total number of links and o
 
 
 
-import StaticNets: fooNetModelDirBin0Rec0, ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats
+import StaticNets: NetModelDirBin0Rec0(), ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats
 using ErgmRcall
 using PyPlot
 using RCall
@@ -16,7 +16,7 @@ using Utilities
 ErgmRcall.clean_start_RCall()
 ergmTermsString = "edges +  mutual"
 R"""options(warn=-1) """
-model = fooNetModelDirBin0Rec0
+model = NetModelDirBin0Rec0()
     
 ##-------------------- Test and COmpare MLE and MPLE estimates
 #Compare for a single value of the parameters
@@ -60,7 +60,7 @@ function mle_pmle_comparison_var_Net_size(model::NetModelDirBin0Rec0, netSizes, 
     parMmle = zeros(nPars, 2, nSample)
     parMple = zeros(nPars, 2, nSample)
     parDgp = zeros(nPars, 2)
-    model = fooNetModelDirBin0Rec0
+    model = NetModelDirBin0Rec0()
     for i=1:nPars
         N = netSizes[i]
         θ_0, η_0 = ergm_par_from_mean_vals(model, linkFun(N), recFun(N), N)

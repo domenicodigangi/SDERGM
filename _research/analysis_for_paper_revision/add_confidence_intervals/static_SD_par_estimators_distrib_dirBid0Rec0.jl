@@ -7,7 +7,7 @@ begin
 
 using ScoreDrivenERGM
 import ScoreDrivenERGM:StaticNets, DynNets
-import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_dgp, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
+import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_mats_sequence, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
 using ScoreDrivenERGM.Utilities
 
 using PyPlot
@@ -38,12 +38,12 @@ model = model_mle
 quantilesVals = [[0.975, 0.025] ]
 
 # sample dgp
-dgpSetAR, ~, dgpSetSD = ScoreDrivenERGM.DynNets.list_example_dgp_settings_for_paper(model_mle)
+dgpSetAR, ~, dgpSetSD = ScoreDrivenERGM.DynNets.list_example_dgp_settings(model_mle)
 
 dgpSettings = dgpSetSD
-parDgpT = DynNets.dgp_misspecified(model, dgpSettings.type, N, T;  dgpSettings.opt...)
+parDgpT = DynNets.sample_time_var_par_from_dgp(model, dgpSettings.type, N, T;  dgpSettings.opt...)
 
-A_T_dgp = DynNets.sample_dgp(model, parDgpT,N)
+A_T_dgp = DynNets.sample_mats_sequence(model, parDgpT,N)
 
 @show std(parDgpT, dims=2)
 
@@ -94,9 +94,9 @@ for n=1:2
     
     global res_mle_pmle = DynNets.estimate_filter_and_conf_bands(model_pmle, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "WHITE-MLE")
 
-   # global res_mle_boot = DynNets.estimate_filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "PAR-BOOTSTRAP-SAMPLE")
+   # global res_mle_boot = DynNets.estimate_filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "PB-SAMPLE")
 
-    # global res_mle_boot = DynNets.estimate_filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "PAR-BOOTSTRAP-COVMAT")
+    # global res_mle_boot = DynNets.estimate_filter_and_conf_bands(model, A_T_dgp, quantilesVals; plotFlag =true, parDgpT = fVecTDgp, parUncMethod = "PB-COVMAT")
 
 end
 end
