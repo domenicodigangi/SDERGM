@@ -19,7 +19,7 @@ using ScoreDrivenERGM.Scalings
 using StaticNets:ergm_par_from_mean_vals
 using DynNets:fooGasNetModelDirBin0Rec0_mle, sample_est_mle_pmle, dgp_missp, GasNetModelDirBin0Rec0_mle
 
-import StaticNets: NetModelDirBin0Rec0(), ergm_par_from_mean_vals,exp_val_stats, diadProbFromPars, samplSingMatCan, statsFromMat
+import StaticNets: NetModelDirBin0Rec0(), ergm_par_from_mean_vals,exp_val_stats, diadProbFromPars, samplSingMatCan, stats_from_mat
 
 
 
@@ -74,7 +74,7 @@ function scaled_sin_sample_est_mle_pmle_var_N(alphaMeanVal::Function, N, T, nSam
     # startLRSeq = alpha_beta_seq_given_N(N).*n_pox_dir_links(N)
     # endAlphaBetaSeq = permutedims( reduce(hcat, [theta_eta_to_alpha_beta(θ, η, N) for (θ, η) in eachcol(get_theta_eta_seq_from_alpha_beta(N))]) )
     # θ_0, η_0 = get_theta_eta_seq_from_alpha_beta(N)[:,1]
-    # A_vec = [statsFromMat(staModel, samplSingMatCan(staModel, diadProbFromPars(staModel, [θ_0, η_0]), N)) for i=1:100]
+    # A_vec = [stats_from_mat(staModel, samplSingMatCan(staModel, diadProbFromPars(staModel, [θ_0, η_0]), N)) for i=1:100]
 
     return sample_est_mle_pmle(model_mle, get_theta_eta_seq_from_alpha_beta(N), N, nSample; plotFlag=plotFlag, regimeString=regimeString)
 end

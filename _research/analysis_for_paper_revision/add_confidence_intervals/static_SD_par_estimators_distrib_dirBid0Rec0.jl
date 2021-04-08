@@ -7,7 +7,7 @@ begin
 
 using ScoreDrivenERGM
 import ScoreDrivenERGM:StaticNets, DynNets
-import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_mats_sequence, statsFromMat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
+import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_mats_sequence, stats_from_mat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
 using ScoreDrivenERGM.Utilities
 
 using PyPlot
@@ -108,7 +108,7 @@ for n=1:nSample
     fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter_or_dgp( model, N, vResParDgp, indTvPar; dgpNT = (N,T))
 
     
-    obsT = [statsFromMat(model, A_T_dgp[:,:,t]) for t in 1:T ]
+    obsT = [stats_from_mat(model, A_T_dgp[:,:,t]) for t in 1:T ]
 
 
     arrayAllParHat, conv_flag,UM, ftot_0 = estimate(model, N, obsT; indTvPar=indTvPar, indTargPar=falses(2), vParOptim_0=vParOptim_0)
@@ -129,7 +129,7 @@ begin
 figure()
 fVecTDgp, A_T_dgp, ~ = DynNets.score_driven_filter_or_dgp( model, vResParDgp, indTvPar; dgpNT = (N,T))
 
-obsT = [statsFromMat(model, A_T_dgp[:,:,t]) for t in 1:T ]
+obsT = [stats_from_mat(model, A_T_dgp[:,:,t]) for t in 1:T ]
 
 arrayAllParHat, conv_flag,UM, ftot_0 = estimate(model, obsT; indTvPar=indTvPar, indTargPar=falses(2), vParOptim_0=vParOptim_0)
 

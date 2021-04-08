@@ -7,7 +7,7 @@ Investigate the existence of regions of the θ η plane where the latters cannot
 using ScoreDrivenERGM
 using ScoreDrivenERGM.Utilities
 
-import ScoreDrivenERGM.StaticNets: NetModelDirBin0Rec0(), ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats, sample_ergm, estimate
+import ScoreDrivenERGM.StaticNets: NetModelDirBin0Rec0(), ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, stats_from_mat, get_one_mple, estimate,NetModelDirBin0Rec0, exp_val_stats, sample_ergm, estimate
 
 using PyPlot
 pygui(true)
@@ -32,7 +32,7 @@ function sample_mats_sequence_static_estimate_mle(model::NetModelDirBin0Rec0, N,
 
         A_vec = sample_ergm(model, N, θ_0, η_0, nSample )        
 
-        obs[i,:,:] = reduce(hcat,[StaticNets.statsFromMat(model, A) for A in A_vec])
+        obs[i,:,:] = reduce(hcat,[StaticNets.stats_from_mat(model, A) for A in A_vec])
         parMle[i,:,:] = reduce(hcat,[StaticNets.estimate(model, A) for A in A_vec])
     end
 

@@ -5,7 +5,7 @@ Test script for dirBin0Rec0 model: one parameter for total number of links and o
 
 
 
-import StaticNets: NetModelDirBin0Rec0(), ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, statsFromMat, get_mple, estimate,NetModelDirBin0Rec0, exp_val_stats
+import StaticNets: NetModelDirBin0Rec0(), ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, stats_from_mat, get_one_mple, estimate,NetModelDirBin0Rec0, exp_val_stats
 using ErgmRcall
 using PyPlot
 using RCall
@@ -29,7 +29,7 @@ Rdgp = n_pox_pairs(N)/4-100
 nSample = 100
 diadProb = diadProbFromPars(model, [θ_0, η_0])
 A_vec = [samplSingMatCan(model, diadProb, N) for i=1:nSample]
-statsVec = reduce(hcat,[statsFromMat(model, A) for A in A_vec])
+statsVec = reduce(hcat,[stats_from_mat(model, A) for A in A_vec])
 pygui(true)
 
 fig, ax = subplots(2,1)
@@ -40,7 +40,7 @@ ax[2].vlines(Rdgp, 0, 1, "k")
 
 
 
-parMpleSingle = reduce(hcat, [get_mple(A,ergmTermsString) for A in A_vec])
+parMpleSingle = reduce(hcat, [get_one_mple(A,ergmTermsString) for A in A_vec])
 parMleSingle = reduce(hcat,[estimate(model, A) for A in A_vec])
 fix, ax = subplots(2,1)
 ax[1].hist(parMleSingle[2,isfinite.(parMleSingle[2,:])], density=true, color="b" )
@@ -68,7 +68,7 @@ function mle_pmle_comparison_var_Net_size(model::NetModelDirBin0Rec0, netSizes, 
         diadProb = diadProbFromPars(model, [θ_0, η_0])
         A_vec = [samplSingMatCan(model, diadProb, N) for i=1:nSample]
         parMmle[i,:,:] = reduce(hcat,[estimate(model, A) for A in A_vec])
-        parMple[i,:,:] = reduce(hcat, [get_mple(A,ergmTermsString) for A in A_vec])
+        parMple[i,:,:] = reduce(hcat, [get_one_mple(A,ergmTermsString) for A in A_vec])
     end
     return parDgp, parMmle, parMple
 end
@@ -107,7 +107,7 @@ plot(parMle[1,:], parMple[1,:], ".")
 
 function pseudo_loglikelihood_ddg(Model::NetModelDirBin0Rec0, A, par)
     θ, η = par
-    L, R, N = statsFromMat(Model, A)
+    L, R, N = stats_from_mat(Model, A)
 
     return L * θ + R*η - sum(log.(1 .+ exp.(2θ .+ (η).*A )) ) 
 end
@@ -122,7 +122,7 @@ fig, ax = subplots(2,1)
 for i=1:3
     A = samplSingMatCan(model, diadProbFromPars(model, [θ_0, η_0]), N) 
     mle = estimate(model, A)
-    mple = get_mple(A,ergmTermsString)
+    mple = get_one_mple(A,ergmTermsString)
     println(mle.-mple)
 
     changeStat, response, weights = decomposeMPLEmatrix(get_change_stats(A,ergmTermsString))
@@ -150,7 +150,7 @@ end
 
 function grad(Model::NetModelDirBin0Rec0, A, par)
     θ, η = par
-    L, R, N = statsFromMat(Model, A) 
+    L, R, N = stats_from_mat(Model, A) 
     z = 1 + 2*exp(θ) + exp(2*θ+η)
     g_θ =  L - (N*(N-1)/2) *(2*exp(θ)+ 2* exp(2*θ+η))/z
     g_η =  R - (N*(N-1)/2) *( exp(2*θ+η))/z

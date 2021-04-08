@@ -25,13 +25,13 @@ dfEst["modelTag"] = string.(dfEst["model"])
 
 df = dfEst
 
-@elapsed dfConf = collect_results( datadir("sims", "samDgpFiltSD_conf")) 
-dfConf["modelTag"] = string.(dfConf["model"]) 
+# @elapsed dfConf = collect_results( datadir("sims", "samDgpFiltSD_conf")) 
+# dfConf["modelTag"] = string.(dfConf["model"]) 
 
-@elapsed df = antijoin(dfEst, dfConf, on = [:allParDgpT, :modelTag])
+# @elapsed df = antijoin(dfEst, dfConf, on = [:allParDgpT, :modelTag])
 
 
-function average_coverages(res, m; limitSample=nothing, quantilesVals = [ [0.975, 0.025]])
+function average_coverages(res, m; limitSample=nothing, quantilesVals = [ [0.975, 0.025]], winsorProp=0)
     
     N = res.N
     T = res.T
@@ -57,28 +57,29 @@ function average_coverages(res, m; limitSample=nothing, quantilesVals = [ [0.975
 
     count = SharedArray(ones(1))
     
-    if m == "PB-COV-MAT"
-        if res.dgpSettings.type == "SD"
-            vEstSdUnParBootDist = mapslices(x -> DynNets.unrestrict_all_par(res.model, res.model.indTvPar, x), res.allvEstSdResPar, dims=1)
+    mvSDUnParEstCov = zeros(3,3)
+    
+    # if m == "PB-MVN"
+    #     if res.dgpSettings.type == "SD"
+    #         vEstSdUnParBootDist = mapslices(x -> DynNets.unrestrict_all_par(res.model, res.model.indTvPar, x), res.allvEstSdResPar, dims=1)
 
-            covParBoot = cov(Utilities.drop_bad_un_estimates(vEstSdUnParBootDist)')
+    #         covParBoot = cov(Utilities.drop_bad_un_estimates(vEstSdUnParBootDist)')
 
-            covParBoot, minEigenVal = Utilities.make_pos_def(covParBoot)
+    #         covParBoot, minEigenVal = Utilities.make_pos_def(covParBoot)
 
-            mvSDUnParEstCov = Symmetric(covParBoot)
+    #         mvSDUnParEstCov = Symmetric(covParBoot)
 
-        end
-    else
-        mvSDUnParEstCov = zeros(3,3)
-    end
+    #     end
+    # end
 
     Threads.@threads for n=1:nSample
         
         Logging.@info("Estimating Conf Bands  N = $N , T=$T, $(DynNets.name(res.model)), $(res.dgpSettings) iter n $(count[1]), ")
         count[1] += 1
 
-        
-        ~, allConfBandsFiltPar[:,:,:,:,n], allConfBandsPar[:,:,:,:,n], errFlag, allmvSDUnParEstCovWhite[:,:,n], distribFilteredSD = DynNets.conf_bands_given_SD_estimates(res.model, N, res.allObsT[n], res.allvEstSdResPar[:,n], res.allftot_0[:,n], quantilesVals;  parUncMethod = m, mvSDUnParEstCov=mvSDUnParEstCov )
+        vEstSdUnPar = unrestrict_all_par(res.model, res.model.indTvPar, res.allvEstSdResPar[:,n])
+
+        ~, allConfBandsFiltPar[:,:,:,:,n], allConfBandsPar[:,:,:,:,n], errFlag, allmvSDUnParEstCovWhite[:,:,n], distribFilteredSD = DynNets.conf_bands_given_SD_estimates(res.model, N, res.allObsT[n], vEstSdUnPar, res.allftot_0[:,n], quantilesVals;  parUncMethod = m, mvSDUnParEstCov=mvSDUnParEstCov, winsorProp=winsorProp )
 
         coverFiltParUnc = DynNets.conf_bands_coverage(res.allParDgpT[:,:,n],   allConfBandsFiltPar[:,:,:,:,n])
 
@@ -101,30 +102,34 @@ function average_coverages(res, m; limitSample=nothing, quantilesVals = [ [0.975
 end
 begin
 
+# limitSample = 10
 limitSample = nothing
-# listParUncMethod = ["PB-COV-MAT"] #"WHITE-MLE"
+# listParUncMethod = ["PB-MVN"] #"WHITE-MLE"
+winsorProp=0.2
 listParUncMethod = ["WHITE-MLE"]
+#listParUncMethod = ["PB-MVN"] #"WHITE-MLE"
 # m = listParUncMethod[1]
 # estResRow = collect(eachrow(df))[1]
 for estResRow in eachrow(df)
 
-    processFlag = true
-    # if (estResRow.N in [100]) & (estResRow.T in [3000])  &  (estResRow.model.scoreScalingType == "HESS_D") & (estResRow.dgpSettings.type == "AR")
+    processFlag = false
+    if (estResRow.N in [50, 100, 500]) & (estResRow.T in [300, 600])  &  (estResRow.model.scoreScalingType == "FISH_D") & (estResRow.dgpSettings.type == "AR")
 
-    #     if  estResRow.dgpSettings.opt.sigma ==  ScoreDrivenERGM.DynNets.list_example_dgp_settings(DynNets.reference_model(estResRow.model)).dgpSetARlowlow.opt.sigma 
-    #         processFlag = true
-    #     end
-    # end     
-    # if  (estResRow.dgpSettings.type == "AR")
-    #     processFlag = false
-    # end     
+        if  estResRow.dgpSettings.opt.sigma ==  ScoreDrivenERGM.DynNets.list_example_dgp_settings(DynNets.reference_model(estResRow.model)).dgpSetARlowlow.opt.sigma 
+            processFlag = true
+        end
+    end     
 
     
 
     if processFlag
         for m in listParUncMethod
 
-            timeConf = @elapsed avgCover, constInds, errInds, allConfBandsFiltPar, allConfBandsPar, allmvSDUnParEstCovWhite = average_coverages(estResRow, m; limitSample = limitSample)
+            if winsorProp!=0
+                m = "$m$winsorProp"
+            end
+
+            timeConf = @elapsed avgCover, constInds, errInds, allConfBandsFiltPar, allConfBandsPar, allmvSDUnParEstCovWhite = average_coverages(estResRow, m; limitSample = limitSample, winsorProp=winsorProp)
                             
             coverDict =  (;m, avgCover, constInds, errInds, allConfBandsFiltPar,  allConfBandsPar, allmvSDUnParEstCovWhite) |>DrWatson.ntuple2dict |> DrWatson.tostringdict
             

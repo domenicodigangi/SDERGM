@@ -1,17 +1,20 @@
 
-# sample sequences of ergms with different parameters' values from R package ergm
-# and test the PseudoLikelihoodScoreDrivenERGM filter
-using Utilities,AReg,StaticNets,JLD,MLBase,StatsBase,CSV, RCall
-using PyCall; pygui(); using PyPlot
-using DataFrames
+# Load raw congress voting data and create a covoting matrix as described in  Roy,  S.,  Y.  Atchad ́e,  and  G.  Michailidis  (2017).   Change  point  estimation  in  high  dimensionalmarkov  random-field  models.Journal  of  the  Royal  Statistical  Society:   Series  B  (StatisticalMethodology) 79(4), 1187–1206
 
-loadPath = "/home/Domenico/Dropbox/Dynamic_Networks/data/congress_covoting_US/Senate_all_votes.csv"
+
+
+using DrWatson
+@quickactivate "ScoreDrivenExponentialRandomGraphs"
+DrWatson.greet()
+
+import ScoreDrivenERGM:StaticNets, Utilities
+
+using JLD2,StatsBase,CSV, RCall
+using DelimitedFiles
+
+loadPath = datadir("US_congr_covoting", "raw_data") * "/Senate_all_votes.csv"
 tmp = readdlm(loadPath,',')
 rowNames = tmp[1,:]
-
-
-
-
 
 
 ids_members = Int.(tmp[2:end,4])
@@ -24,7 +27,7 @@ allCongrs = unique(congNumb)
 yesVotesCodes = [1,2,3]
 nayVotesCodes = [4,5,6]
 Ncongresses = length(allCongrs)
-votingMatrices  = Array{Array{Int,2},1}(Ncongresses)
+votingMatrices  = Array{Array{Int,2},1}(undef,Ncongresses)
 for c=1:Ncongresses
     cong = allCongrs[c]
     inds_c = congNumb.==cong
@@ -45,7 +48,7 @@ for c=1:Ncongresses
         #indices of votes
         roll_i = rollNumb[indsId_i]
         #esclude multi voting of same member
-        length(unique(roll_i)) == length((roll_i)) ? Nrolls_i = length(unique(roll_i)):error()
+        length(unique(roll_i)) == length((roll_i)) ? Nrolls_i = length(unique(roll_i)) : error()
         #for each roll of i
         for r=1:Nrolls_i
             rollInd = roll_i[r]
@@ -59,7 +62,7 @@ for c=1:Ncongresses
     end
 end
 
-coVotingMatrices  = Array{Array{Float64,2},1}(Ncongresses)
+coVotingMatrices  = Array{Array{Float64,2},1}(undef, Ncongresses)
 for c = 1:Ncongresses
     println(c)
     mat = votingMatrices[c]
@@ -69,8 +72,9 @@ for c = 1:Ncongresses
         vot_i = mat[:,i]
         for j=i+1:N
             vot_j = mat[:,j]
-            covot = sum(vot_i.==vot_j)
-            copresent = sum( (vot_i.!=0)&(vot_j.!=0) )
+            ind_copresent = (vot_i.!=0).&(vot_j.!=0)
+            covot = sum((vot_i.==vot_j).&ind_copresent)
+            copresent = sum(  ind_copresent)
             if copresent>0
                 tmpCovot[i,j] = covot/copresent
             end
@@ -79,95 +83,76 @@ for c = 1:Ncongresses
     coVotingMatrices[c] = tmpCovot
 end
 
-# save Data
-@save("/home/Domenico/Dropbox/Dynamic_Networks/data/congress_covoting_US/coVotingMatrices_julia.jld",
-        coVotingMatrices,votingMatrices)
-
-
-@load("/home/Domenico/Dropbox/Dynamic_Networks/data/congress_covoting_US/coVotingMatrices_julia.jld",
-        coVotingMatrices,votingMatrices)
 
 
 
-loadPath = "/home/Domenico/Dropbox/Dynamic_Networks/data/congress_covoting_US/members_Info.csv"
-tmp = readdlm(loadPath,',')
-rowNames = tmp[1,:]
+#identify republicans and democrats. Not used in the paper, hence not checked and not saved
+# loadPath = datadir("US_congr_covoting", "raw_data") * "/members_Info.csv"
+# tmp = readdlm(loadPath,',')
+# rowNames = tmp[1,:]
 
+# ids_members = Int.(tmp[2:end,4])
+# congNumb = Int.(tmp[2:end,1])
+# partyCode = Int.(tmp[2:end,7])
+# Ncong = length(unique(congNumb))
+# codesBigParties = zeros(Ncong,2)
+# affiliationVecs = Array{Array{String,1},1}(undef, Ncong)
+# congressMenPresentVecs = Array{Array{Int,1},1}(undef, Ncong)
+# for c = 1:Ncong
+#     indsCong_c = congNumb .== c
+#     congressMansVec = unique(ids_members[indsCong_c])
+#     congressMansPartiesVec = unique(ids_members[indsCong_c])
+#     congressMenPresentVecs[c] = congressMansVec
+#     Ncongressmas_c = length(congressMansVec)
+#     partyCode_c = partyCode[indsCong_c]
+#     parties_c  = unique(partyCode_c)
+#     Nparties = length(parties_c)
+#     countPartiesMembers = zeros(length(parties_c))
+#     for i=1:Nparties
+#          countPartiesMembers[i] =  sum(partyCode_c.==parties_c[i])
 
-
-
-
-#identify republicans and democrats
-
-
-ids_members = Int.(tmp[2:end,4])
-congNumb = Int.(tmp[2:end,1])
-partyCode = Int.(tmp[2:end,7])
-Ncong = length(unique(congNumb))
-codesBigParties = zeros(Ncong,2)
-affiliationVecs = Array{Array{String,1},1}(Ncong)
-congressMansPresentVecs = Array{Array{Int,1},1}(Ncong)
-for c = 1:Ncong
-    indsCong_c = congNumb .== c
-    congressMansVec = unique(ids_members[indsCong_c])
-    congressMansPartiesVec = unique(ids_members[indsCong_c])
-    congressMansPresentVecs[c] = congressMansVec
-    Ncongressmas_c = length(congressMansVec)
-    partyCode_c = partyCode[indsCong_c]
-    parties_c  = unique(partyCode_c)
-    Nparties = length(parties_c)
-    countPartiesMembers = zeros(parties_c)
-    for i=1:Nparties
-         countPartiesMembers[i] =  sum(partyCode_c.==parties_c[i])
-
-    end
-    println(length(parties_c))
-    println(countPartiesMembers)
-    if Nparties>2
-        indsBigParties = .!(countPartiesMembers/mean(countPartiesMembers).<0.5)
-        sum(indsBigParties)!=2?println("warning more than 2 large parties"):()#error if more than two parties are flagged as big ones
-        tmp = [countPartiesMembers Vector(1:Nparties)]
-        tmp = sortrows(tmp,rev = true)
-        indsBigParties = tmp[1:2,2]
-    else
-        indsBigParties = trues(2)
-    end
-    codesBigParties[c,:] = parties_c[indsBigParties]
-    tmpVecAffil = ["" for i=1:Ncongressmas_c]
-    for i=1:Ncongressmas_c
-        inds_man_i = ids_members[indsCong_c] .==congressMansVec[i]
-        partyCongressMan_i = unique( partyCode_c[inds_man_i])
-        length(partyCongressMan_i)>1?println("warning one man with more parties"):()
-        partyCongressMan_i=partyCongressMan_i[1]
-        # it does not matter that Ds are democrates and R are reps. it matter only that all Reps have the same letter etc
-        independent = true
-        partyCongressMan_i.== codesBigParties[c,1] ? (tmpVecAffil[i] = "D";independent=false):()
-        partyCongressMan_i.== codesBigParties[c,2] ? (tmpVecAffil[i] = "R"; independent = false):()
-        independent? tmpVecAffil[i] = "I":()
-    end
-     affiliationVecs[c]=tmpVecAffil
-     congressMansPresentVecs[c] = congressMansVec
-end
+#     end
+#     println(length(parties_c))
+#     println(countPartiesMembers)
+#     if Nparties>2
+#         indsBigParties = .!(countPartiesMembers/mean(countPartiesMembers).<0.5)
+#         sum(indsBigParties) != 2 ? println("warning more than 2 large parties") : ()#error if more than two parties are flagged as big ones
+#         tmp = [countPartiesMembers collect(1:Nparties)]
+#         tmp = sortslices(tmp,rev = true, dims=1)
+#         indsBigParties = tmp[1:2,2]
+#     else
+#         indsBigParties = [1 2]
+#     end
+#     codesBigParties[c,:] = parties_c[Int.(indsBigParties)]
+#     tmpVecAffil = ["" for i=1:Ncongressmas_c]
+#     for i=1:Ncongressmas_c
+#         inds_man_i = ids_members[indsCong_c] .==congressMansVec[i]
+#         partyCongressMan_i = unique( partyCode_c[inds_man_i])
+#         length(partyCongressMan_i)>1 ? println("warning one man with more parties") : ()
+#         partyCongressMan_i=partyCongressMan_i[1]
+#         # it does not matter that Ds are democrats and R are reps. it matters only that all Reps have the same letter etc
+#         independent = true
+#         partyCongressMan_i.== codesBigParties[c,1] ? (tmpVecAffil[i] = "D";independent=false) : ()
+#         partyCongressMan_i.== codesBigParties[c,2] ? (tmpVecAffil[i] = "R"; independent = false) : ()
+#         independent ? tmpVecAffil[i] = "I" : ()
+#     end
+#      affiliationVecs[c]=tmpVecAffil
+#      congressMenPresentVecs[c] = congressMansVec
+# end
 
 #make matrix symmetric and remove inactive nodes
-
+using LinearAlgebra
 for c=1:Ncong
-        tmp = coVotingMatrices[t]
-        indsActive = .!((sumSq(tmp,1).==0)&(sumSq(tmp,2).==0))
-        println(sum(inds2rem))
+        tmp = coVotingMatrices[c]
+        indsActive = .!((dropdims(sum(tmp,dims=1), dims=1).==0).&(dropdims(sum(tmp,dims=2), dims=2).==0))
         Nactive = sum(indsActive)
-        newMat = tmp[indsActive,indsActive]
+        coVotingMatrices[c] = Symmetric(tmp[indsActive,indsActive])
 
-        for i=1:Nactive
-            for j=i+1:Nactive
-                newMat[j,i] = tmp[i,j]
-            end
-        end
-        affiliationVecs[c] = affiliationVecs[c][indsActive]
+        # affiliationVecs[c] = affiliationVecs[c][indsActive]
 end
 
-
-
 # save Data
-@save("/home/Domenico/Dropbox/Dynamic_Networks/data/congress_covoting_US/coVotingMatrices_julia.jld",
-        coVotingMatrices,votingMatrices,affiliationVecs,congressMansPresentVecs)
+@save(datadir("US_congr_covoting", "clean_data") * "/coVotingMatrices_julia.jld2", coVotingMatrices,votingMatrices,congressMenPresentVecs)
+
+
+

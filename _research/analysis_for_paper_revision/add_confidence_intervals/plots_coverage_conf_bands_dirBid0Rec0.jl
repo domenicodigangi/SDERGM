@@ -27,11 +27,11 @@ df["modelTag"] = string.(df["model"])
 
 begin
 
-parUncMethod = "NPB-COV-MAT" #
 parUncMethod = "WHITE-MLE" 
+parUncMethod = "NPB-MVN" #
 limitSample =50
 indB = 1
-tVals = [100 300 600 3000]
+tVals = [300]
 nVals = [100  ]
 model = DynNets.GasNetModelDirBin0Rec0_mle(scoreScalingType="FISH_D")
 model = DynNets.GasNetModelDirBin0Rec0_pmle(scoreScalingType="FISH_D")

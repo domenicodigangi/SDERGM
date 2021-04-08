@@ -26,13 +26,14 @@ df["modelTag"] = string.(df["model"])
 
 # select results for one set of parameters
 begin
-T = 3000
+T = 300
 N = 100
 nSample = 50
 indQuant = 1
-modelTag = string(DynNets.GasNetModelDirBin0Rec0_pmle(scoreScalingType = "FISH_D"))
 modelTag = string(DynNets.GasNetModelDirBin0Rec0_mle(scoreScalingType = "FISH_D"))
+modelTag = string(DynNets.GasNetModelDirBin0Rec0_pmle(scoreScalingType = "FISH_D"))
 parUncMethod = "WHITE-MLE" 
+parUncMethod = "NPB-MVN" 
 
 dgpSetting = DynNets.list_example_dgp_settings(DynNets.GasNetModelDirBin0Rec0_mle()).dgpSetARlowlow
 
@@ -43,7 +44,7 @@ dgpSetting = DynNets.list_example_dgp_settings(DynNets.GasNetModelDirBin0Rec0_ml
 res = filter([:modelTag, :T, :N, :dgp, :S, :m] => (mTag,t,n, d, s, m) -> all((mTag==modelTag, t==T, n==N, d == dgpSetting, s == nSample, m == parUncMethod)), df)
 
 nrow(res) != 1 ? error("$N, $T,  $(size(res))") : res = res[1,:]
-    for nPlot = 1:1
+    for nPlot = 1:10
         if !any(res.errInds[:,nPlot])
             DynNets.plot_filtered_and_conf_bands(res.model, N, res.allfVecT_filt[:,1:end,nPlot], res.allConfBandsFiltPar[:,1:end,:,:,nPlot] ; parDgpTIn=res.allParDgpT[:,1:T,nPlot], confBands2In = res.allConfBandsPar[:,1:end,:,:,nPlot] , offset = 1, indBand = indQuant)
         end
@@ -53,7 +54,9 @@ using Statistics
 using SharedArrays
 # unrestrict static SD estimates
 
-if false
+if true
+
+names(res)
 
 allCovWhite = res.allmvSDUnParEstCovWhite
 covParBoot = cov(vEstSdUnParBootDist')

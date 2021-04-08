@@ -26,7 +26,7 @@ addprocs(nWorkers - nprocs())
     Pkg.instantiate() 
     using ScoreDrivenERGM
     import ScoreDrivenERGM:StaticNets, DynNets
-    import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_mats_sequence, statsFromMat, array2VecGasPar, unrestrict_all_par, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage_parallel, estimate, plot_filtered_and_conf_bands
+    import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_mats_sequence, stats_from_mat, array2VecGasPar, unrestrict_all_par, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage_parallel, estimate, plot_filtered_and_conf_bands
     using ScoreDrivenERGM.Utilities
 
     model_mle = DynNets.GasNetModelDirBin0Rec0_mle()
