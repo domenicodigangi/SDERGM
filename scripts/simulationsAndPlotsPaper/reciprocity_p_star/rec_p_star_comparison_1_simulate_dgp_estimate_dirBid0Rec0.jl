@@ -3,7 +3,7 @@ Simulate various Dgps for dirBin0Rec0 various T N and filter
 """
 
 
-#region import and models
+#region import modules and init workers
 
 using Pkg
 Pkg.activate(".") 
@@ -39,7 +39,7 @@ end
 dgpSetARlowlow, dgpSetARlow, dgpSetARmed, dgpSetARhigh, dgpSetSIN, dgpSetSDlow, dgpSetSD, dgpSetSDhigh = ScoreDrivenERGM.DynNets.list_example_dgp_settings(model_mle)
 
 
-
+# define dictionary with all the different values for each setting of the simulation. The product of all settings will be executed using DrWatson.jl functionalities
 c= Dict{String, Any}()
 c["model"] =[DynNets.GasNetModelDirBin0Rec0_mle(scoreScalingType="FISH_D"), DynNets.GasNetModelDirBin0Rec0_pmle(scoreScalingType="FISH_D")] 
 c["T"] = [100, 300, 600]
@@ -65,9 +65,6 @@ for d in list
 
     Logging.@info("Time sim = $timeSim ,  time save = $timeSave ")
 
-    # res2 =  (;allAT ) |>DrWatson.ntuple2dict |> DrWatson.tostringdict
-    # matsDict = merge(res2, d)
-    # @tagsave( datadir("sims", "sampleDgpFilterSD_sampled_mats", saveName), matsDict)
 
 end
 
