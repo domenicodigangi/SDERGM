@@ -5,7 +5,7 @@ Test script for dirBin0Rec0 model: one parameter for total number of links and o
 
 
 
-import StaticNets: NetModelDirBin0Rec0(), ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, stats_from_mat, get_one_mple, estimate,NetModelDirBin0Rec0, exp_val_stats
+import StaticNets: ErgmDirBin0Rec0(), ergm_par_from_mean_vals,diadProbFromPars , samplSingMatCan, stats_from_mat, get_one_mple, estimate,ErgmDirBin0Rec0, exp_val_stats
 using ErgmRcall
 using PyPlot
 using RCall
@@ -16,7 +16,7 @@ using Utilities
 ErgmRcall.clean_start_RCall()
 ergmTermsString = "edges +  mutual"
 R"""options(warn=-1) """
-model = NetModelDirBin0Rec0()
+model = ErgmDirBin0Rec0()
     
 ##-------------------- Test and COmpare MLE and MPLE estimates
 #Compare for a single value of the parameters
@@ -54,13 +54,13 @@ ax[2].vlines(θ_0, 0, 1, "k")
 ax[2].vlines(η_0, 0, 1, "k")
 ax[2].set_title("mple")
 
-function mle_pmle_comparison_var_Net_size(model::NetModelDirBin0Rec0, netSizes, linkFun, recFun; nSample=30)
+function mle_pmle_comparison_var_Net_size(model::ErgmDirBin0Rec0, netSizes, linkFun, recFun; nSample=30)
     # compare the two estimators over different  par values for the dgp
     nPars = length(netSizes)
     parMmle = zeros(nPars, 2, nSample)
     parMple = zeros(nPars, 2, nSample)
     parDgp = zeros(nPars, 2)
-    model = NetModelDirBin0Rec0()
+    model = ErgmDirBin0Rec0()
     for i=1:nPars
         N = netSizes[i]
         θ_0, η_0 = ergm_par_from_mean_vals(model, linkFun(N), recFun(N), N)
@@ -105,7 +105,7 @@ plot(parMle[1,:], parMple[1,:], ".")
 
 ##----------------------------- Explore logLikelihoods around the estimates
 
-function pseudo_loglikelihood_ddg(Model::NetModelDirBin0Rec0, A, par)
+function pseudo_loglikelihood_ddg(Model::ErgmDirBin0Rec0, A, par)
     θ, η = par
     L, R, N = stats_from_mat(Model, A)
 
@@ -148,7 +148,7 @@ for i=1:3
     ax[2].grid()
 end
 
-function grad(Model::NetModelDirBin0Rec0, A, par)
+function grad(Model::ErgmDirBin0Rec0, A, par)
     θ, η = par
     L, R, N = stats_from_mat(Model, A) 
     z = 1 + 2*exp(θ) + exp(2*θ+η)

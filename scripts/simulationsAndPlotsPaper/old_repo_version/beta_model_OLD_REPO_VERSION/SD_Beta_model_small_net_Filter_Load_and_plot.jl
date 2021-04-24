@@ -16,9 +16,9 @@ using PyCall; pygui(:qt); using PyPlot; pygui(true)
 T = size(dynDegsSam.s)[2]
   for s=1:Nsample
     for t=1:T
-          estFitSS.s[:,t,s] =  StaticNets.identify(StaticNets.NetModelDirBin1(dynDegsSam.s[:,t,s]),
+          estFitSS.s[:,t,s] =  StaticNets.identify(StaticNets.ErgmDirBin1(dynDegsSam.s[:,t,s]),
                                                 estFitSS.s[:,t,s];idType = "firstZero" )
-          filFitGas.s[:,t,s] =  StaticNets.identify(StaticNets.NetModelDirBin1(dynDegsSam.s[:,t,s]),
+          filFitGas.s[:,t,s] =  StaticNets.identify(StaticNets.ErgmDirBin1(dynDegsSam.s[:,t,s]),
                                                 filFitGas.s[:,t,s];idType = "firstZero" )
         end
       rmseSSandGas.s[:,1,s] = sqrt.(meanSq((dynFitDgp - estFitSS.s[:,:,s]).^2,2))

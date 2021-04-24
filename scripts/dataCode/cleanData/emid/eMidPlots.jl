@@ -47,11 +47,11 @@ function plotSingSnapSeq(filtPar_T)
 end
 
 ## Filter and Plot
-estModNpar = DynNets.GasNetModelDirBin1(degsIO_T,estGas[1],[Vector(1:N),ones(Int,N),ones(Int,N)])
+estModNpar = DynNets.SdErgmDirBin1(degsIO_T,estGas[1],[Vector(1:N),ones(Int,N),ones(Int,N)])
 filterParNpar = DynNets.score_driven_filter_or_dgp(estModNpar)[1]
 plotFilter(filterParNpar, "N W Par")
 
-estMod1par = DynNets.GasNetModelDirBin1(degsIO_T,estGas_1GW[1],[ones(Int,N),ones(Int,1),ones(Int,1)])
+estMod1par = DynNets.SdErgmDirBin1(degsIO_T,estGas_1GW[1],[ones(Int,N),ones(Int,1),ones(Int,1)])
 filterPar1par = DynNets.score_driven_filter_or_dgp(estMod1par)[1]
 plotFilter(filterPar1par,"1 W Par")
 filtPar_T,like = DynNets.score_driven_filter_or_dgp(estMod1par)

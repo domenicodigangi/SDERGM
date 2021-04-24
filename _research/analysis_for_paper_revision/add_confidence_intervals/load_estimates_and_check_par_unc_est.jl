@@ -3,9 +3,11 @@ Load estimates from known DGPs and check that the parameter uncertainty is estim
 """
 
 #region import and models
-using Pkg
-Pkg.activate(".") 
-Pkg.instantiate() 
+
+#%%
+using DrWatson
+@quickactivate "ScoreDrivenExponentialRandomGraphs"
+
 using DrWatson
 using DataFrames
 using ScoreDrivenERGM
@@ -20,8 +22,8 @@ using SharedArrays
 import ScoreDrivenERGM:DynNets
 
 
-@elapsed df = collect_results( datadir("sims", "samDgpFiltSD_est"))
-@elapsed df = collect_results( datadir("sims", "samDgpFiltSD_conf"))
+@elapsed df = collect_results( datadir("sims", "dgp&FIl_est"))
+@elapsed df = collect_results( datadir("sims", "dgp&FIl_conf"))
 df["modelTag"] = string.(df["model"]) 
 
 # select results for one set of parameters
@@ -30,12 +32,12 @@ T = 300
 N = 100
 nSample = 50
 indQuant = 1
-modelTag = string(DynNets.GasNetModelDirBin0Rec0_mle(scoreScalingType = "FISH_D"))
-modelTag = string(DynNets.GasNetModelDirBin0Rec0_pmle(scoreScalingType = "FISH_D"))
+modelTag = string(DynNets.SdErgmDirBin0Rec0_mle(scoreScalingType = "FISH_D"))
+modelTag = string(DynNets.SdErgmDirBin0Rec0_pmle(scoreScalingType = "FISH_D"))
 parUncMethod = "WHITE-MLE" 
 parUncMethod = "NPB-MVN" 
 
-dgpSetting = DynNets.list_example_dgp_settings(DynNets.GasNetModelDirBin0Rec0_mle()).dgpSetARlowlow
+dgpSetting = DynNets.list_example_dgp_settings(DynNets.SdErgmDirBin0Rec0_mle()).dgpSetARlowlow
 
 
          

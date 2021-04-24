@@ -44,8 +44,8 @@ while n <= Nsample
         library(network)
         sessionInfo()"
     try
-        obsT,statsT,fVecT = ErgmRcall.sdergmDGPpaper_Rcall(  DynNets.fooGasNetModelDirBinGlobalPseudo, indTvPar ,T,N, UM = UM, B_Re = B_Re,A_Re = A_Re)
-        model = DynNets.GasNetModelDirBinGlobalPseudo(obsT,DynNets.fooGasPar,indTvPar,"")
+        obsT,statsT,fVecT = ErgmRcall.sdergmDGPpaper_Rcall(  DynNets.fooSdErgmDirBinGlobalPseudo, indTvPar ,T,N, UM = UM, B_Re = B_Re,A_Re = A_Re)
+        model = DynNets.SdErgmDirBinGlobalPseudo(obsT,DynNets.fooGasPar,indTvPar,"")
         estPar,convFlag[n],UM_est,startPoint = DynNets.estimate(model;indTvPar = indTvPar, indTargPar = indTargPar)
         obsT_all[n] = obsT
         estPar_all[n] = estPar
@@ -95,7 +95,7 @@ end
 #  for n=1:Nsample
 #      @show(n)
 #       pVals_Nsample[:,n],tmpInfo,staticEst[n] =
-#          DynNets.pValStatic_SDERGM( DynNets.GasNetModelDirBinGlobalPseudo(tmp[:,n],DynNets.fooGasPar,falses(Nterms),""))
+#          DynNets.pValStatic_SDERGM( DynNets.SdErgmDirBinGlobalPseudo(tmp[:,n],DynNets.fooGasPar,falses(Nterms),""))
 #       @show(tmpInfo)
 #      if tvParFromTest
 #          indTvPar =  pVals_Nsample[:,n] .< pValTh
@@ -107,7 +107,7 @@ end
 #      else
 #           indTargPar =BitArray([false,false])
 #      end
-#     model = DynNets.GasNetModelDirBinGlobalPseudo(tmp[:,n],DynNets.fooGasPar,indTvPar,"")
+#     model = DynNets.SdErgmDirBinGlobalPseudo(tmp[:,n],DynNets.fooGasPar,indTvPar,"")
 #
 #     if .!onlyTest
 #     estPar,convFlag[n],UM,startPoint = DynNets.estimate(model;UM =meanSq(estParSS_T[n,:,:],1),indTvPar = indTvPar, indTargPar = indTargPar)
@@ -139,7 +139,7 @@ end
 #      legTex = ["Constant ERGM";"SDERGM"; "Sequence of ERGM"; "DGP"]
 #      for n=1:Nsample
 #      indTvPar = BitArray([true,true])
-#      model = GasNetModelDirBinGlobalPseudo(tmp[:,n],fooGasPar,indTvPar,"")
+#      model = SdErgmDirBinGlobalPseudo(tmp[:,n],fooGasPar,indTvPar,"")
 #      estPar = gasParEst[n] # store gas parameters
 #      gasFiltPar  = filtPar_T_Nsample[:,:,n]
 #      parInd = 1

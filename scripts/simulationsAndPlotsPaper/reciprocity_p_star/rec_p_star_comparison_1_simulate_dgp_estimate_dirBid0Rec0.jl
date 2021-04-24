@@ -24,10 +24,10 @@ addprocs(nWorkers - nprocs())
     Pkg.instantiate() 
     using ScoreDrivenERGM
     import ScoreDrivenERGM:StaticNets, DynNets
-    import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, simulate_and_estimate_parallel
+    import ScoreDrivenERGM.DynNets:SdErgm,SdErgmDirBin0Rec0, simulate_and_estimate_parallel
     using ScoreDrivenERGM.Utilities
 
-    model_mle = DynNets.GasNetModelDirBin0Rec0_mle(scoreScalingType="FISH_D")
+    model_mle = DynNets.SdErgmDirBin0Rec0_mle(scoreScalingType="FISH_D")
 
     indTvPar = trues(2)
     end
@@ -41,7 +41,7 @@ dgpSetARlowlow, dgpSetARlow, dgpSetARmed, dgpSetARhigh, dgpSetSIN, dgpSetSDlow, 
 
 # define dictionary with all the different values for each setting of the simulation. The product of all settings will be executed using DrWatson.jl functionalities
 c= Dict{String, Any}()
-c["model"] =[DynNets.GasNetModelDirBin0Rec0_mle(scoreScalingType="FISH_D"), DynNets.GasNetModelDirBin0Rec0_pmle(scoreScalingType="FISH_D")] 
+c["model"] =[DynNets.SdErgmDirBin0Rec0_mle(scoreScalingType="FISH_D"), DynNets.SdErgmDirBin0Rec0_pmle(scoreScalingType="FISH_D")] 
 c["T"] = [100, 300, 600]
 c["N"] = [50, 100, 500]
 c["dgpSettings"] = [dgpSetARlowlow]
@@ -59,9 +59,9 @@ for d in list
 
     estDict = merge(res1, d)
 
-    saveName = replace.( savename(d, "jld2";allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.GasNetModel) ), r"[\"]" => "")
+    saveName = replace.( savename(d, "jld2";allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.SdErgm) ), r"[\"]" => "")
 
-    timeSave = @elapsed save( datadir("sims", "samDgpFiltSD_est", saveName), estDict)
+    timeSave = @elapsed save( datadir("sims", "dgp&FIl_est", saveName), estDict)
 
     Logging.@info("Time sim = $timeSim ,  time save = $timeSave ")
 

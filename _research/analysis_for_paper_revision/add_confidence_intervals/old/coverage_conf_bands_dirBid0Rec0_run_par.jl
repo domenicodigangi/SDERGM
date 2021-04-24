@@ -26,11 +26,11 @@ addprocs(nWorkers - nprocs())
     Pkg.instantiate() 
     using ScoreDrivenERGM
     import ScoreDrivenERGM:StaticNets, DynNets
-    import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_mats_sequence, stats_from_mat, array2VecGasPar, unrestrict_all_par, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage_parallel, estimate, plot_filtered_and_conf_bands
+    import ScoreDrivenERGM.DynNets:SdErgm,SdErgmDirBin0Rec0, sample_mats_sequence, stats_from_mat, array2VecGasPar, unrestrict_all_par, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage_parallel, estimate, plot_filtered_and_conf_bands
     using ScoreDrivenERGM.Utilities
 
-    model_mle = DynNets.GasNetModelDirBin0Rec0_mle()
-    model_pmle = DynNets.GasNetModelDirBin0Rec0_pmle()
+    model_mle = DynNets.SdErgmDirBin0Rec0_mle()
+    model_pmle = DynNets.SdErgmDirBin0Rec0_pmle()
     indTvPar = trues(2)
 
     end
@@ -63,7 +63,7 @@ for d in dict_list(c)
 
     resDict = merge(res, d)
     
-    saveName = replace.( savename(d, "jld";allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.GasNetModel) ), r"[\"]" => "")
+    saveName = replace.( savename(d, "jld";allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.SdErgm) ), r"[\"]" => "")
 
    @tagsave( datadir("sims", "cofBandsCover", saveName), resDict)
 

@@ -57,11 +57,11 @@ close()
 
 
 #Estimate gas model on train sample
-allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.NetModelDirBin1(meanSq(degsIO_T[:,1:Ttrain],2)) )
- modGasDirBin1_eMidTrain = DynNets.GasNetModelDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG")
+allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.ErgmDirBin1(meanSq(degsIO_T[:,1:Ttrain],2)) )
+ modGasDirBin1_eMidTrain = DynNets.SdErgmDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG")
  estTargDirBin1_eMidTrain,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS )
  gasParEstOnTrain = estTargDirBin1_eMidTrain
- GasforeFitTrain,~ = DynNets.score_driven_filter_or_dgp( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+ GasforeFitTrain,~ = DynNets.score_driven_filter_or_dgp( DynNets.SdErgmDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
  gasforeFitTrain = Float64.(GasforeFitTrain)
 
 

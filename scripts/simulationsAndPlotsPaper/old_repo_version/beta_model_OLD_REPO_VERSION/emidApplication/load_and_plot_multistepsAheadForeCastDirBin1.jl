@@ -40,11 +40,11 @@ matY_T = YeMidWeekly_T[:,:,3:end]
 #  S_T = [sum(matY_T[:,:,t]) for t=1:T]
 
 #Estimate gas model on train sample
-allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.NetModelDirBin1(meanSq(degsIO_T[:,1:Ttrain],2)) )
- modGasDirBin1_eMidTrain = DynNets.GasNetModelDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG")
+allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.ErgmDirBin1(meanSq(degsIO_T[:,1:Ttrain],2)) )
+ modGasDirBin1_eMidTrain = DynNets.SdErgmDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG")
  estTargDirBin1_eMidTrain,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS )
  gasParEstOnTrain = estTargDirBin1_eMidTrain
- modAllObs =  DynNets.GasNetModelDirBin1(degsIO_T,"FISHER-DIAG")
+ modAllObs =  DynNets.SdErgmDirBin1(degsIO_T,"FISHER-DIAG")
  GasforeFit,~ = DynNets.score_driven_filter_or_dgp(modAllObs,[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
  gasforeFit = Float64.(GasforeFit)
 
@@ -155,7 +155,7 @@ close()
 #
 #     @show Nlinksnnc =sum(noDiagIndnnc)
 #     # forecast fitnesses using Gas parameters and observations
-#     foreFit,~ = score_driven_filter_or_dgp( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+#     foreFit,~ = score_driven_filter_or_dgp( DynNets.SdErgmDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
 #
 #     TRoc = Ttest-1
 #     #storage variables
@@ -172,7 +172,7 @@ close()
 #         indZeroMat = indZeroR.*indZeroC
 #     #    println(sum(indZeroMat)/(length(indZeroC)^2))
 #
-#         expMat = StaticNets.expMatrix(StaticNets.fooNetModelDirBin1,foreFit[:,Ttrain+1:end][:,t])
+#         expMat = StaticNets.expMatrix(StaticNets.fooErgmDirBin1,foreFit[:,Ttrain+1:end][:,t])
 #
 #          tmpAllMat,~ = multiSteps_predict_score_driven_par(modGasDirBin1_eMidTrain,N,foreFit[:,Ttrain+1:end][:,t-Nsteps],
 #             gasParEstOnTrain[1],gasParEstOnTrain[2],gasParEstOnTrain[3],Nsample,Nsteps)

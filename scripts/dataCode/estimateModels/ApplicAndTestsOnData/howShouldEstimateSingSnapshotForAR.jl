@@ -23,8 +23,8 @@ function estimate(Model::SnapSeqNetDirBin1; degsIO_T::Array{<:Real,2}=Model.obsT
    prog = 0
    for t = 1:T
        degs_t = degsIO_T[:,t]
-       UnPar_t , Niter  = estimate(fooNetModelDirBin1; degIO = degs_t , targetErr =  targetErr,identIter=identIter)
-       identPost?UnParT[:,t] = identify!(fooNetModelDirBin1,UnPar_t): UnParT[:,t] = UnPar_t
+       UnPar_t , Niter  = estimate(fooErgmDirBin1; degIO = degs_t , targetErr =  targetErr,identIter=identIter)
+       identPost?UnParT[:,t] = identify!(fooErgmDirBin1,UnPar_t): UnParT[:,t] = UnPar_t
        round(t/T,2)>prog ? (prog=round(t/T,2);println((prog,Niter)) ):()
    end
    if uppercase(zeroDegFit) == "INF"
@@ -41,7 +41,7 @@ function estimate(Model::SnapSeqNetDirBin1; degsIO_T::Array{<:Real,2}=Model.obsT
    end
  return UnParT
 end
-function bigNegParFun(Model::NetModelDirBin1,N::Int; smallProb = 1e-1)
+function bigNegParFun(Model::ErgmDirBin1,N::Int; smallProb = 1e-1)
     #define a number big enough to play the role of Inf for
     # purposes of sampling N(N-1) bernoulli rvs with prob 1/(1+exp(  bigNumb))
     # prob of sampling degree > 0 (N-1)/(1+exp(bigNumb)) < 1e-6
@@ -145,7 +145,7 @@ function forecastEvalAR1(allFit::Array{Float64,2})
     Nobs = NmaxLinks*T
     for t=2:Ttest
         adjMat =  AeMidWeekly_Active_T[:,:,Ttrain+1:end][:,:,t]
-        expMat = expMatrix(fooNetModelDirBin1,foreFit[:,t])
+        expMat = expMatrix(fooErgmDirBin1,foreFit[:,t])
         foreVals[lastInd:lastInd+NmaxLinks-1] = expMat[noDiagInd]
         realVals[lastInd:lastInd+NmaxLinks-1] = adjMat[noDiagInd]
 

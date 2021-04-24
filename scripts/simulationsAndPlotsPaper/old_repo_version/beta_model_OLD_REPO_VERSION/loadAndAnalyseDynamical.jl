@@ -159,9 +159,9 @@ rmseSSandGas[i,d][indsTVnodes[i,d],2,:]
 indN,s,d = 2,2,2
  parGas,~ =  DynNets.estimateTarg(modGasDirBin1;SSest = estFitSS[indN,s,d])
  degsIO_T = dynDegsSam[indN,s,d]
- modGasDirBin1 = DynNets.GasNetModelDirBin1(degsIO_T)
+ modGasDirBin1 = DynNets.SdErgmDirBin1(degsIO_T)
  parGas,~ =  DynNets.estimateTarg(modGasDirBin1;SSest = estFitSS[indN,s,d])
- gasFiltFit,~ = DynNets.score_driven_filter_or_dgp( DynNets.GasNetModelDirBin1(degsIO_T),[parGas[1];parGas[2];0.05])
+ gasFiltFit,~ = DynNets.score_driven_filter_or_dgp( DynNets.SdErgmDirBin1(degsIO_T),[parGas[1];parGas[2];0.05])
  sqrt.(meanSq((dynFitDgp[indN,s,d] - gasFiltFit).^2,2))
 
 plot(gasFiltFit')
@@ -174,7 +174,7 @@ for i=[1,20]
 end
 #
 degsDgp = zeros(dynFitDgp)
- for t = 1:T degsDgp[:,t] =  expValStats(fooNetModelDirBin1,dynFitDgp[:,t] ) end
+ for t = 1:T degsDgp[:,t] =  expValStats(fooErgmDirBin1,dynFitDgp[:,t] ) end
  indPlot = indsTVnodes# [1,round(Int,N/2),N]
  fig, ax = subplots(2,1)
  ax[1,1][:plot](dynFitDgp[indPlot,:]')

@@ -15,7 +15,9 @@ using SharedArrays
 using Statistics
 using ScoreDrivenERGM
 using TableView
+using Blink
 
+viewtab(df) = body!(Window(), showtable(df))
 #endregion
 
 
@@ -23,26 +25,55 @@ using TableView
 
 
 
-@elapsed dfEst = collect_results( datadir("sims", "samDgpFiltSD_est")) 
+@elapsed dfEst = collect_results( datadir("sims", "dgp&FIl_est")) 
 dfEst["modelTag"] = string.(dfEst["model"]) 
 
 df = dfEst
 
 df = df[getfield.(dfEst.model, :scoreScalingType) .== "FISH_D",:] 
 df.avg_rmse_filt = 0.0
+df.avg_rmse_filt_SS = 0.0
 
-for row in eachrow(df)
-    rmse = dropdims(sqrt.(mean((row.allParDgpT .- row.allfVecT_filt).^2,dims=2)), dims=2)
+df.allfVecT_filt_SS = [zeros(size(df[i,:].allfVecT_filt)) for i =1:nrow(df)]
+
+res = df[3,:]
+res.T
+res.modelTag
+
+
+for (indRow,res) in enumerate(eachrow(df))
+    @show indRow
+    if !contains( res.modelTag, "pmle")
+        for t=1:res.T, n in 1:length(res.allObsT)
+            res.allfVecT_filt_SS[:, t, n] = StaticNets.estimate(res.model.staticModel, res.allObsT[n][t]... ) 
+
+        end
+            rmse = dropdims(sqrt.(mean((res.allParDgpT .- res.allfVecT_filt_SS).^2,dims=2)), dims=2)
+
+            avg_rmse = mean(rmse)
+
+            res.avg_rmse_filt_SS = avg_rmse
+    end
+    rmse = dropdims(sqrt.(mean((res.allParDgpT .- res.allfVecT_filt).^2,dims=2)), dims=2)
     avg_rmse = mean(rmse)
 
-    row.avg_rmse_filt = avg_rmse
+    res.avg_rmse_filt = avg_rmse
 
 end
 
+dfRes = df[[:modelTag, :dgpSettings,:avg_rmse_filt_SS, :avg_rmse_filt, :T, :N]]
+filter!(:dgpSettings => x->x.type == "AR" ,dfRes)
+viewtab(dfRes)
 
-showtable(df[[:model, :dgpSettings, :avg_rmse_filt]])
+df
 
-df.avg_rmse_filt
+dfPlot = filter(:T => x-> x in [100, 300, 600] ,dfRes)
+
+dfp = filter([:N, :modelTag] => (n, m)-> ((n == 50) & contains(m, "pmle")) ,dfPlot)
+plot(dfp.T, dfp.avg_rmse_filt)
+dfp = filter([:N, :modelTag] => (n, m)-> ((n == 50) & !contains(m, "pmle")) ,dfPlot)
+plot(dfp.T, dfp.avg_rmse_filt)
+
 
 begin
 
@@ -52,12 +83,12 @@ limitSample =50
 indB = 1
 tVals = [300]
 nVals = [100  ]
-model = DynNets.GasNetModelDirBin0Rec0_mle(scoreScalingType="FISH_D")
-model = DynNets.GasNetModelDirBin0Rec0_pmle(scoreScalingType="FISH_D")
-dgpSetting = DynNets.list_example_dgp_settings(DynNets.GasNetModelDirBin0Rec0_mle()).dgpSetARlowlow
+model = DynNets.SdErgmDirBin0Rec0_mle(scoreScalingType="FISH_D")
+model = DynNets.SdErgmDirBin0Rec0_pmle(scoreScalingType="FISH_D")
+dgpSetting = DynNets.list_example_dgp_settings(DynNets.SdErgmDirBin0Rec0_mle()).dgpSetARlowlow
 
 
-modelTags = [DynNets.name(model)] # ["GasNetModelDirBin0Rec0_mle(Bool[1, 1], scal = HESS_D)"]# unique(df["modelTag"])
+modelTags = [DynNets.name(model)] # ["SdErgmDirBin0Rec0_mle(Bool[1, 1], scal = HESS_D)"]# unique(df["modelTag"])
 # modelTags =unique(df["modelTag"])
 nNVals = length(nVals)
 nTVals = length(tVals)

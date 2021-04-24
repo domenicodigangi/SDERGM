@@ -47,11 +47,11 @@ sizeLab = 30
  plt[:axvline](x=Ttrain,color = "r",linestyle = "--")
 
 #Estimate gas model on train sample
-allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.NetModelDirBin1(meanSq(degsIO_T[:,1:Ttrain],2)) )
- modGasDirBin1_eMidTrain = DynNets.GasNetModelDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG")
+allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.ErgmDirBin1(meanSq(degsIO_T[:,1:Ttrain],2)) )
+ modGasDirBin1_eMidTrain = DynNets.SdErgmDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG")
  estTargDirBin1_eMidTrain,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS )
  gasParEstOnTrain = estTargDirBin1_eMidTrain
- GasforeFit,~ = DynNets.score_driven_filter_or_dgp( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+ GasforeFit,~ = DynNets.score_driven_filter_or_dgp( DynNets.SdErgmDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
  gasforeFit = Float64.(GasforeFit)
 
 
@@ -105,11 +105,11 @@ N = length(matAP_T[1,:,1])
     degsIOP_T = [sumSq(matAP_T,2);sumSq(matAP_T,1)]
 
  allFitSS =   StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(degsIOP_T); identPost = false,identIter= true,targetErr = 1e-6 )
- allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.NetModelDirBin1(meanSq(degsIOP_T[:,1:Ttrain],2)) )
- modGasDirBin1_eMidTrain = DynNets.GasNetModelDirBin1(degsIOP_T[:,1:Ttrain],"FISHER-DIAG")
+ allFitConstTrain,~,~ =  StaticNets.estimate( StaticNets.ErgmDirBin1(meanSq(degsIOP_T[:,1:Ttrain],2)) )
+ modGasDirBin1_eMidTrain = DynNets.SdErgmDirBin1(degsIOP_T[:,1:Ttrain],"FISHER-DIAG")
  estTargDirBin1_eMidTrain,~ = DynNets.estimateTarg(modGasDirBin1_eMidTrain;SSest = allFitSS )
  gasParEstOnTrain = estTargDirBin1_eMidTrain
- GasforeFit,~ = DynNets.score_driven_filter_or_dgp( DynNets.GasNetModelDirBin1(degsIOP_T),
+ GasforeFit,~ = DynNets.score_driven_filter_or_dgp( DynNets.SdErgmDirBin1(degsIOP_T),
                     [gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
 
  #Nconst,isConIn,isConOut = defineConstDegs(degsIOP_T[:,1:Ttrain];thVarConst = thVarConst )

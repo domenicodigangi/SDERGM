@@ -14,7 +14,7 @@ Nrange = 50:50:100#100:150#800
 Nsample = 5
 degMin = 30
 degMax = 30
-function simulAndEstVarN(model::NetModelDirBin1,Nrange::StepRange{Int,Int},Nsample::Int,degMin::Int,degMax::Int)
+function simulAndEstVarN(model::ErgmDirBin1,Nrange::StepRange{Int,Int},Nsample::Int,degMin::Int,degMax::Int)
     density=zeros(length(Nrange),3)
     dgpFits = Array{Array{Float64,1},2}(length(Nrange),3 )
     #generate multiple versions of the degree sequences for the dgp
@@ -37,12 +37,12 @@ function simulAndEstVarN(model::NetModelDirBin1,Nrange::StepRange{Int,Int},Nsamp
         Nn = Nrange[n]
         for i=1:size(dgpFits)[2]
             # sample the dgpFits
-            matSamp =  StaticNets.sampl(NetModelDirBin1(dgpFits[n,i]),Nsample;  parGroupsIO = dgpFits[n,i])
+            matSamp =  StaticNets.sampl(ErgmDirBin1(dgpFits[n,i]),Nsample;  parGroupsIO = dgpFits[n,i])
             degsSamp = [sumSq(matSamp,2);sumSq(matSamp,1)]
             #println(degsSamp   )
             tmpEst = zeros(2Nn,Nsample)
             for s=1:Nsample
-                tmpEst[:,s],~ = StaticNets.estimate(fooNetModelDirBin1,degIO = degsSamp[:,s])
+                tmpEst[:,s],~ = StaticNets.estimate(fooErgmDirBin1,degIO = degsSamp[:,s])
 
             end
             estFits[n,i] = tmpEst
@@ -52,23 +52,23 @@ function simulAndEstVarN(model::NetModelDirBin1,Nrange::StepRange{Int,Int},Nsamp
  return dgpFits,estFits
 end
 
-function simulAndEstVarN(model::NetModelDirBin1,dgpDegs::Array{<:Real,1},Nsample::Int)
+function simulAndEstVarN(model::ErgmDirBin1,dgpDegs::Array{<:Real,1},Nsample::Int)
     # if the degree sequence is given as input use that
-    dgpFits,~,~ = meanFit ,~ = StaticNets.estimate(StaticNets.NetModelDirBin1(dgpDegs),degIO = dgpDegs  )
+    dgpFits,~,~ = meanFit ,~ = StaticNets.estimate(StaticNets.ErgmDirBin1(dgpDegs),degIO = dgpDegs  )
     N2 = length(dgpDegs)
     estFits = Array{Float64,2}(N2, Nsample )
     estFits = zeros(N2,Nsample)
-    matSamp = StaticNets.sampl(NetModelDirBin1(dgpFits),Nsample;  parGroupsIO = dgpFits)
+    matSamp = StaticNets.sampl(ErgmDirBin1(dgpFits),Nsample;  parGroupsIO = dgpFits)
     degsSamp = [sumSq(matSamp,2);sumSq(matSamp,1)]
         for s=1:Nsample
-            estFits[:,s],~ = StaticNets.estimate(fooNetModelDirBin1,degIO = degsSamp[:,s])
+            estFits[:,s],~ = StaticNets.estimate(fooErgmDirBin1,degIO = degsSamp[:,s])
             println(s)
         end
  return dgpFits,estFits
 end
 
 # sample and estimate networks of increasing size AND STORE DATA
-#@time dgpFits,estFits = simulAndEstVarN(fooNetModelDirBin1,Nrange,Nsample,degMin,degMax)
+#@time dgpFits,estFits = simulAndEstVarN(fooErgmDirBin1,Nrange,Nsample,degMin,degMax)
 
 # Load data and plot results
 save_fold = "./data/estimatesTest/asympTest/"
@@ -79,9 +79,9 @@ dgpFits = data["dgpFits"]
 N,Scal = size(dgpFits)
 Sam = size(estFits[1,1])[2]
 expDegsDgp = copy(dgpFits)
-for n=1:N,scal=1:Scal expDegsDgp[n,scal] = expValStats(fooNetModelDirBin1,dgpFits[n,scal]) end
+for n=1:N,scal=1:Scal expDegsDgp[n,scal] = expValStats(fooErgmDirBin1,dgpFits[n,scal]) end
 expDegsEst = copy(estFits)
-for n=1:N,scal=1:Scal,sam =1:Sam  expDegsEst[n,scal][:,sam] = expValStats(fooNetModelDirBin1,estFits[n,scal][:,sam]) end
+for n=1:N,scal=1:Scal,sam =1:Sam  expDegsEst[n,scal][:,sam] = expValStats(fooErgmDirBin1,estFits[n,scal][:,sam]) end
 # plot the Degrees in the dgp
 for n=1:N
     scal = 3
@@ -127,7 +127,7 @@ degsIO_T = [sumSq(AeMidWeekly_T,2);sumSq(AeMidWeekly_T,1)]
 #plot(sumSq(degsIO_T.>0,1)
 meanDegsEmid = meanSq(degsIO_T,2)
 dgpDegs =  round.(Int,meanDegsEmid)
-dgpFits,estFits = simulAndEstVarN(fooNetModelDirBin1,dgpDegs,Sam)
+dgpFits,estFits = simulAndEstVarN(fooErgmDirBin1,dgpDegs,Sam)
 #plot empirical cumulative distribution
 dgpDegDistr = ecdf(dgpDegs)
  plot(0:0.1:maximum(dgpDegs),dgpDegDistr(0:0.1:maximum(dgpDegs)),".-")
@@ -135,9 +135,9 @@ dgpDegDistr = ecdf(dgpDegs)
  xticks(0:maximum(dgpDegs))
  xlabel("Degree")
  ylabel("emprical distribution")
-expDegsDgp = expValStats(fooNetModelDirBin1,dgpFits)
+expDegsDgp = expValStats(fooErgmDirBin1,dgpFits)
 expDegsEst = copy(estFits)
-for sam =1:Sam  expDegsEst[:,sam] = expValStats(fooNetModelDirBin1,estFits[:,sam]) end
+for sam =1:Sam  expDegsEst[:,sam] = expValStats(fooErgmDirBin1,estFits[:,sam]) end
 diff =  (expDegsDgp .- expDegsEst)
 diffRel = diff./expDegsDgp
  diffRel[expDegsDgp.==0,:] = diff[expDegsDgp.==0,:]

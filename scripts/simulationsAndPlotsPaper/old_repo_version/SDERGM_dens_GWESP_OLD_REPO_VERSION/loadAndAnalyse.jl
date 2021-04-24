@@ -26,9 +26,9 @@ dgpFits = data["dgpFits"]
 N,Scal = size(dgpFits)
 Sam = size(estFits[1,1])[2]
 expDegsDgp = copy(dgpFits)
-for n=1:N,scal=1:Scal expDegsDgp[n,scal] = expValStats(fooNetModelDirBin1,dgpFits[n,scal]) end
+for n=1:N,scal=1:Scal expDegsDgp[n,scal] = expValStats(fooErgmDirBin1,dgpFits[n,scal]) end
 expDegsEst = copy(estFits)
-for n=1:N,scal=1:Scal,sam =1:Sam  expDegsEst[n,scal][:,sam] = expValStats(fooNetModelDirBin1,estFits[n,scal][:,sam]) end
+for n=1:N,scal=1:Scal,sam =1:Sam  expDegsEst[n,scal][:,sam] = expValStats(fooErgmDirBin1,estFits[n,scal][:,sam]) end
 
 # plot the Degrees in the dgp
 for n=1:N

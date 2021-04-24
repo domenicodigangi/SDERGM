@@ -20,12 +20,12 @@ using LinearAlgebra
 
 
 
-@elapsed dfEst = collect_results( datadir("sims", "samDgpFiltSD_est")) 
+@elapsed dfEst = collect_results( datadir("sims", "dgp&FIl_est")) 
 dfEst["modelTag"] = string.(dfEst["model"]) 
 
 df = dfEst
 
-# @elapsed dfConf = collect_results( datadir("sims", "samDgpFiltSD_conf")) 
+# @elapsed dfConf = collect_results( datadir("sims", "dgp&FIl_conf")) 
 # dfConf["modelTag"] = string.(dfConf["model"]) 
 
 # @elapsed df = antijoin(dfEst, dfConf, on = [:allParDgpT, :modelTag])
@@ -145,9 +145,9 @@ for estResRow in eachrow(df)
 
             # loadPath = estResRow.path
 
-            saveName = replace.( savename(coverDict, "jld2"; allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.GasNetModel) ), r"[\"]" => "") #loadPath[findlast("\\", loadPath)[end]+1:end]
+            saveName = replace.( savename(coverDict, "jld2"; allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.SdErgm) ), r"[\"]" => "") #loadPath[findlast("\\", loadPath)[end]+1:end]
 
-            timeSave = save( datadir("sims", "samDgpFiltSD_conf", saveName), coverDict)
+            timeSave = save( datadir("sims", "dgp&FIl_conf", saveName), coverDict)
 
             Logging.@info(" errRatio = $(mean(errInds)) , time = $timeConf")
 
@@ -165,9 +165,9 @@ end
 # N = 100
 # nSample = 100
 
-# modelTag = string(DynNets.GasNetModelDirBin0Rec0_pmle("HESS_D"))
+# modelTag = string(DynNets.SdErgmDirBin0Rec0_pmle("HESS_D"))
 
-# dgpSetting = DynNets.list_example_dgp_settings(DynNets.GasNetModelDirBin0Rec0_mle()).dgpSetSDhigh
+# dgpSetting = DynNets.list_example_dgp_settings(DynNets.SdErgmDirBin0Rec0_mle()).dgpSetSDhigh
 
 
 # res = filter([:modelTag, :T, :N, :dgpSettings, :nSample] => (m,t,n, d, s) -> all((m==modelTag, t==T, n==N, d == dgpSetting, s == nSample)), df)[1,:]

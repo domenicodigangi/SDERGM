@@ -22,23 +22,23 @@ addprocs(4)
                       dynFitDgp = zeros(10,50), indsTVnodes=falses(10))
 
        if sum(dynFitDgp)==0
-           dynFitDgp,indsTVnodes =  StaticNets.dgpDynamic(StaticNets.fooNetModelDirBin1,dynType,N,T;
+           dynFitDgp,indsTVnodes =  StaticNets.dgpDynamic(StaticNets.fooErgmDirBin1,dynType,N,T;
                                                NTV = NTV,degIOUncMeans = degIOUncMeans,degb = degb  )
        end
        dynExpDegsDgp = zero(dynFitDgp)
-       for t =1:T  dynExpDegsDgp[:,t] = StaticNets.expValStats(StaticNets.fooNetModelDirBin1,dynFitDgp[:,t]) end
+       for t =1:T  dynExpDegsDgp[:,t] = StaticNets.expValStats(StaticNets.fooErgmDirBin1,dynFitDgp[:,t]) end
        # sanmple dynamical networks from dgp fitnesses
        dynDegsSam = zeros(size(dynFitDgp))
        for t=1:T
-           matSamp = StaticNets.sampl(StaticNets.NetModelDirBin1(dynFitDgp[:,t]),1;  parGroupsIO = dynFitDgp[:,t])
+           matSamp = StaticNets.sampl(StaticNets.ErgmDirBin1(dynFitDgp[:,t]),1;  parGroupsIO = dynFitDgp[:,t])
            dynDegsSam[:,t] = [sumSq(matSamp,2);sumSq(matSamp,1)]
        end
        #println(dynDegsSam[:,4])
        estFitSS =  StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(dynDegsSam); identPost = true,identIter= false,targetErr = 0.001 )
        for t=1:T
-           dynFitDgp[:,t] =  StaticNets.identify(StaticNets.NetModelDirBin1(dynDegsSam[:,t]),
+           dynFitDgp[:,t] =  StaticNets.identify(StaticNets.ErgmDirBin1(dynDegsSam[:,t]),
                                               dynFitDgp[:,t]; idType = "equalIOsums" )
-           estFitSS[:,t] =  StaticNets.identify(StaticNets.NetModelDirBin1(dynDegsSam[:,t]),
+           estFitSS[:,t] =  StaticNets.identify(StaticNets.ErgmDirBin1(dynDegsSam[:,t]),
                                               estFitSS[:,t]; idType =  "equalIOsums")
        end
        return dynFitDgp,dynDegsSam,estFitSS,indsTVnodes
@@ -75,7 +75,7 @@ end
                simWrap1(N,T,NTV;dynType =dgpType,degIOUncMeans =unifDeg*ones(2N),degb = degb, dynFitDgp = dynFitDgp,indsTVnodes = indsTVnodes)
        fooPar =[zeros(2N), zeros(2N) ,zeros(2N)]# [zeros(2N),zeros(1),zeros(1)]#
        indsGroups = [Int.(1:2N),Int.(1:2N)] #[Int.(1:2N),ones(2N)] #
-       modGasDirBin1 = DynNets.GasNetModelDirBin1(degsIO_T, fooPar, indsGroups,"FISHER-DIAG")
+       modGasDirBin1 = DynNets.SdErgmDirBin1(degsIO_T, fooPar, indsGroups,"FISHER-DIAG")
 
        rmseSSandGas[:,1,s] =sqrt.(meanSq((dynFitDgp - estFitSS_T).^2,2))
        estFitSS[:,:,s] = estFitSS_T

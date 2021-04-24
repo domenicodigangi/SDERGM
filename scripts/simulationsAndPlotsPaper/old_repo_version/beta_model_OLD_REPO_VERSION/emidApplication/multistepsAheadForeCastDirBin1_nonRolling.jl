@@ -41,7 +41,7 @@ initWorkers()
 
 #select links among largest banks in training sample
 remMat =squeeze(prod(.!matA_T,3),3)#
-  modAllObs = DynNets.GasNetModelDirBin1(degsIO_T,"FISHER-DIAG")
+  modAllObs = DynNets.SdErgmDirBin1(degsIO_T,"FISHER-DIAG")
   sizeLeg = 15
   legTex = []
   valsNsample = [5 10 20 30] #Vector(5:10:106)
@@ -204,7 +204,7 @@ end
 #
 #     @show Nlinksnnc =sum(noDiagIndnnc)
 #     # forecast fitnesses using Gas parameters and observations
-#     foreFit,~ = score_driven_filter_or_dgp( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+#     foreFit,~ = score_driven_filter_or_dgp( DynNets.SdErgmDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
 #
 #     TRoc = Ttest-1
 #     #storage variables
@@ -221,7 +221,7 @@ end
 #         indZeroMat = indZeroR.*indZeroC
 #     #    println(sum(indZeroMat)/(length(indZeroC)^2))
 #
-#         expMat = StaticNets.expMatrix(StaticNets.fooNetModelDirBin1,foreFit[:,Ttrain+1:end][:,t])
+#         expMat = StaticNets.expMatrix(StaticNets.fooErgmDirBin1,foreFit[:,Ttrain+1:end][:,t])
 #
 #          tmpAllMat,~ = multiSteps_predict_score_driven_par(modGasDirBin1_eMidTrain,N,foreFit[:,Ttrain+1:end][:,t-Nsteps],
 #             gasParEstOnTrain[1],gasParEstOnTrain[2],gasParEstOnTrain[3],Nsample,Nsteps)

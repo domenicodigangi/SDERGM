@@ -9,7 +9,7 @@ using ScoreDrivenERGM
 
 import ScoreDrivenERGM:StaticNets, DynNets
 
-import ScoreDrivenERGM.DynNets:GasNetModel,GasNetModelDirBin0Rec0, sample_mats_sequence, stats_from_mat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
+import ScoreDrivenERGM.DynNets:SdErgm,SdErgmDirBin0Rec0, sample_mats_sequence, stats_from_mat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
 using ScoreDrivenERGM.Utilities
 
 using PyPlot
@@ -24,8 +24,8 @@ using Statistics
 
 using JLD2
 
-model_mle = DynNets.GasNetModelDirBin0Rec0_mle()
-model_pmle = DynNets.GasNetModelDirBin0Rec0_pmle()
+model_mle = DynNets.SdErgmDirBin0Rec0_mle()
+model_pmle = DynNets.SdErgmDirBin0Rec0_pmle()
 indTvPar = trues(2)
 
 end

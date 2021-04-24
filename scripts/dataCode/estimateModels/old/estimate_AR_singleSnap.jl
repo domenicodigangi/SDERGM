@@ -24,13 +24,13 @@ function estimate(Model::SnapSeqNetDirBin1; degsIO_T::Array{<:Real,2}=Model.obsT
    prog = 0
    for t = 1:T
        degs_t = degsIO_T[:,t]
-       UnParT[:,t]  = identify!(fooNetModelDirBin1,estimate(fooNetModelDirBin1; degIO = degs_t , targetErr =  targetErr)[1])
+       UnParT[:,t]  = identify!(fooErgmDirBin1,estimate(fooErgmDirBin1; degIO = degs_t , targetErr =  targetErr)[1])
        round(t/T,2)>prog ? (prog=round(t/T,2);println(prog) ):()
    end
  return UnParT
 end
 
-function bigNegParFun(Model::NetModelDirBin1,N::Int; smallProb = 1e-1)
+function bigNegParFun(Model::ErgmDirBin1,N::Int; smallProb = 1e-1)
     #define a number big enough to play the role of Inf for
     # purposes of sampling N(N-1) bernoulli rvs with prob 1/(1+exp(  bigNumb))
     # prob of sampling degree > 0 (N-1)/(1+exp(bigNumb)) < 1e-6
@@ -74,7 +74,7 @@ cor(x,y)
 
 ##
 degIO = degsIO_T[:,1]
-parUn,it = estimate(fooNetModelDirBin1; degIO = degIO , targetErr =  1e-15)
+parUn,it = estimate(fooErgmDirBin1; degIO = degIO , targetErr =  1e-15)
 
 
 

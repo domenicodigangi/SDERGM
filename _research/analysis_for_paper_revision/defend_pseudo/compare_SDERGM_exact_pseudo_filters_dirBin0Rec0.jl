@@ -1,7 +1,7 @@
 
 
 """
-Script for comparison of two versions of  GasNetModelDirBin0Rec0, i.e. one parameter for total number of links and one for reciprocity, a version based on MLE and one on PMLE
+Script for comparison of two versions of  SdErgmDirBin0Rec0, i.e. one parameter for total number of links and one for reciprocity, a version based on MLE and one on PMLE
 
 To Do: 
 
@@ -17,14 +17,14 @@ using ScoreDrivenERGM.Utilities
 using ScoreDrivenERGM.Scalings
 
 using StaticNets:ergm_par_from_mean_vals
-using DynNets:fooGasNetModelDirBin0Rec0_mle, sample_est_mle_pmle, dgp_missp, GasNetModelDirBin0Rec0_mle
+using DynNets:fooSdErgmDirBin0Rec0_mle, sample_est_mle_pmle, dgp_missp, SdErgmDirBin0Rec0_mle
 
-import StaticNets: NetModelDirBin0Rec0(), ergm_par_from_mean_vals,exp_val_stats, diadProbFromPars, samplSingMatCan, stats_from_mat
+import StaticNets: ErgmDirBin0Rec0(), ergm_par_from_mean_vals,exp_val_stats, diadProbFromPars, samplSingMatCan, stats_from_mat
 
 
 
-model_mle = fooGasNetModelDirBin0Rec0_mle
-staModel = NetModelDirBin0Rec0()
+model_mle = fooSdErgmDirBin0Rec0_mle
+staModel = ErgmDirBin0Rec0()
 
 
 ## Search an appropriate dgp, i.e. one that stays away form physical bounds
@@ -94,9 +94,9 @@ scaled_sin_sample_est_mle_pmle(sparseAlphaScal, 100, T, 2, regimeString = "Spars
 """
 for a single misspecified dgp compare mle and mple rmse for varying network sizes 
 """
-function scaling_comparison(model_mle::GasNetModelDirBin0Rec0_mle, Nvals, alphaScal, nSample, T; plotFlag = false, regimeString="")
+function scaling_comparison(model_mle::SdErgmDirBin0Rec0_mle, Nvals, alphaScal, nSample, T; plotFlag = false, regimeString="")
     
-    staModel = NetModelDirBin0Rec0()
+    staModel = ErgmDirBin0Rec0()
 
     rmse_mle = []
     rmse_pmle = []

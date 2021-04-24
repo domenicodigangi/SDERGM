@@ -35,7 +35,7 @@ matY_T = YeMidWeekly_T[1:N_test,1:N_test,3:end]
 #plot(allFitSS[:,1])
 
 #Estimate gas model on  windows of length Ttrain
-model = GasNetModelDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG", "ONE_PAR_ALL")
+model = SdErgmDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG", "ONE_PAR_ALL")
 gasParEstOnTrain,~ = estimateTarg(model;SSest = allFitSS[:,1:Ttrain] )
 
 #f(x) = DynNets.score_driven_filter_or_dgp(model, x;groupsInds = model.groupsInds)[2]
@@ -54,10 +54,10 @@ end
 BA_un_hat =  UnrestrAB(BA_re_hat)
 w_hat = allpar0[1:2*N]
 #%%
-function loglike(Model::DynNets.GasNetModelDirBin1, degs_t::Array{<:Real,1},
+function loglike(Model::DynNets.SdErgmDirBin1, degs_t::Array{<:Real,1},
                         f_t::Array{<:Real,1})
 
-    thetas_mat_t_exp, exp_mat_t = StaticNets.expMatrix2(StaticNets.fooNetModelBin1,f_t)
+    thetas_mat_t_exp, exp_mat_t = StaticNets.expMatrix2(StaticNets.fooErgmBin1,f_t)
     exp_deg_t = sum(exp_mat_t,dims = 2)
 
     loglike_t = sum(f_t.*degs_t) -  sum(UpperTriangular(log.(1 .+ thetas_mat_t_exp))) #  sum(log.(1 + thetas_mat_t_exp))
@@ -69,13 +69,13 @@ function loglike(Model::DynNets.GasNetModelDirBin1, degs_t::Array{<:Real,1},
 using ForwardDiff
 obsT = model.obsT
 T_train = size(obsT)[2]
-f_T(x) = logLike_T(model::GasNetModelDirBin1, obsT, x)
+f_T(x) = logLike_T(model::SdErgmDirBin1, obsT, x)
 # @time ForwardDiff.hessian(f_t, allpar0)
 #@time FiniteDiff.finite_difference_hessian(f_T, allpar0)
 
 covA0 =  ForwardDiff.hessian(f_T, allpar0)./T_train
 # estimate outer product of scores
-vec_of_f_t =[x -> logLike_t(model::GasNetModelDirBin1, obsT[:, 1:t], x) for t in 1:Ttrain]
+vec_of_f_t =[x -> logLike_t(model::SdErgmDirBin1, obsT[:, 1:t], x) for t in 1:Ttrain]
 # run once to precompile the functions
 [f(allpar0) for f in vec_of_f_t]
 vec_g_t = [ForwardDiff.gradient(f, allpar0) for f in vec_of_f_t[2:end]]

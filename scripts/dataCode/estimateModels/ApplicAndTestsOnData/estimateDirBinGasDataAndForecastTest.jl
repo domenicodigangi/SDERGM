@@ -19,8 +19,8 @@ halfPeriod ? periodEndStr =  "2012_03_12_to_2015_02_27.jld" : periodEndStr =  "2
 N2,T = size(degsIO_T);N = round(Int,N2/2)
 Ttrain = round(Int,T/2)
 Ttest = T - Ttrain
-modGasDirBin1_eMid = DynNets.GasNetModelDirBin1(degsIO_T)
-modGasDirBin1_eMidTrain = DynNets.GasNetModelDirBin1(degsIO_T[:,1:Ttrain])
+modGasDirBin1_eMid = DynNets.SdErgmDirBin1(degsIO_T)
+modGasDirBin1_eMidTrain = DynNets.SdErgmDirBin1(degsIO_T[:,1:Ttrain])
 SSestForTargTrain = DynNets.estimateSnapSeq(modGasDirBin1_eMidTrain)
 # ## test targeted estimate
 
@@ -53,11 +53,11 @@ foreEval = forecastEvalGasNetDirBin1(gasParEstOnTrain,testObsNet_T)
 rocCurve(foreEval[1],foreEval[2])
 
 #check that forecasted fitnesses and degrees are reasonable
-foreFit,~ = score_driven_filter_or_dgp( DynNets.GasNetModelDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
+foreFit,~ = score_driven_filter_or_dgp( DynNets.SdErgmDirBin1(degsIO_T),[gasParEstOnTrain[1];gasParEstOnTrain[2];gasParEstOnTrain[3]])
 plot(foreFit')
 expDegsIO_Ttest = zeros(N2,Ttest)
 for t=1:Ttest
-    expDegsIO_Ttest[:,t] = [sumSq(StaticNets.expMatrix(StaticNets.fooNetModelDirBin1,foreEval[3][:,t]),2);sumSq(StaticNets.expMatrix(StaticNets.fooNetModelDirBin1,foreEval[3][:,t]),1)]
+    expDegsIO_Ttest[:,t] = [sumSq(StaticNets.expMatrix(StaticNets.fooErgmDirBin1,foreEval[3][:,t]),2);sumSq(StaticNets.expMatrix(StaticNets.fooErgmDirBin1,foreEval[3][:,t]),1)]
 end
 plot(expDegsIO_Ttest' )
 

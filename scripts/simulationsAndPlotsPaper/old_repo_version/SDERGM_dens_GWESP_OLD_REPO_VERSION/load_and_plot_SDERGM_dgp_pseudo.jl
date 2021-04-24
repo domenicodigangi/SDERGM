@@ -76,7 +76,7 @@ using Statistics, ForwardDiff, LinearAlgebra
       hess_hat_all = fill( zeros(6,6),Nsample)
       for n=1:Nsample
             print(n)
-            model = DynNets.GasNetModelDirBinGlobalPseudo(obsT_all[1],DynNets.fooGasPar,indTvPar,"")
+            model = DynNets.SdErgmDirBinGlobalPseudo(obsT_all[1],DynNets.fooGasPar,indTvPar,"")
             tmpParStat,~ = DynNets.estimate(model;indTvPar = BitArray(undef,2),changeStats_T =obsT_all[n][1:5])
             ftot_0 = [tmpParStat[1][1], tmpParStat[2][1]]
             function likeFun(vecReGasParAll::Array{<:Real,1})

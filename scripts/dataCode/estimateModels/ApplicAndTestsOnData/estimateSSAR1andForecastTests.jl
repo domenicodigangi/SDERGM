@@ -139,7 +139,7 @@ for j=1:Ntest
     samplDegIO_T = [sumSq(sampledA_T,2); sumSq(sampledA_T,1)]
     singSnapReEstIdent_T = estimate(fooSnapSeqNetDirBin1;degsIO_T = samplDegIO_T,  identPost = true,identIter=true)
 
-    #estimate(fooNetModelDirBin1;degIO = samplDegIO_T[:,47],targetErr = 1e-4)#,identIter=identIter)
+    #estimate(fooErgmDirBin1;degIO = samplDegIO_T[:,47],targetErr = 1e-4)#,identIter=identIter)
     #estimate the B
     (reEstAR,isCon) = estManyAR(singSnapReEstIdent_T)
 

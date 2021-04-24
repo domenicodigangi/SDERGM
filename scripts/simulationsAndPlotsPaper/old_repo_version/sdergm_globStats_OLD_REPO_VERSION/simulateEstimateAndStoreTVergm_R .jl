@@ -100,7 +100,7 @@ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
  for n=1:Nsample
      @show(n)
       pVals_Nsample[:,n],tmpInfo,staticEst[n] =
-         DynNets.pValStatic_SDERGM( DynNets.GasNetModelDirBinGlobalPseudo(tmp[:,n],DynNets.fooGasPar,falses(Nterms),""))
+         DynNets.pValStatic_SDERGM( DynNets.SdErgmDirBinGlobalPseudo(tmp[:,n],DynNets.fooGasPar,falses(Nterms),""))
       @show(tmpInfo)
      if tvParFromTest
          indTvPar =  pVals_Nsample[:,n] .< pValTh
@@ -112,7 +112,7 @@ using Utilities,AReg,StaticNets,DynNets , JLD,MLBase,StatsBase,CSV, RCall
      else
           indTargPar =BitArray([false,false])
      end
-    model = DynNets.GasNetModelDirBinGlobalPseudo(tmp[:,n],DynNets.fooGasPar,indTvPar,"")
+    model = DynNets.SdErgmDirBinGlobalPseudo(tmp[:,n],DynNets.fooGasPar,indTvPar,"")
 
     if .!onlyTest
     estPar,convFlag[n],UM,startPoint = DynNets.estimate(model;UM =meanSq(estParSS_T[n,:,:],1),indTvPar = indTvPar, indTargPar = indTargPar)
@@ -144,7 +144,7 @@ if false
      legTex = ["Constant ERGM";"SDERGM"; "Sequence of ERGM"; "DGP"]
      for n=1:Nsample
      indTvPar = BitArray([true,true])
-     model = GasNetModelDirBinGlobalPseudo(tmp[:,n],fooGasPar,indTvPar,"")
+     model = SdErgmDirBinGlobalPseudo(tmp[:,n],fooGasPar,indTvPar,"")
      estPar = gasParEst[n] # store gas parameters
      gasFiltPar  = filtPar_T_Nsample[:,:,n]
      parInd = 1

@@ -14,18 +14,62 @@ using JLD2
 using SharedArrays
 using Statistics
 using ScoreDrivenERGM
-
+using TableView
+using Blink
+viewtab(df) = body!(Window(), showtable(df))
 #endregion
 
 
 # #region load and plot coverage simulations
 
-@elapsed df = collect_results( datadir("sims", "samDgpFiltSD_conf")) 
+@elapsed df = collect_results( datadir("sims", "dgp&FIl_conf")) 
 df["modelTag"] = string.(df["model"]) 
 
 
+df = df[getfield.(df.model, :scoreScalingType) .== "FISH_D",:] 
+df = df[getfield.(df.dgp, :type) .== "AR",:] 
+viewtab(df[[:modelTag, :N, :T]])
 
-begin
+
+df.confBndCoverFiltPar = [zeros(1, 50) for i = 1: nrow(df)]            
+df.confBndCoverPar = [zeros(1, 50) for i = 1: nrow(df)]            
+df.avgConfBndCoverFiltPar = zeros(nrow(df))            
+df.avgConfBndCoverPar = zeros(nrow(df))            
+
+
+obsShift = 1
+for res in eachrow(df)
+    T = res.T
+    limitSample = sum(res.allConfBandsFiltPar[1,1,1,1,:] .!= 0 )
+    nBands = size(res.allConfBandsFiltPar)[3]
+    avgCoverFiltPar = zeros(nBands, limitSample)
+    avgCoverPar = zeros(nBands, limitSample)
+
+    constInds = any(res.allvEstSdResPar[3:3:6, 1:limitSample] .< 0.00005, dims=1)
+
+    # Threads.@threads 
+    for n = 1:limitSample
+        coverFiltParUnc = DynNets.conf_bands_coverage(res.allParDgpT[:,1:T-obsShift,n],   res.allConfBandsFiltPar[:,1+obsShift:end,:,:,n])
+
+        coverParUnc = DynNets.conf_bands_coverage(res.allParDgpT[:,1:T-obsShift,n],   res.allConfBandsPar[:,1+obsShift:end,:,:,n])
+
+        avgCoverFiltPar[1, n] =  mean(coverFiltParUnc[:,:,1]) 
+        avgCoverPar[1, n] =  mean(coverFiltParUnc[:,:,1]) 
+
+    end
+
+    res.avgConfBndCoverFiltPar = mean(avgCoverFiltPar[.!constInds])            
+    res.avgConfBndCoverPar = mean(avgCoverPar[.!constInds])        
+
+    res.confBndCoverFiltPar = avgCoverFiltPar            
+    res.confBndCoverPar = avgCoverPar        
+end    
+
+viewtab(df[df.N.==100,:][[:modelTag, :m,  :dgp, :N, :T, :avgConfBndCoverFiltPar, :confBndCoverFiltPar]])
+
+
+#region obtain box plots to compare subsets of the simulations run
+begin 
 
 parUncMethod = "WHITE-MLE" 
 parUncMethod = "NPB-MVN" #
@@ -33,12 +77,12 @@ limitSample =50
 indB = 1
 tVals = [300]
 nVals = [100  ]
-model = DynNets.GasNetModelDirBin0Rec0_mle(scoreScalingType="FISH_D")
-model = DynNets.GasNetModelDirBin0Rec0_pmle(scoreScalingType="FISH_D")
-dgpSetting = DynNets.list_example_dgp_settings(DynNets.GasNetModelDirBin0Rec0_mle()).dgpSetARlowlow
+model = DynNets.SdErgmDirBin0Rec0_mle(scoreScalingType="FISH_D")
+model = DynNets.SdErgmDirBin0Rec0_pmle(scoreScalingType="FISH_D")
+dgpSetting = DynNets.list_example_dgp_settings(DynNets.SdErgmDirBin0Rec0_mle()).dgpSetARlowlow
 
 
-modelTags = [DynNets.name(model)] # ["GasNetModelDirBin0Rec0_mle(Bool[1, 1], scal = HESS_D)"]# unique(df["modelTag"])
+modelTags = [DynNets.name(model)] # ["SdErgmDirBin0Rec0_mle(Bool[1, 1], scal = HESS_D)"]# unique(df["modelTag"])
 # modelTags =unique(df["modelTag"])
 nNVals = length(nVals)
 nTVals = length(tVals)
@@ -142,3 +186,4 @@ end
 tight_layout()
 
 end
+#endregion

@@ -23,25 +23,25 @@ unifDeg = round(Int,(maxDeg-  minDeg)/2)
 #targetStatic = false=> use a the mean of single snapshots  estimates for targeting in SD estimate
 targetStatic = true
 # Define time varying fitneesse
-dynFitDgp, indsTVnodes =  StaticNets.dgpDynamic(StaticNets.fooNetModelDirBin1,dynType,N,T;
+dynFitDgp, indsTVnodes =  StaticNets.dgpDynamic(StaticNets.fooErgmDirBin1,dynType,N,T;
                                   NTV = NTV, degIOUncMeans =unifDeg*ones(2N),
                                  degb = degb  )
 
 # Sample time series of networks from the dynamical fitnesses
 dynDegsSam = zeros(size(dynFitDgp))
 for t=1:T
-    matSamp = StaticNets.sampl(StaticNets.NetModelDirBin1(dynFitDgp[:,t]),1;  parGroupsIO = dynFitDgp[:,t])
+    matSamp = StaticNets.sampl(StaticNets.ErgmDirBin1(dynFitDgp[:,t]),1;  parGroupsIO = dynFitDgp[:,t])
     dynDegsSam[:,t] = [sumSq(matSamp,2);sumSq(matSamp,1)]
 end
 estFitSS_T =  StaticNets.estimate( StaticNets.SnapSeqNetDirBin1(dynDegsSam); identPost = true,identIter= false,targetErr = 0.001 )
 for t=1:T
-    dynFitDgp[:,t] =  StaticNets.identify(StaticNets.NetModelDirBin1(dynDegsSam[:,t]),dynFitDgp[:,t];idType = "firstZero" )
-    estFitSS_T[:,t] =  StaticNets.identify(StaticNets.NetModelDirBin1(dynDegsSam[:,t]),estFitSS_T[:,t];idType = "firstZero" )
+    dynFitDgp[:,t] =  StaticNets.identify(StaticNets.ErgmDirBin1(dynDegsSam[:,t]),dynFitDgp[:,t];idType = "firstZero" )
+    estFitSS_T[:,t] =  StaticNets.identify(StaticNets.ErgmDirBin1(dynDegsSam[:,t]),estFitSS_T[:,t];idType = "firstZero" )
 end
 
 degsIO_T = dynDegsSam
 indsGroups = [Int.(1:2N),Int.(1:2N)] #[Int.(1:2N),ones(2N)] #
-modGasDirBin1_3Npars = DynNets.GasNetModelDirBin1(degsIO_T, [zeros(2N), zeros(2N) ,zeros(2N)],
+modGasDirBin1_3Npars = DynNets.SdErgmDirBin1(degsIO_T, [zeros(2N), zeros(2N) ,zeros(2N)],
                                             indsGroups, "FISHER-DIAG")
 rmseSS =sqrt.(meanSq((dynFitDgp - estFitSS_T).^2,2))
 if targetStatic
@@ -70,7 +70,7 @@ using ForwardDiff
 
 Ttrain = T# round(Int, T/2) #70 106 #
 #Estimate gas model on  windows of length Ttrain
-modGasDirBin1_N_p_2 = GasNetModelDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG", "ONE_PAR_ALL")
+modGasDirBin1_N_p_2 = SdErgmDirBin1(degsIO_T[:,1:Ttrain],"FISHER-DIAG", "ONE_PAR_ALL")
 gasParEstOnTrain,~ = estimateTarg(modGasDirBin1_N_p_2;SSest = estFitSS_T[:,1:Ttrain] )
 
 #f(x) = DynNets.score_driven_filter_or_dgp(modGasDirBin1_N_p_2, x;groupsInds = modGasDirBin1_N_p_2.groupsInds)[2]
@@ -85,10 +85,10 @@ function UnrestrAB(vecRePar::Array{<:Real,1}) #restrict a vector of only A and B
       vecUnPar =  [diag_B_Un; diag_A_Un]
       return vecUnPar
 end
-function loglike(Model::DynNets.GasNetModelDirBin1, degs_t::Array{<:Real,1},
+function loglike(Model::DynNets.SdErgmDirBin1, degs_t::Array{<:Real,1},
                         f_t::Array{<:Real,1})
 
-    thetas_mat_t_exp, exp_mat_t = StaticNets.expMatrix2(StaticNets.fooNetModelBin1,f_t)
+    thetas_mat_t_exp, exp_mat_t = StaticNets.expMatrix2(StaticNets.fooErgmBin1,f_t)
     exp_deg_t = sum(exp_mat_t,dims = 2)
 
     loglike_t = sum(f_t.*degs_t) -  sum(UpperTriangular(log.(1 .+ thetas_mat_t_exp))) #  sum(log.(1 + thetas_mat_t_exp))
@@ -100,7 +100,7 @@ function logLike_t(Model, obsT, vReGasPar)
       NGW,GBA,ABgroupsIndNodesIO,indTvNodesIO = NumberOfGroupsAndABindNodes(Model, groupsInds)
       # Organize parameters of the GAS update equation
       WGroupsIO = vReGasPar[1:NGW]
-      #    StaticNets.expMatrix2(StaticNets.fooNetModelDirBin1,WGroupsIO )
+      #    StaticNets.expMatrix2(StaticNets.fooErgmDirBin1,WGroupsIO )
       W_allIO = WGroupsIO[groupsInds[1]]
       BgasGroups  = vReGasPar[NGW+1:NGW+GBA]
       AgasGroups  = vReGasPar[NGW+GBA+1:NGW+2GBA]
@@ -127,7 +127,7 @@ function logLike_T(Model, obsT, vReGasPar)
       NGW,GBA,ABgroupsIndNodesIO,indTvNodesIO = NumberOfGroupsAndABindNodes(Model, groupsInds)
       # Organize parameters of the GAS update equation
       WGroupsIO = vReGasPar[1:NGW]
-      #    StaticNets.expMatrix2(StaticNets.fooNetModelDirBin1,WGroupsIO )
+      #    StaticNets.expMatrix2(StaticNets.fooErgmDirBin1,WGroupsIO )
       W_allIO = WGroupsIO[groupsInds[1]]
       BgasGroups  = vReGasPar[NGW+1:NGW+GBA]
       AgasGroups  = vReGasPar[NGW+GBA+1:NGW+2GBA]
@@ -154,13 +154,13 @@ end
 
 obsT = modGasDirBin1_N_p_2.obsT
 T_train = size(obsT)[2]
-f_T(x) = logLike_T(modGasDirBin1_N_p_2::GasNetModelDirBin1, obsT, x)
+f_T(x) = logLike_T(modGasDirBin1_N_p_2::SdErgmDirBin1, obsT, x)
 # @time ForwardDiff.hessian(f_t, allpar0)
 #@time FiniteDiff.finite_difference_hessian(f_T, allpar0)
 
 covA0 =  ForwardDiff.hessian(f_T, allpar0)./T_train
 # estimate outer product of scores
-vec_of_f_t =[x -> logLike_t(modGasDirBin1_N_p_2::GasNetModelDirBin1, obsT[:, 1:t], x) for t in 1:Ttrain]
+vec_of_f_t =[x -> logLike_t(modGasDirBin1_N_p_2::SdErgmDirBin1, obsT[:, 1:t], x) for t in 1:Ttrain]
 # run once to precompile the functions
 [f(allpar0) for f in vec_of_f_t]
 vec_g_t = [ForwardDiff.gradient(f, allpar0) for f in vec_of_f_t[2:end]]

@@ -2,3 +2,15 @@
 data/old_pre_drWatson_git_ignored/
 
 data/sims/
+
+data/collegeMsg/raw_data/
+
+data/wiki_tk/raw_data/wiki-talk-temporal-usernames.txt
+
+data/wiki_tk/raw_data/wiki-talk-temporal.txt
+
+data/wiki_tk/raw_data/wiki_talk_daily_edges.csv
+
+data/wiki_tk/raw_data/wiki_talk_daily_edges.feather
+
+data/wiki_tk/ch_stats_present/

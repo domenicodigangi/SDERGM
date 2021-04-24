@@ -36,7 +36,7 @@ n=1
 indTvPar = BitArray([false, true])
 indTargPar =indTvPar #BitArray([true,true])
 obsT = tmp[:,n]
-model = DynNets.GasNetModelDirBinGlobalPseudo(obsT, DynNets.fooGasPar, indTvPar,"")
+model = DynNets.SdErgmDirBinGlobalPseudo(obsT, DynNets.fooGasPar, indTvPar,"")
 estPar,convFlag[n],UM,startPoint,hess_opt = DynNets.estimate(model;UM =meanSq(estParSS_T[n,:,:],1),
                           indTvPar = indTvPar, indTargPar = indTargPar,hess_opt_flag = true)
 T_train = size(obsT)[1]
@@ -44,21 +44,21 @@ T_train = size(obsT)[1]
 restrCase = false
 if restrCase
     # restricted parameters
-    f_T(x) = DynNets.logLike_T(model::DynNets.GasNetModelDirBinGlobalPseudo,
+    f_T(x) = DynNets.logLike_T(model::DynNets.SdErgmDirBinGlobalPseudo,
                                 obsT, x, model.indTvPar)
     allpar0 = DynNets.array2VecGasPar(model, estPar, model.indTvPar)
-    vec_of_f_t =[x -> DynNets.logLike_t(model::DynNets.GasNetModelDirBinGlobalPseudo,
+    vec_of_f_t =[x -> DynNets.logLike_t(model::DynNets.SdErgmDirBinGlobalPseudo,
                                         obsT[1:t], x, model.indTvPar)
                  for t in 1:T_train]
 else
     #Not restricted parameters
-    f_T(x) = DynNets.logLike_T(model::DynNets.GasNetModelDirBinGlobalPseudo,
+    f_T(x) = DynNets.logLike_T(model::DynNets.SdErgmDirBinGlobalPseudo,
                                 obsT,DynNets.restrictGasPar(model, x, model.indTvPar),
                                 model.indTvPar)
     allpar0 = DynNets.unRestrictGasPar(model,
                                         DynNets.array2VecGasPar(model, estPar, model.indTvPar),
                                         indTvPar )
-    vec_of_f_t =[x -> DynNets.logLike_t(model::DynNets.GasNetModelDirBinGlobalPseudo,
+    vec_of_f_t =[x -> DynNets.logLike_t(model::DynNets.SdErgmDirBinGlobalPseudo,
                                         obsT[1:t],
                                         DynNets.restrictGasPar(model, x, model.indTvPar),
                                          model.indTvPar)
@@ -125,7 +125,7 @@ gasFiltPar_conf_all = fill(zeros(N_samp_par,Nterms,T),Nsample)
  for n=1
      @show(n)
     indTvPar = BitArray([true,true])
-    model = DynNets.GasNetModelDirBinGlobalPseudo(tmp[:,n],fooGasPar,indTvPar,"")
+    model = DynNets.SdErgmDirBinGlobalPseudo(tmp[:,n],fooGasPar,indTvPar,"")
 
     N_samp_par = size(gasParSampled[n])[2]
     # Works only when all parameters are time varying
@@ -156,7 +156,7 @@ figure()
      legTex = ["DGP";"SDERGM"; "95%"]
      n=1
      indTvPar = BitArray([true,true])
-     model = DynNets.GasNetModelDirBinGlobalPseudo(tmp[:,n],fooGasPar,indTvPar,"")
+     model = DynNets.SdErgmDirBinGlobalPseudo(tmp[:,n],fooGasPar,indTvPar,"")
      estPar = gasParEst[n] # store gas parameters
      gasFiltPar  = filtPar_T_Nsample[:,:,n]
      parInd = 1
