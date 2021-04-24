@@ -234,6 +234,12 @@ git-tree-sha1 = "1402e52fcda25064f51c77a9655ce8680b76acf0"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
 version = "2.2.7+6"
 
+[[Feather]]
+deps = ["CategoricalArrays", "DataFrames", "Dates", "FlatBuffers", "Mmap", "Tables"]
+git-tree-sha1 = "cf89ab43c53134b6dcbccfb701f169bdffc8dcff"
+uuid = "becb17da-46f6-5d3c-ad1b-1c5fe96bc73c"
+version = "0.5.7"
+
 [[FileIO]]
 deps = ["Pkg"]
 git-tree-sha1 = "fee8955b9dfa7bec67117ef48085fb2b559b9c22"
@@ -266,6 +272,12 @@ deps = ["AbstractTrees", "Colors", "FileIO", "FixedPointNumbers", "IndirectArray
 git-tree-sha1 = "99c43a8765095efa6ef76233d44a89e68073bd10"
 uuid = "08572546-2f56-4bcf-ba4e-bab62c3a3f89"
 version = "0.2.5"
+
+[[FlatBuffers]]
+deps = ["Parameters", "Test"]
+git-tree-sha1 = "8582924ac52011d08da9cf1e67f13a71dbbc2594"
+uuid = "53afe959-3a16-52fa-a8da-cf864710bae9"
+version = "0.5.4"
 
 [[Fontconfig_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Expat_jll", "FreeType2_jll", "JLLWrappers", "Libdl", "Libuuid_jll", "Pkg", "Zlib_jll"]
@@ -765,6 +777,12 @@ git-tree-sha1 = "caa269e6f86900de232dffaf7e66edfe9414b007"
 uuid = "c46f51b8-102a-5cf2-8d2c-8597cb0e0da7"
 version = "0.6.9"
 
+[[ProjUtilities]]
+deps = ["Blink", "DataFrames", "Logging", "TableView"]
+path = "src/ProjUtilities"
+uuid = "9c5b1640-a51a-11eb-23cc-f7e044dcc037"
+version = "0.1.0"
+
 [[PyCall]]
 deps = ["Conda", "Dates", "Libdl", "LinearAlgebra", "MacroTools", "Serialization", "VersionParsing"]
 git-tree-sha1 = "dd1a970b543bd02efce2984582e996af28cab27f"
@@ -855,7 +873,7 @@ uuid = "6e75b9c4-186b-50bd-896f-2d2496a4843e"
 version = "0.5.0"
 
 [[ScoreDrivenERGM]]
-deps = ["DataFrames", "DataStructures", "Distributed", "Distributions", "ForwardDiff", "GLM", "JLD", "JLD2", "LightGraphs", "LineSearches", "LinearAlgebra", "Logging", "MLBase", "NLSolversBase", "Optim", "PolynomialRoots", "PyCall", "PyPlot", "RCall", "Random", "Roots", "SharedArrays", "Statistics", "StatsBase", "StatsFuns", "Suppressor"]
+deps = ["DataFrames", "DataStructures", "Distributed", "Distributions", "ForwardDiff", "GLM", "JLD", "JLD2", "LightGraphs", "LineSearches", "LinearAlgebra", "Logging", "MLBase", "NLSolversBase", "Optim", "PolynomialRoots", "PyCall", "PyPlot", "RCall", "Random", "Roots", "SharedArrays", "SparseArrays", "Statistics", "StatsBase", "StatsFuns", "Suppressor"]
 path = "src/ScoreDrivenERGM.jl"
 uuid = "6ee3d76e-adae-4ed7-a671-0c83eafad244"
 version = "0.1.0"
