@@ -1,13 +1,12 @@
 #########
-#File: c:\Users\digan\Dropbox\Dynamic_Networks\repos\ScoreDrivenExponentialRandomGraphs\_research\analysis_for_paper_revision\applic_collegMsg\load_college_msg_pre_process.py
-#Project: c:\Users\digan\Dropbox\Dynamic_Networks\repos\ScoreDrivenExponentialRandomGraphs\_research\analysis_for_paper_revision\applic_collegMsg
+#File: c:\Users\digan\Dropbox\Dynamic_Networks\repos\ScoreDrivenExponentialRandomGraphs\_research\analysis_for_paper_revision\applic_collegMsg\0_load_college_msg_pre_process.py
 #Created Date: Friday April 23rd 2021
 #Author: Domenico Di Gangi,  <digangidomenico@gmail.com>
 #-----
-#Last Modified: Friday April 23rd 2021 3:48:11 pm
+#Last Modified: Tuesday May 4th 2021 11:51:20 am
 #Modified By:  Domenico Di Gangi
 #-----
-#Description:
+#Description: Preprocess college messages data downloaded from SNAP :https://snap.stanford.edu/data/CollegeMsg.html
 #-----
 ########
 

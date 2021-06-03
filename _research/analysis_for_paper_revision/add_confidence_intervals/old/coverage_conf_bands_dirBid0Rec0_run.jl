@@ -9,7 +9,7 @@ using ScoreDrivenERGM
 
 import ScoreDrivenERGM:StaticNets, DynNets
 
-import ScoreDrivenERGM.DynNets:SdErgm,SdErgmDirBin0Rec0, sample_mats_sequence, stats_from_mat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
+import ScoreDrivenERGM.DynNets:SdErgm,SdErgmDirBin0Rec0, sample_ergm_sequence, stats_from_mat, array_2_vec_all_par, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
 using ScoreDrivenERGM.Utilities
 
 using PyPlot
@@ -81,7 +81,7 @@ for (indT, T) in Iterators.enumerate(tVals)
 
             parDgpT = DynNets.sample_time_var_par_from_dgp(model_mle, dgpType, N, T;  dgpOptions...)
 
-            estimate_filter_and_conf_bands(model, sample_mats_sequence(model, parDgpT,N), quantilesVals; plotFlag =false, parDgpT = parDgpT)
+            estimate_filter_and_conf_bands(model, sample_ergm_sequence(model, N, parDgpT, 1)[:,:,:,1], quantilesVals; plotFlag =false, parDgpT = parDgpT)
             
             @elapsed allCoverBuccheri, allCoverBlasques, allvEstSdResPar, allfVecT_filt, allConfBandsBuccheri, allConfBandsBlasques, allErrFlags = conf_bands_coverage(model, dgpType, dgpOptions, T, N,  nSampleCoverage, quantilesVals)
 

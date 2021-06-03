@@ -45,7 +45,7 @@ if restrCase
     # restricted parameters
     f_T(x) = DynNets.logLike_T(model::DynNets.SdErgmDirBinGlobalPseudo,
                                 obsT, x, model.indTvPar)
-    allpar0 = DynNets.array2VecGasPar(model, estPar, model.indTvPar)
+    allpar0 = DynNets.array_2_vec_all_par(model, estPar, model.indTvPar)
     vec_of_f_t =[x -> DynNets.logLike_t(model::DynNets.SdErgmDirBinGlobalPseudo,
                                         obsT[1:t], x, model.indTvPar)
                  for t in 1:T_train]
@@ -55,7 +55,7 @@ else
                                 obsT,DynNets.restrictGasPar(model, x, model.indTvPar),
                                 model.indTvPar)
     allpar0 = DynNets.unRestrictGasPar(model,
-                                        DynNets.array2VecGasPar(model, estPar, model.indTvPar),
+                                        DynNets.array_2_vec_all_par(model, estPar, model.indTvPar),
                                         indTvPar )
     vec_of_f_t =[x -> DynNets.logLike_t(model::DynNets.SdErgmDirBinGlobalPseudo,
                                         obsT[1:t],

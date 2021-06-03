@@ -80,6 +80,7 @@ nVals = [100  ]
 model = DynNets.SdErgmDirBin0Rec0_mle(scoreScalingType="FISH_D")
 model = DynNets.SdErgmDirBin0Rec0_pmle(scoreScalingType="FISH_D")
 dgpSetting = DynNets.list_example_dgp_settings(DynNets.SdErgmDirBin0Rec0_mle()).dgpSetARlowlow
+dgpSetting.opt.B[1] = 1
 
 
 modelTags = [DynNets.name(model)] # ["SdErgmDirBin0Rec0_mle(Bool[1, 1], scal = HESS_D)"]# unique(df["modelTag"])

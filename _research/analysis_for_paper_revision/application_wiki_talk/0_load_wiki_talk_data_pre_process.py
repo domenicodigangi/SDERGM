@@ -4,10 +4,10 @@
 #Created Date: Wednesday April 21st 2021
 #Author: Domenico Di Gangi,  <digangidomenico@gmail.com>
 #-----
-#Last Modified: Thursday April 22nd 2021 10:13:21 pm
+#Last Modified: Tuesday May 4th 2021 11:45:52 am
 #Modified By:  Domenico Di Gangi
 #-----
-#Description:
+#Description: Preprocess wiki talk data downloaded from SNAP : https://snap.stanford.edu/data/wiki-talk-temporal.html
 #-----
 ########
 

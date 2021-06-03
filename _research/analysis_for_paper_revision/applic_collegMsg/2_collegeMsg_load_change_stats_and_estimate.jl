@@ -4,7 +4,7 @@
 #Created Date: Friday April 23rd 2021
 #Author: Domenico Di Gangi,  <digangidomenico@gmail.com>
 #-----
-#Last Modified: Friday April 23rd 2021 10:40:20 pm
+#Last Modified: Thursday June 3rd 2021 5:18:23 pm
 #Modified By:  Domenico Di Gangi
 #-----
 #Description:
@@ -63,24 +63,21 @@ begin
 row = dfEst[1,:]
 model = row.model
 T = row.Tf
-t0_train = 90
+t0_train = 10
 tend_train = T
 
 obsT = row.ch_stats[t0_train:tend_train]
 
-obsT[1]
-model
-DynNets.number_ergm_par(model)
 ENV["JULIA_DEBUG"] = ScoreDrivenERGM
 
 res_est = DynNets.estimate_and_filter(model, N, obsT; show_trace = true)
-# fig, ax = DynNets.plot_filtered(model, N, res_est[3])
+fig, ax = DynNets.plot_filtered(model, N, res_est[3])
 
-res_conf = DynNets.conf_bands_given_SD_estimates(model, N, obsT, DynNets.unrestrict_all_par(model, model.indTvPar, res_est.vEstSdResParAll), res_est.ftot_0, [[0.975, 0.025]]; indTvPar = model.indTvPar, offset=0, plotFlag=true, parUncMethod = "WHITE-MLE", xval = dates[t0_train:tend_train], winsorProp = 0.25)
-res_conf.ax[1].set_title("college msgs $(model.staticModel.ergmTermsString)")
+# res_conf = DynNets.conf_bands_given_SD_estimates(model, N, obsT, DynNets.unrestrict_all_par(model, res_est.vEstSdResParAll), res_est.ftot_0, [[0.975, 0.025]]; , offset=0, plotFlag=true, parUncMethod = "WHITE-MLE", xval = dates[t0_train:tend_train], winsorProp = 0.25)
+# res_conf.ax[1].set_title("college msgs $(model.staticModel.ergmTermsString)")
 
-# est_SS = DynNets.estimate_single_snap_sequence(model, obsT)
-# fig, ax = DynNets.plot_filtered(model, N, est_SS, ax=res_conf.ax, lineType = ".", lineColor="r")
+estSS_T = DynNets.estimate_single_snap_sequence(model, obsT)
+fig, ax = DynNets.plot_filtered(model, N, estSS_T, ax=ax, lineType = ".", lineColor="r")
 end
 
 using Statistics

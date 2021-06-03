@@ -38,7 +38,7 @@ res_est = DynNets.estimate_and_filter(model, N, obsT; show_trace = true)
 fig, ax = DynNets.plot_filtered(model, N, res[3])
 
 
-res_conf = DynNets.conf_bands_given_SD_estimates(model, N, obsT, DynNets.unrestrict_all_par(model, model.indTvPar, res.vEstSdResParAll), res.ftot_0, [[0.975, 0.025]]; indTvPar = model.indTvPar, offset=0, plotFlag=true, parUncMethod = "WHITE-MLE")
+res_conf = DynNets.conf_bands_given_SD_estimates(model, N, obsT, DynNets.unrestrict_all_par(model, res.vEstSdResParAll), res.ftot_0, [[0.975, 0.025]]; indTvPar = model.indTvPar, offset=0, plotFlag=true, parUncMethod = "WHITE-MLE")
 
 DynNets.plot_filtered(model, N, estParSS_T; lineType = ".", lineColor = "k", fig = res_conf.fig, ax=res_conf.ax, gridFlag=false, xval = dates[t0_train:tend_train])
 

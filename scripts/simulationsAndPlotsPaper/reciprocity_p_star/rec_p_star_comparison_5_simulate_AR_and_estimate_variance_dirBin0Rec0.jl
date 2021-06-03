@@ -1,6 +1,4 @@
-"""
-Simulate various Dgps for dirBin0Rec0 various T N and filter
-"""
+
 
 
 #region import and models

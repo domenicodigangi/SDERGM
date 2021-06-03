@@ -20,7 +20,7 @@ ergmTermsString = "edges +  mutual"
 model = ErgmDirBin0Rec0()
     
 
-function sample_mats_sequence_static_estimate_mle(model::ErgmDirBin0Rec0, N, parDgpSeq, nSample)
+function sample_ergm_sequence_static_estimate_mle(model::ErgmDirBin0Rec0, N, parDgpSeq, nSample)
 
     T = size(parDgpSeq)[2]
     parMle = zeros(T, 2, nSample)
@@ -28,10 +28,10 @@ function sample_mats_sequence_static_estimate_mle(model::ErgmDirBin0Rec0, N, par
 
     for i =1:T
     
-        A_vec = sample_ergm(model, N, parDgpSeq[:,i], nSample )        
+        A_S = sample_ergm(model, N, parDgpSeq[:,i], nSample )        
 
-        obs[i,:,:] = reduce(hcat,[StaticNets.stats_from_mat(model, A) for A in A_vec])
-        parMle[i,:,:] = reduce(hcat,[StaticNets.estimate(model, A) for A in A_vec])
+        obs[i,:,:] = reduce(hcat,[StaticNets.stats_from_mat(model, A) for A in eachslice(A_S, dims=3)])
+        parMle[i,:,:] = reduce(hcat,[StaticNets.estimate(model, A) for A in eachslice(A_S, dims=3)])
     end
 
     return parMle, obs
@@ -46,7 +46,7 @@ Nvals = [30, 50, 70, 90]
 θ_0 = -5
 for N in Nvals 
     parDgpSeq = reduce(hcat, [ [θ_0, η ] for η = 2:0.05:7])
-    parMle, obs = sample_mats_sequence_static_estimate_mle(model, N, parDgpSeq, 150 )
+    parMle, obs = sample_ergm_sequence_static_estimate_mle(model, N, parDgpSeq, 150 )
     fracZeroRec = mean(obs[:,2,:].==0;dims=2)
     fracUb = mean(obs[:,2,:].==obs[:,1,:]/2;dims=2)
     xplot = parDgpSeq[2,:]

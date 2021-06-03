@@ -15,11 +15,16 @@ using DataStructures
 using JLD2
 using RCall
 
+using PyCall
 
+
+
+model = DynNets.SdErgmPml(staticModel = StaticNets.NetModeErgmPml("edges +  gwesp(decay = 0.25,fixed = TRUE)", true), indTvPar = [false, true], scoreScalingType="FISH_D")
 
 JLD2.@load( datadir("US_congr_covoting", "estimates") * "\\SS_est_MCMC.jld2",estParSS_T)#, obsMat_T, changeStats_T, stats_T)
 
 JLD2.@load( datadir("US_congr_covoting", "estimates")*"\\SD_est_$(DynNets.name(model))", res_conf, res_est, estParStatic)
+
 
 
 

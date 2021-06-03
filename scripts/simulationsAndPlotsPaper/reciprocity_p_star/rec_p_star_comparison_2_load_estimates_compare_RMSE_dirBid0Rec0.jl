@@ -14,10 +14,8 @@ using JLD2
 using SharedArrays
 using Statistics
 using ScoreDrivenERGM
-using TableView
-using Blink
+using ProjUtilities
 
-viewtab(df) = body!(Window(), showtable(df))
 #endregion
 
 
@@ -28,7 +26,7 @@ viewtab(df) = body!(Window(), showtable(df))
 @elapsed dfEst = collect_results( datadir("sims", "dgp&FIl_est")) 
 dfEst["modelTag"] = string.(dfEst["model"]) 
 
-df = dfEst
+@elapsed df = dfEst
 
 df = df[getfield.(dfEst.model, :scoreScalingType) .== "FISH_D",:] 
 df.avg_rmse_filt = 0.0
@@ -45,7 +43,7 @@ for (indRow,res) in enumerate(eachrow(df))
     @show indRow
     if !contains( res.modelTag, "pmle")
         for t=1:res.T, n in 1:length(res.allObsT)
-            res.allfVecT_filt_SS[:, t, n] = StaticNets.estimate(res.model.staticModel, res.allObsT[n][t]... ) 
+            # res.allfVecT_filt_SS[:, t, n] = StaticNets.estimate(res.model.staticModel, res.allObsT[n][t]... ) 
 
         end
             rmse = dropdims(sqrt.(mean((res.allParDgpT .- res.allfVecT_filt_SS).^2,dims=2)), dims=2)
@@ -63,6 +61,9 @@ end
 
 dfRes = df[[:modelTag, :dgpSettings,:avg_rmse_filt_SS, :avg_rmse_filt, :T, :N]]
 filter!(:dgpSettings => x->x.type == "AR" ,dfRes)
+filter!(:dgpSettings => x->x.opt.sigma[1] == 0.005 ,dfRes)
+filter!(:dgpSettings => x->x.opt.B[1] == 1 ,dfRes)
+dfRes.avg_rmse_filt_relative = dfRes.avg_rmse_filt./1.25
 viewtab(dfRes)
 
 df

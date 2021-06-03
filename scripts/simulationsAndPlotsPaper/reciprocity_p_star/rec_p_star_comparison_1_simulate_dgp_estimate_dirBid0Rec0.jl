@@ -14,9 +14,12 @@ using Distributed
 using SharedArrays
 using ScoreDrivenERGM
 using Logging
+import ScoreDrivenERGM:StaticNets, DynNets
+import ScoreDrivenERGM.DynNets:SdErgm,SdErgmDirBin0Rec0, simulate_and_estimate_parallel
+using ScoreDrivenERGM.Utilities
 
 begin
-nWorkers = 15
+nWorkers = 10
 addprocs(nWorkers - nprocs())
 @sync @everywhere begin 
     using Pkg
@@ -42,8 +45,14 @@ dgpSetARlowlow, dgpSetARlow, dgpSetARmed, dgpSetARhigh, dgpSetSIN, dgpSetSDlow, 
 # define dictionary with all the different values for each setting of the simulation. The product of all settings will be executed using DrWatson.jl functionalities
 c= Dict{String, Any}()
 c["model"] =[DynNets.SdErgmDirBin0Rec0_mle(scoreScalingType="FISH_D"), DynNets.SdErgmDirBin0Rec0_pmle(scoreScalingType="FISH_D")] 
-c["T"] = [100, 300, 600]
-c["N"] = [50, 100, 500]
+c["model"][1].options["integrated"] = true
+c["model"][2].options["integrated"] = true
+
+
+c["T"] = [300, 3000]
+c["N"] = [100]
+
+dgpSetARlowlow.opt.B[1] = 1
 c["dgpSettings"] = [dgpSetARlowlow]
 c["nSample"] = 50
 
@@ -60,9 +69,10 @@ for d in list
     estDict = merge(res1, d)
 
     saveName = replace.( savename(d, "jld2";allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.SdErgm) ), r"[\"]" => "")
+   
 
-    timeSave = @elapsed save( datadir("sims", "dgp&FIl_est", saveName), estDict)
-
+    timeSave = @elapsed save( datadir("sims", "dgp&Fil_est", saveName), estDict)
+   
     Logging.@info("Time sim = $timeSim ,  time save = $timeSave ")
 
 

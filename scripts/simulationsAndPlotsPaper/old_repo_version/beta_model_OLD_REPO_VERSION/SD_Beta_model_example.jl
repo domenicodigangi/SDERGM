@@ -75,7 +75,7 @@ gasParEstOnTrain,~ = estimateTarg(modGasDirBin1_N_p_2;SSest = estFitSS_T[:,1:Ttr
 
 #f(x) = DynNets.score_driven_filter_or_dgp(modGasDirBin1_N_p_2, x;groupsInds = modGasDirBin1_N_p_2.groupsInds)[2]
 GBA = 1
-allpar0 = array2VecGasPar(modGasDirBin1_N_p_2, gasParEstOnTrain)
+allpar0 = array_2_vec_all_par(modGasDirBin1_N_p_2, gasParEstOnTrain)
 BA_re_hat = allpar0[end-1:end]
 function UnrestrAB(vecRePar::Array{<:Real,1}) #restrict a vector of only A and B
       diag_B_Re = vecRePar[1:GBA]

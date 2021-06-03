@@ -7,7 +7,7 @@ begin
 
 using ScoreDrivenERGM
 import ScoreDrivenERGM:StaticNets, DynNets
-import ScoreDrivenERGM.DynNets:SdErgm,SdErgmDirBin0Rec0, sample_mats_sequence, stats_from_mat, array2VecGasPar, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
+import ScoreDrivenERGM.DynNets:SdErgm,SdErgmDirBin0Rec0, sample_ergm_sequence, stats_from_mat, array_2_vec_all_par, unrestrict_all_par, conf_bands_par_uncertainty, avg_grad_and_hess_obj_SD_filter_time_seq, conf_bands_par_uncertainty, number_ergm_par, estimate_filter_and_conf_bands, conf_bands_coverage, estimate, mle_distrib_filtered_par, plot_filtered_and_conf_bands
 using ScoreDrivenERGM.Utilities
 
 using PyPlot
@@ -43,7 +43,7 @@ dgpSetAR, ~, dgpSetSD = ScoreDrivenERGM.DynNets.list_example_dgp_settings(model_
 dgpSettings = dgpSetSD
 parDgpT = DynNets.sample_time_var_par_from_dgp(model, dgpSettings.type, N, T;  dgpSettings.opt...)
 
-A_T_dgp = DynNets.sample_mats_sequence(model, parDgpT,N)
+A_T_dgp = DynNets.sample_ergm_sequence(model,N , parDgpT, 1)[:,:,:,1]
 
 @show std(parDgpT, dims=2)
 
@@ -62,8 +62,8 @@ model = model_pmle
 alpha = 0.2
 beta = mean(DynNets.beta_min_max_from_alpha_min(0.1, N))
 UM = [alpha, beta]
-vUnPar, ~ = DynNets.starting_point_optim(model, indTvPar, UM)
-vResParDgp = DynNets.restrict_all_par(model, indTvPar, vUnPar)
+vUnPar, ~ = DynNets.starting_point_optim(model,  UM)
+vResParDgp = DynNets.restrict_all_par(model, vUnPar)
 
 BDgp = 0.96
 ADgp = 0.2
@@ -71,9 +71,9 @@ vResParDgp[2:3:end] .= BDgp
 vResParDgp[3:3:end] .= ADgp
 
 #start optimization on the correct values
-vParUnOptim_0, ARe_min = DynNets.starting_point_optim(model, indTvPar, UM; indTargPar = falses(number_ergm_par(model)))
+vParUnOptim_0, ARe_min = DynNets.starting_point_optim(model, UM; indTargPar = falses(number_ergm_par(model)))
 
-vParOptim_0 = Real.(DynNets.restrict_all_par(model, indTvPar, vParUnOptim_0))
+vParOptim_0 = Real.(DynNets.restrict_all_par(model, vParUnOptim_0))
 
 
 
@@ -114,9 +114,9 @@ for n=1:nSample
     arrayAllParHat, conv_flag,UM, ftot_0 = estimate(model, N, obsT; indTvPar=indTvPar, indTargPar=falses(2), vParOptim_0=vParOptim_0)
 
     
-    vResParEstDistrib[:,n] = DynNets.array2VecGasPar(model, arrayAllParHat, indTvPar)
+    vResParEstDistrib[:,n] = DynNets.array_2_vec_all_par(model, arrayAllParHat, indTvPar)
 
-    OpGradSum[:,:,n], HessSum[:,:,n] = DynNets.A0_B0_est_for_white_cov_mat_obj_SD_filter_time_seq(model, N, obsT, vResParEstDistrib[:,n], indTvPar, ftot_0)
+    OpGradSum[:,:,n], HessSum[:,:,n] = DynNets.A0_B0_est_for_white_cov_mat_obj_SD_filter_time_seq(model, N, obsT, vResParEstDistrib[:,n], ftot_0)
 
     # estCovWhite[:,:,n], errorFlag, OpGradSum[:,:,n], HessSum[:,:,n] = DynNets.white_estimate_cov_mat_static_sd_par(model, obsT, indTvPar, ftot_0, vResParEstDistrib[:,n]; returnAllMats=true)
 
@@ -134,7 +134,7 @@ obsT = [stats_from_mat(model, A_T_dgp[:,:,t]) for t in 1:T ]
 arrayAllParHat, conv_flag,UM, ftot_0 = estimate(model, obsT; indTvPar=indTvPar, indTargPar=falses(2), vParOptim_0=vParOptim_0)
 
 
-vResParEstDistrib[:,n] = DynNets.array2VecGasPar(model, arrayAllParHat, indTvPar)
+vResParEstDistrib[:,n] = DynNets.array_2_vec_all_par(model, arrayAllParHat, indTvPar)
 
 fVecTFilt, A_T_dgp, ~ = DynNets.score_driven_filter_or_dgp( model, vResParEstDistrib[:,n], indTvPar, obsT=obsT, ftot_0=ftot_0)
 

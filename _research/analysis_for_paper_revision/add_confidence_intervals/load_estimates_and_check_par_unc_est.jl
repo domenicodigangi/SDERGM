@@ -89,7 +89,7 @@ nrow(res) != 1 ? error("$N, $T,  $(size(res))") : res = res[1,:]
 
 
 vEstSdResParBootDist =  res.allvEstSdResPar
-vEstSdUnParBootDist = mapslices(x -> DynNets.unrestrict_all_par(res.model, res.model.indTvPar, x), vEstSdResParBootDist, dims=1)
+vEstSdUnParBootDist = mapslices(x -> DynNets.unrestrict_all_par(res.model, x), vEstSdResParBootDist, dims=1)
 
 parNames = ["w_theta", "B_theta", "A_theta", "w_eta", "B_eta", "A_eta"]
 if false

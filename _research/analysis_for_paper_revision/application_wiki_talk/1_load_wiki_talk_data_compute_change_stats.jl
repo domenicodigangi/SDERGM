@@ -4,7 +4,7 @@
 #Created Date: Wednesday April 21st 2021
 #Author: Domenico Di Gangi,  <digangidomenico@gmail.com>
 #-----
-#Last Modified: Saturday April 24th 2021 4:26:42 pm
+#Last Modified: Friday May 7th 2021 5:48:20 pm
 #Modified By:  Domenico Di Gangi
 #-----
 #Description:
@@ -39,24 +39,7 @@ addprocs(nWorkers - nprocs())
     import ScoreDrivenERGM.DynNets:SdErgm,SdErgmDirBin0Rec0, simulate_and_estimate_parallel
     using ScoreDrivenERGM.Utilities
 
-    model_edge_gwd(decay_par) = DynNets.SdErgmPml(staticModel = StaticNets.NetModeErgmPml("edges + gwidegree(decay = $decay_par, fixed = TRUE, cutoff=10) + gwodegree(decay = $decay_par, fixed = TRUE, cutoff=10)", true), indTvPar = [true, true, true], scoreScalingType="FISH_D")
-    
-    model_edge_gwesp = DynNets.SdErgmPml(staticModel = StaticNets.NetModeErgmPml("edges + gwesp(decay = 0.25, fixed = TRUE, cutoff=10)", true), indTvPar = [true, true], scoreScalingType="FISH_D")
-
-    model_edge_mutual_gwd(decay_par) = DynNets.SdErgmPml(staticModel = StaticNets.NetModeErgmPml("edges + mutual + gwidegree(decay = $decay_par, fixed = TRUE, cutoff=10) + gwodegree(decay = $decay_par, fixed = TRUE, cutoff=10)", true), indTvPar = [true, true, true, true], scoreScalingType="FISH_D")
-
-    model_rec_p_star = DynNets.SdErgmPml(staticModel = StaticNets.NetModeErgmPml("edges + mutual ", true), indTvPar = [true, true], scoreScalingType="FISH_D")
-
-
-
-    """ return an edge list with nodes indexed starting from 1 to the number of nodes present in the list """
-    function edge_list_pres(list)
-        pres = sort(unique(reshape(list, :)))
-        list_pres =  [findfirst(isequal(n), pres) for n in list]
-        sorted_list_pres = sortslices(list_pres, dims=1)
-        return sorted_list_pres
-    end
-
+   
     end
 end
 
@@ -114,7 +97,7 @@ for d in list
 
     saveName = replace.( savename(d_save, "jld2";allowedtypes = (Real, String, Symbol, NamedTuple, Tuple, ScoreDrivenERGM.DynNets.SdErgm) ), r"[\"]" => "")
 
-    timeSave = @elapsed save( datadir("wiki_tk", "ch_stats_present", saveName), saveDict)
+    timeSave = @elapsed save( datadir("wiki_tk", "ch_stats", saveName), saveDict)
 
     Logging.@info("Time sim = $timeSim ,  time save = $timeSave ")
 

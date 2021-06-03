@@ -4,7 +4,7 @@
 #Created Date: Friday April 23rd 2021
 #Author: Domenico Di Gangi,  <digangidomenico@gmail.com>
 #-----
-#Last Modified: Friday April 23rd 2021 3:39:44 pm
+#Last Modified: Thursday June 3rd 2021 5:18:20 pm
 #Modified By:  Domenico Di Gangi
 #-----
 #Description:
@@ -16,9 +16,8 @@
 using DrWatson
 @quickactivate "ScoreDrivenExponentialRandomGraphs"
 DrWatson.greet()
-
-
 using Distributed
+
 begin
 using TableView
 using Blink
@@ -33,13 +32,6 @@ using Dates
 using PyPlot
 pygui(true)
 
-model_edge_gwd(decay_par) = DynNets.SdErgmPml(staticModel = StaticNets.NetModeErgmPml("edges + gwidegree(decay = $decay_par, fixed = TRUE, cutoff=10) + gwodegree(decay = $decay_par, fixed = TRUE, cutoff=10)", true), indTvPar = [true, true, true], scoreScalingType="FISH_D")
-
-model_edge_gwesp = DynNets.SdErgmPml(staticModel = StaticNets.NetModeErgmPml("edges + gwesp(decay = 0.25, fixed = TRUE, cutoff=10)", true), indTvPar = [true, true], scoreScalingType="FISH_D")
-
-model_edge_mutual_gwd(decay_par) = DynNets.SdErgmPml(staticModel = StaticNets.NetModeErgmPml("edges + mutual + gwidegree(decay = $decay_par, fixed = TRUE, cutoff=10) + gwodegree(decay = $decay_par, fixed = TRUE, cutoff=10)", true), indTvPar = [true, true, true, true], scoreScalingType="FISH_D")
-
-model_rec_p_star = DynNets.SdErgmPml(staticModel = StaticNets.NetModeErgmPml("edges + mutual ", true), indTvPar = [true, true], scoreScalingType="FISH_D")
 end
 
 #%%
@@ -69,36 +61,38 @@ end
 # time = [@time DynNets.stats_from_mat(model_rec_p_star, edge_list_pres(edge_list_pres_T[t_ref][1:n_links, :])) for n_links in n_links_sub]
 
 
-@elapsed dfEst = collect_results( datadir("wiki_tk", "ch_stats")) 
+@elapsed dfEst = collect_results( datadir("wiki_tk", "ch_stats_present")) 
 viewtab(dfEst[Not(:ch_stats)])
-
-row = dfEst[dfEst.ergmString .==  "edges + mutual + gwidegree(decay = 1.5, fixed = TRUE, cutoff=10) + gwodegree(decay = 1.5, fixed = TRUE, cutoff=10)",:][1,:]
 
 row = dfEst[dfEst.ergmString .==  "edges + gwidegree(decay = 1.5, fixed = TRUE, cutoff=10) + gwodegree(decay = 1.5, fixed = TRUE, cutoff=10)",:][1,:]
 
+
+row = dfEst[dfEst.ergmString .==  "edges + mutual",:][1,:]
+
 row = dfEst[dfEst.ergmString .==  "edges + gwesp(decay = 0.25, fixed = TRUE, cutoff=10)",:][1,:]
+begin
+row = dfEst[dfEst.ergmString .==  "edges + mutual + gwidegree(decay = 1.5, fixed = TRUE, cutoff=10) + gwodegree(decay = 1.5, fixed = TRUE, cutoff=10)",:][1,:]
+
 model = row.model
 T = row.Tf
 t0_train = 1
-tend_train = 400
+tend_train = 365
 N = n_nodes_T[t0_train:tend_train]
 obsT = row.ch_stats[t0_train:tend_train]
 
 ENV["JULIA_DEBUG"] = ScoreDrivenERGM
 
 res_est = DynNets.estimate_and_filter(model, N, obsT; show_trace = true)
-
 fig, ax = DynNets.plot_filtered(model, N, res_est[3])
+end
 
-DynNets.number_ergm_par(model)
+# res_conf = DynNets.conf_bands_given_SD_estimates(model, N, obsT, DynNets.unrestrict_all_par(model, res_est.vEstSdResParAll), res_est.ftot_0, [[0.975, 0.025]];  offset=0, plotFlag=true, parUncMethod = "WHITE-MLE", xval = dates[t0_train:tend_train], winsorProp = 0)
+# res_conf.ax[1].set_title("wiki talk $(model.staticModel.ergmTermsString)")
 
 est_SS = DynNets.estimate_single_snap_sequence(model, obsT)
-fig, ax = DynNets.plot_filtered(model, N, est_SS)
+# fig, ax = DynNets.plot_filtered(model, N, est_SS, ax=res_conf.ax, lineType = ".", lineColor="r")
 
-
-res_conf = DynNets.conf_bands_given_SD_estimates(model, N, obsT, DynNets.unrestrict_all_par(model, model.indTvPar, res_est.vEstSdResParAll), res_est.ftot_0, [[0.975, 0.025]]; indTvPar = model.indTvPar, offset=0, plotFlag=true, parUncMethod = "WHITE-MLE", xval = dates[t0_train:tend_train])
-
+dates[365]
 using Statistics
-var(res_est.fVecT_filt, dims = 2)
-DynNets.plot_filtered(model, N, estParSS_T; lineType = ".", lineColor = "k", fig = res_conf.fig, ax=res_conf.ax, gridFlag=false)
+var(res_est.fVecT_filt[:, 1:365], dims = 2)
 
